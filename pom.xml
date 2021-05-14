@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.diamondq.cachly</groupId>
+    <artifactId>cachly-masterparent</artifactId>
+    <version>${revision}${sha1}${changelist}</version>
+    <relativePath>cachly-masterparent</relativePath>
+  </parent>
+  <artifactId>cachly-root</artifactId>
+  <packaging>pom</packaging>
+  <name>DiamondQ Cachly: Root</name>
+  <modules>
+    <module>cachly-api</module>
+    <module>cachly-bom</module>
+    <module>cachly-core</module>
+    <module>cachly-ehcache</module>
+    <module>cachly-masterparent</module>
+    <module>cachly-parent</module>
+  </modules>
+</project>
