@@ -1,0 +1,114 @@
+<configuration>
+  <conversionRule conversionWord="DQLogger" converterClass="com.diamondq.common.utils.logback.DQLogger" />
+  <conversionRule conversionWord="DQMDC" converterClass="com.diamondq.common.utils.logback.DQMDC" />
+  <conversionRule conversionWord="DQIfMDC" converterClass="com.diamondq.common.utils.logback.DQIfMDC" />
+  <conversionRule conversionWord="DQContext" converterClass="com.diamondq.common.utils.logback.DQContext" />
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator" />
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <if condition='property("env.eclipse").equals("true") == false'>
+      <then>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+          <level>TRACE</level>
+        </filter>
+      </then>
+    </if>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <matcher>
+          <Name>graphql</Name>
+          <regex>Parsing query|Executing request|Validating query</regex>
+        </matcher>
+        <expression>logger.equals("notprivacysafe.graphql.GraphQL") &amp;&amp; graphql.matches(formattedMessage) 
+        </expression>
+      </evaluator>
+      <OnMismatch>NEUTRAL</OnMismatch>
+      <OnMatch>DENY</OnMatch>
+    </filter>
+    <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+      <evaluator>
+        <expression>level &lt;= INFO &amp;&amp; "true".equals((String)mdc.get("DataLoadSkip"))</expression>
+      </evaluator>
+      <OnMismatch>NEUTRAL</OnMismatch>
+      <OnMatch>DENY</OnMatch>
+    </filter>
+    <encoder>
+      <!-- %-9.9marker replaced with %-9.9DQMDC(slf4j.marker) as pax-logging-logback currently loses the marker -->
+      <pattern><![CDATA[%d{yyyy-MM-DD HH:mm:ss.SSS} [%-16.16thread] %-5level %-36.36logger{36} - %-30.30DQContext{30,true} - %DQMDC{!bundle.id,!bundle.name,!bundle.version,!slf4j.marker}%DQIfMDC{!bundle.id,!bundle.name,!bundle.version,!slf4j.marker,\s}%DQContext{}%msg%n]]></pattern>
+    </encoder>
+  </appender>
+  <if condition='isDefined("FILE_LOGGER")'>
+    <then>
+      <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>hub-file-logger.log</file>
+        <append>true</append>
+        <immediateFlush>true</immediateFlush>
+        <encoder>
+          <pattern><![CDATA[%d{yyyy-MM-DD HH:mm:ss.SSS} [%-16.16thread] %-5level %-36.36logger{36} - %-30.30DQContext{30,true} - %DQMDC{!bundle.id,!bundle.name,!bundle.version,!slf4j.marker}%DQIfMDC{!bundle.id,!bundle.name,!bundle.version,!slf4j.marker,\s}%DQContext{}%msg%n]]></pattern>
+        </encoder>
+      </appender>
+    </then>
+  </if>
+  <if condition='isDefined("REDUCED_LOGGING_LEVEL")'>
+    <then>
+      <logger name="io.micronaut.context.DefaultBeanContext" level="INFO" />
+      <logger name="io.micronaut.context.lifecycle" level="INFO" />
+      <logger name="org.apache.http" level="INFO" />
+      <logger name="org.apache.pdfbox.pdmodel.font.PDType1Font" level="ERROR" />
+      <logger name="org.apache.pdfbox.pdmodel.font.FileSystemFontProvider" level="ERROR" />
+      <logger name="ca" level="DEBUG" />
+      <logger name="com" level="DEBUG" />
+      <logger name="io" level="DEBUG" />
+      <logger name="edu" level="DEBUG" />
+      <logger name="org" level="DEBUG" />
+      <logger name="ca.bc.rdffg" level="TRACE" />
+    </then>
+  </if>
+  <!-- Reduced logging -->
+  <logger name="jdk.event.security" level="INFO" />
+  <logger name="org.postgresql" level="INFO" />
+  <logger name="liquibase" level="INFO" />
+  <logger name="ca.bc.rdffg.hub.security.ReplacementJwtAuthenticationFactory" level="DEBUG" />
+  <logger name="com.zaxxer.hikari.pool.HikariPool" level="INFO" />
+  <logger name="io.micronaut.aop.chain.InterceptorChain" level="DEBUG" />
+  <logger name="io.micronaut.context.AbstractBeanDefinitionReference" level="DEBUG" />
+  <logger name="io.micronaut.context.DefaultBeanContext" level="INFO" />
+  <!-- Condition reports on what objects are being disabled -->
+  <logger name="io.micronaut.context.condition.Condition" level="INFO" />
+  <logger name="io.micronaut.context.env.PropertySourcePropertyResolver" level="DEBUG" />
+  <logger name="io.micronaut.context.event.ApplicationEventPublisher" level="INFO" />
+  <logger name="io.micronaut.context.lifecycle" level="INFO" />
+  <logger name="io.micronaut.core.beans.DefaultBeanIntrospector" level="INFO" />
+  <logger name="io.micronaut.core.reflect.ClassUtils" level="INFO" />
+  <logger name="io.micronaut.http.netty.reactive.HandlerPublisher" level="DEBUG" />
+  <logger name="io.micronaut.inject.qualifiers.TypeArgumentQualifier" level="DEBUG" />
+  <logger name="io.micronaut.jackson.modules.BeanIntrospectionModule" level="INFO" />
+  <logger
+    name="io.micronaut.security.oauth2.client.clientcredentials.propagation.ClientCredentialsHttpClientFilter"
+    level="DEBUG" />
+  <logger name="io.micronaut.transaction.jdbc.DataSourceTransactionManager" level="INFO" />
+  <logger name="io.micronaut.transaction.support.TransactionSynchronizationManager" level="DEBUG" />
+  <logger name="io.netty.buffer" level="INFO" />
+  <logger name="io.netty.channel.DefaultChannelId" level="INFO" />
+  <logger name="io.netty.channel.nio.NioEventLoop" level="INFO" />
+  <logger name="io.netty.util.internal" level="INFO" />
+  <logger name="io.netty.util.NetUtil" level="INFO" />
+  <logger name="org.apache.pdfbox.pdfparser.PDFObjectStreamParser" level="INFO" />
+  <logger name="org.codehaus.janino" level="INFO" />
+  <logger name="org.jooq.impl.DefaultBinding" level="DEBUG" />
+  <logger name="org.jooq.tools.LoggerListener" level="DEBUG" />
+  <!-- <logger name="io.netty.handler.codec.http.websocketx" level="INFO" /> <logger name="io.micronaut.configuration.graphql.ws.GraphQLWsController" 
+    level="INFO" /> <logger name="io.micronaut.http.server.netty.websocket" level="INFO" /> <logger name="io.micronaut.http.server.netty.NettyHttpServer" 
+    level="INFO" /> <logger name="io.micronaut.security.token" level="INFO" /> <logger name="io.micronaut.security.rules" level="INFO" 
+    /> <logger name="io.micronaut.security.filters.SecurityFilter" level="INFO" /> <logger name="io.netty.channel.DefaultChannelPipeline" 
+    level="INFO" /> <logger name="org.apache.http.wire" level="INFO" /> <logger name="tracer" level="INFO" /> <logger name="io.micronaut.transaction.jdbc.DataSourceUtils" 
+    level="INFO" /> <logger name="io.micronaut.transaction.jdbc.DataSourceTransactionManager" level="INFO" /> <logger name="io.micronaut.transaction.support.TransactionSynchronizationManager" 
+    level="INFO" /> -->
+  <root level="TRACE">
+    <appender-ref ref="STDOUT" />
+    <if condition='isDefined("FILE_LOGGER")'>
+      <then>
+        <appender-ref ref="FILE" />
+      </then>
+    </if>
+  </root>
+</configuration>

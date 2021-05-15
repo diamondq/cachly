@@ -1,0 +1,10 @@
+cachly:
+  micronaut:
+    my-cache:
+     paths:
+      - processDefinitions
+ehcache:
+  caches:
+    my-cache:
+      enabled: true
+    

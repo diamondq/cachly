@@ -14,17 +14,12 @@
     <dependencies>
       <dependency>
         <groupId>com.diamondq.cachly</groupId>
-        <artifactId>cachly-api</artifactId>
+        <artifactId>cachly</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.diamondq.cachly</groupId>
-        <artifactId>cachly-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.diamondq.cachly</groupId>
-        <artifactId>cachly-ehcache</artifactId>
+        <artifactId>cachly-micronaut</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>

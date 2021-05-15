@@ -12,11 +12,11 @@
   <packaging>pom</packaging>
   <name>DiamondQ Cachly: Root</name>
   <modules>
-    <module>cachly-api</module>
+    <module>cachly</module>
     <module>cachly-bom</module>
-    <module>cachly-core</module>
-    <module>cachly-ehcache</module>
+    <module>cachly-micronaut</module>
     <module>cachly-masterparent</module>
     <module>cachly-parent</module>
+    <module>cachly-testing</module>
   </modules>
 </project>
