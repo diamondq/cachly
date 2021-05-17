@@ -2,6 +2,7 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
+import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -11,6 +12,8 @@ public interface KeyInternal<I, O> extends Key<I, O> {
 
   @Nullable
   public KeyInternal<Object, Object> getPreviousKey();
+
+  public TypeReference<O> getOutputType();
 
   public CacheStorage getLastStorage();
 

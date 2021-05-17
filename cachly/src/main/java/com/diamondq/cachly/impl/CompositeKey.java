@@ -3,6 +3,7 @@ package com.diamondq.cachly.impl;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.ROOT;
+import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -29,6 +30,14 @@ public class CompositeKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
     mParts = tempParts;
     mPartsLen = mParts.length;
     mLast = ki2;
+  }
+
+  /**
+   * @see com.diamondq.cachly.impl.KeyInternal#getOutputType()
+   */
+  @Override
+  public TypeReference<O> getOutputType() {
+    return mLast.getOutputType();
   }
 
   public <M1> CompositeKey(Key<ROOT, M1> pKey1, Key<M1, I> pKey2, Key<I, O> pKey3) {
@@ -142,7 +151,7 @@ public class CompositeKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     for (KeyInternal<?, ?> part : mParts) {
-      sb.append(part.getBaseKey());
+      sb.append(part.toString());
       sb.append("/");
     }
     sb.setLength(sb.length() - 1);

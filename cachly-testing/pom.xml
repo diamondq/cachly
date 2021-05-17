@@ -34,5 +34,9 @@
       <groupId>org.codehaus.janino</groupId>
       <artifactId>janino</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.micronaut.cache</groupId>
+      <artifactId>micronaut-cache-ehcache</artifactId>
+    </dependency>
   </dependencies>
 </project>

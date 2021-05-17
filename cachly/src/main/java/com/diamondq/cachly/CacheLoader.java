@@ -1,10 +1,21 @@
 package com.diamondq.cachly;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
+/**
+ * This represents a cache loader that is capable of calculating or retrieving a given value
+ *
+ * @param <I> the parent's type
+ * @param <O> the expected result type
+ */
 public interface CacheLoader<I, O> {
 
-  public CacheResult<O> load(Key<I, O> pKey, @Nullable I pObject);
+  /**
+   * Called to load a specific key
+   *
+   * @param pCache the cache
+   * @param pKey the key to load
+   * @return the result
+   */
+  public CacheResult<O> load(Cache pCache, Key<I, O> pKey);
 
   public boolean supportsNull();
 

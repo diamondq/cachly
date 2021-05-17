@@ -4,16 +4,21 @@ import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
+import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
+import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.KeyDetails;
 import com.diamondq.cachly.impl.KeyInternal;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Stack;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,6 +31,12 @@ public class CacheEngine implements Cache {
   private final Map<String, CacheStorage>                mCacheStorage;
 
   private final Map<String, CacheLoader<Object, Object>> mLoader;
+
+  private final ThreadLocal<Stack<Set<String>>>          mMonitored = ThreadLocal.withInitial(() -> new Stack<>());
+
+  private final KeyInternal<?, CacheInfo>                mStorageKey;
+
+  private final CacheInfo                                mCacheInfo;
 
   @Inject
   public CacheEngine(List<CacheStorage> pCacheStorages, List<CacheLoader<?, ?>> pCacheLoaders) {
@@ -42,11 +53,45 @@ public class CacheEngine implements Cache {
       CacheLoader<Object, Object> obj = (CacheLoader<Object, Object>) loader;
       loaders.put(path, obj);
     }
+
+    /* If there is no CacheStorage for __CacheEngine__, then create a simple memory one */
+
+    if (storages.containsKey(CacheInfoLoader.CACHE_INFO_NAME) == false)
+      storages.put(CacheInfoLoader.CACHE_INFO_NAME, new MemoryCacheStorage());
+
     mCacheStorage = storages;
     mLoader = loaders;
+
+    /* Setup the storage key and cache info */
+
+    mStorageKey =
+      (KeyInternal<?, CacheInfo>) KeyBuilder.of(CacheInfoLoader.CACHE_INFO_NAME, new TypeReference<CacheInfo>() {
+      });
+    setupKey(mStorageKey);
+    CacheResult<CacheInfo> cacheInfoResult = mStorageKey.getLastStorage().queryForKey(mStorageKey);
+    if (cacheInfoResult.entryFound() == false)
+      mCacheInfo = new CacheInfo();
+    else
+      mCacheInfo = cacheInfoResult.getValue();
   }
 
-  private <V> CacheResult<V> lookup(KeyInternal<Object, V> pKey) {
+  /**
+   * This is the main resolution routine. It will take a key and resolve it to the cached value
+   *
+   * @param <O> the result type
+   * @param pKey the key
+   * @return the result
+   */
+  private <O> CacheResult<O> lookup(KeyInternal<Object, O> pKey) {
+
+    String keyStr = pKey.toString();
+
+    /* Are we monitoring? */
+
+    Stack<Set<String>> dependencyStack = mMonitored.get();
+    if (dependencyStack.isEmpty() == false) {
+      dependencyStack.peek().add(keyStr);
+    }
 
     /* Find the last storage given the key */
 
@@ -54,38 +99,81 @@ public class CacheEngine implements Cache {
 
     /* Query the storage for the full key */
 
-    CacheResult<V> queryResult = storage.queryForKey(pKey);
+    CacheResult<O> queryResult = storage.queryForKey(pKey);
 
     if (queryResult.entryFound() == true)
       return queryResult;
 
-    /* If not found, then take an parent of the key and get the result */
-
-    KeyInternal<Object, Object> previousKey = pKey.getPreviousKey();
-    Object previousValue;
-    if (previousKey != null) {
-
-      CacheResult<?> previousResult = lookup(previousKey);
-      if (previousResult.entryFound() == false)
-        return CacheResult.notFound();
-      previousValue = previousResult.getValue();
-    }
-    else
-      previousValue = null;
-
     /* Now attempt to lookup the data */
 
-    CacheLoader<Object, V> cacheLoader = pKey.getLoader();
-    CacheResult<V> loadedResult = cacheLoader.load(pKey, previousValue);
+    CacheLoader<Object, O> cacheLoader = pKey.getLoader();
+
+    /* In order to track dependencies, create a new set to add to the current stack */
+
+    dependencyStack.add(new HashSet<>());
+
+    CacheResult<O> loadedResult;
+    Set<String> dependencies;
+    try {
+      loadedResult = cacheLoader.load(this, pKey);
+    }
+    finally {
+
+      /* Pull the dependency set off the stack */
+
+      dependencies = dependencyStack.pop();
+    }
 
     /* Now store the result */
 
     if (loadedResult.entryFound() == true)
       storage.store(pKey, loadedResult);
 
+    /* Store the dependencies for later tracking */
+
+    if (dependencies.isEmpty() == false) {
+      for (String dep : dependencies) {
+        Set<KeyInternal<?, ?>> set = mCacheInfo.dependencyMap.get(dep);
+        if (set == null) {
+          set = new HashSet<>();
+          mCacheInfo.dependencyMap.put(dep, set);
+        }
+        set.add(pKey);
+      }
+      mStorageKey.getLastStorage().store(mStorageKey, new CacheResult<>(mCacheInfo, true));
+    }
+
     /* Return */
 
     return loadedResult;
+
+  }
+
+  private <O> void invalidate(KeyInternal<?, O> pKey) {
+
+    String keyStr = pKey.toString();
+
+    /* Find the last storage given the key */
+
+    CacheStorage storage = pKey.getLastStorage();
+
+    storage.invalidate(pKey);
+
+    /* Were there dependencies? */
+
+    Set<KeyInternal<?, ?>> depSet = mCacheInfo.dependencyMap.remove(keyStr);
+    if (depSet != null) {
+
+      /* Save the updated CacheInfo */
+
+      mStorageKey.getLastStorage().store(mStorageKey, new CacheResult<>(mCacheInfo, true));
+
+      /* Invalidate all the subkeys */
+
+      for (KeyInternal<?, ?> dep : depSet)
+        invalidate(dep);
+
+    }
 
   }
 
@@ -119,6 +207,16 @@ public class CacheEngine implements Cache {
     }
   }
 
+  /**
+   * This internal method resolves a placeholder out of a CompositeKey
+   *
+   * @param <K> the key value type
+   * @param <V> the result value type
+   * @param pKey the composite key
+   * @param pHolder the key placeholder
+   * @param pValue the value
+   * @return the new composite key with the placeholder removed
+   */
   private <@NonNull K, V> KeyInternal<Object, V> resolve(KeyInternal<?, V> pKey, KeyPlaceholder<?, K, ?> pHolder,
     K pValue) {
     if (pHolder instanceof KeyInternal == false)
@@ -225,6 +323,75 @@ public class CacheEngine implements Cache {
       throw new IllegalStateException();
     KeyInternal<?, V> ki = (KeyInternal<?, V>) pKey;
     return get(resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4,
+      pValue4));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key)
+   */
+  @Override
+  public <V> void invalidate(Key<?, V> pKey) {
+    if ((pKey instanceof KeyInternal) == false)
+      throw new IllegalStateException();
+    @SuppressWarnings("unchecked")
+    KeyInternal<Object, V> ki = (KeyInternal<Object, V>) pKey;
+    if (ki.hasKeyDetails() == false)
+      setupKey(ki);
+    invalidate(ki);
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object)
+   */
+  @Override
+  public <@NonNull K1, V> void invalidate(Key<?, V> pKey, KeyPlaceholder<?, K1, ?> pHolder1, K1 pValue1) {
+    if ((pKey instanceof KeyInternal) == false)
+      throw new IllegalStateException();
+    KeyInternal<?, V> ki = (KeyInternal<?, V>) pKey;
+    invalidate(resolve(ki, pHolder1, pValue1));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   */
+  @Override
+  public <@NonNull K1, @NonNull K2, V> void invalidate(Key<?, V> pKey, KeyPlaceholder<?, K1, ?> pHolder1, K1 pValue1,
+    KeyPlaceholder<?, K2, ?> pHolder2, K2 pValue2) {
+    if ((pKey instanceof KeyInternal) == false)
+      throw new IllegalStateException();
+    KeyInternal<?, V> ki = (KeyInternal<?, V>) pKey;
+    invalidate(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object)
+   */
+  @Override
+  public <@NonNull K1, @NonNull K2, @NonNull K3, V> void invalidate(Key<?, V> pKey, KeyPlaceholder<?, K1, ?> pHolder1,
+    K1 pValue1, KeyPlaceholder<?, K2, ?> pHolder2, K2 pValue2, KeyPlaceholder<?, K3, ?> pHolder3, K3 pValue3) {
+    if ((pKey instanceof KeyInternal) == false)
+      throw new IllegalStateException();
+    KeyInternal<?, V> ki = (KeyInternal<?, V>) pKey;
+    invalidate(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   */
+  @Override
+  public <@NonNull K1, @NonNull K2, @NonNull K3, @NonNull K4, V> void invalidate(Key<?, V> pKey,
+    KeyPlaceholder<?, K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<?, K2, ?> pHolder2, K2 pValue2,
+    KeyPlaceholder<?, K3, ?> pHolder3, K3 pValue3, KeyPlaceholder<?, K4, ?> pHolder4, K4 pValue4) {
+    if ((pKey instanceof KeyInternal) == false)
+      throw new IllegalStateException();
+    KeyInternal<?, V> ki = (KeyInternal<?, V>) pKey;
+    invalidate(resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4,
       pValue4));
   }
 }

@@ -2,6 +2,7 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
+import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -30,6 +31,14 @@ public class ResolvedKeyPlaceholder<I, O> implements Key<I, O>, KeyInternal<I, O
   @Override
   public String getKey() {
     return mKey;
+  }
+
+  /**
+   * @see com.diamondq.cachly.impl.KeyInternal#getOutputType()
+   */
+  @Override
+  public TypeReference<O> getOutputType() {
+    return mPlaceholder.getOutputType();
   }
 
   @Override
@@ -91,5 +100,10 @@ public class ResolvedKeyPlaceholder<I, O> implements Key<I, O>, KeyInternal<I, O
   @Override
   public void storeKeyDetails(KeyDetails<I, O> pDetails) {
     mPlaceholder.storeKeyDetails(pDetails);
+  }
+
+  @Override
+  public String toString() {
+    return mKey;
   }
 }

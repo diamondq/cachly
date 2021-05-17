@@ -14,5 +14,9 @@
       <groupId>com.diamondq.cachly</groupId>
       <artifactId>cachly</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.micronaut.cache</groupId>
+      <artifactId>micronaut-cache-core</artifactId>
+    </dependency>
   </dependencies>
 </project>

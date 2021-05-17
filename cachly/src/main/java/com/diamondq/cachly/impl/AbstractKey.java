@@ -2,6 +2,7 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
+import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
 
 import java.util.Objects;
@@ -17,8 +18,11 @@ public class AbstractKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
 
   private final @NonNull KeyInternal<Object, Object>[] mParts;
 
-  public AbstractKey(String pKey) {
+  private final TypeReference<O>                       mOutputType;
+
+  public AbstractKey(String pKey, TypeReference<O> pOutputType) {
     mKey = pKey;
+    mOutputType = pOutputType;
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
     KeyInternal<Object, Object>[] tempParts = new KeyInternal[] {this};
@@ -31,6 +35,14 @@ public class AbstractKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
   @Override
   public String getKey() {
     return mKey;
+  }
+
+  /**
+   * @see com.diamondq.cachly.impl.KeyInternal#getOutputType()
+   */
+  @Override
+  public TypeReference<O> getOutputType() {
+    return mOutputType;
   }
 
   /**

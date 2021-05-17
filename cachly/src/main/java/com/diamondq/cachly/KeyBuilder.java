@@ -8,8 +8,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class KeyBuilder {
 
-  public static <I, O> Key<I, O> of(String pTextKey) {
-    return new StaticKey<I, O>(pTextKey);
+  public static <I, O> Key<I, O> of(String pTextKey, TypeReference<O> pOutputType) {
+    return new StaticKey<I, O>(pTextKey, pOutputType);
   }
 
   public static <O> Key<ROOT, O> from(Key<ROOT, O> pKey1) {
@@ -24,8 +24,9 @@ public class KeyBuilder {
     return new CompositeKey<M2, O>(pKey1, pKey2, pKey3);
   }
 
-  public static <I, @NonNull K, O> KeyPlaceholder<I, K, O> placeholder(String pPlaceholderKey) {
-    return new StaticKeyPlaceholder<I, K, O>(pPlaceholderKey);
+  public static <I, @NonNull K, O> KeyPlaceholder<I, K, O> placeholder(String pPlaceholderKey,
+    TypeReference<O> pOutputType) {
+    return new StaticKeyPlaceholder<I, K, O>(pPlaceholderKey, pOutputType);
   }
 
 }

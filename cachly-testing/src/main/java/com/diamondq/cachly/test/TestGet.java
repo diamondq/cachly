@@ -1,10 +1,13 @@
 package com.diamondq.cachly.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.diamondq.cachly.AbstractCacheLoader;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheResult;
+import com.diamondq.cachly.CommonTypeReferences;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
@@ -16,7 +19,6 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Test;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -27,10 +29,10 @@ public class TestGet {
   public static class KEYS {
 
     public static final Key<ROOT, Map<String, String>>                      PROCESS_DEFINITIONS =
-      KeyBuilder.of("processDefinitions");
+      KeyBuilder.of("processDefinitions", CommonTypeReferences.MAP_STRING_TO_STRING);
 
     public static final KeyPlaceholder<Map<String, String>, String, String> PD_BY_ID_PLACE      =
-      KeyBuilder.placeholder("id");
+      KeyBuilder.placeholder("id", CommonTypeReferences.STRING);
 
     public static final Key<Map<String, String>, String>                    PD_BY_ID            =
       KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
@@ -53,7 +55,7 @@ public class TestGet {
     }
 
     @Override
-    public CacheResult<Map<String, String>> load(Key<ROOT, Map<String, String>> pKey, @Nullable ROOT pParentValue) {
+    public CacheResult<Map<String, String>> load(Cache pCache, Key<ROOT, Map<String, String>> pKey) {
       return new CacheResult<>(sMap, true);
     }
 
@@ -68,11 +70,11 @@ public class TestGet {
     }
 
     @Override
-    public CacheResult<String> load(Key<Map<String, String>, String> pKey, @Nullable Map<String, String> pParentValue) {
-      if (pParentValue == null)
-        throw new IllegalStateException();
-      String r = pParentValue.get(pKey.getKey());
-      return new CacheResult<>(r, true);
+    public CacheResult<String> load(Cache pCache, Key<Map<String, String>, String> pKey) {
+      @SuppressWarnings("unused")
+      Map<String, String> map = pCache.get(KEYS.PROCESS_DEFINITIONS);
+      // String r = map.get(pKey.getKey());
+      return new CacheResult<>(String.valueOf(System.currentTimeMillis()), true);
     }
 
   }
@@ -84,6 +86,13 @@ public class TestGet {
   void test() {
     String r = cache.get(KEYS.PD_BY_ID, KEYS.PD_BY_ID_PLACE, "123");
     assertNotNull(r);
+    String r2 = cache.get(KEYS.PD_BY_ID, KEYS.PD_BY_ID_PLACE, "123");
+    assertNotNull(r2);
+    assertEquals(r, r2);
+    cache.invalidate(KEYS.PROCESS_DEFINITIONS);
+    String r3 = cache.get(KEYS.PD_BY_ID, KEYS.PD_BY_ID_PLACE, "123");
+    assertNotNull(r3);
+    assertNotEquals(r, r3);
   }
 
 }

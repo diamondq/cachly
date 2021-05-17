@@ -13,4 +13,6 @@ public interface CacheStorage {
 
   List<String> getBasePaths();
 
+  <V> void invalidate(KeyInternal<?, V> pKey);
+
 }
