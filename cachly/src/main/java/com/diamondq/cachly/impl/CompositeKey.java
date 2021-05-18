@@ -22,38 +22,47 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
     if (pKey1 instanceof KeySPI == false)
       throw new IllegalStateException();
     KeySPI<?> ki1 = (KeySPI<?>) pKey1;
+    @NonNull
+    KeySPI<Object>[] ki1Parts = ki1.getParts();
     if (pKey2 instanceof KeySPI == false)
       throw new IllegalStateException();
     KeySPI<O> ki2 = (KeySPI<O>) pKey2;
+    @NonNull
+    KeySPI<Object>[] ki2Parts = ki2.getParts();
+    int partsLen = ki1Parts.length + ki2Parts.length;
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
-    KeySPI<Object>[] tempParts = new KeySPI[] {ki1, ki2};
+    KeySPI<Object>[] tempParts = new KeySPI[partsLen];
+    System.arraycopy(ki1Parts, 0, tempParts, 0, ki1Parts.length);
+    System.arraycopy(ki2Parts, 0, tempParts, ki1Parts.length, ki2Parts.length);
     mParts = tempParts;
     mPartsLen = mParts.length;
     mLast = ki2;
-  }
-
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getOutputType()
-   */
-  @Override
-  public Type getOutputType() {
-    return mLast.getOutputType();
   }
 
   public CompositeKey(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
     if (pKey1 instanceof KeySPI == false)
       throw new IllegalStateException();
     KeySPI<?> ki1 = (KeySPI<?>) pKey1;
+    @NonNull
+    KeySPI<Object>[] ki1Parts = ki1.getParts();
     if (pKey2 instanceof KeySPI == false)
       throw new IllegalStateException();
     KeySPI<?> ki2 = (KeySPI<?>) pKey2;
+    @NonNull
+    KeySPI<Object>[] ki2Parts = ki2.getParts();
     if (pKey3 instanceof KeySPI == false)
       throw new IllegalStateException();
     KeySPI<O> ki3 = (KeySPI<O>) pKey3;
+    @NonNull
+    KeySPI<Object>[] ki3Parts = ki3.getParts();
+    int partsLen = ki1Parts.length + ki2Parts.length + ki3Parts.length;
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
-    KeySPI<Object>[] tempParts = new KeySPI[] {ki1, ki2, ki3};
+    KeySPI<Object>[] tempParts = new KeySPI[partsLen];
+    System.arraycopy(ki1Parts, 0, tempParts, 0, ki1Parts.length);
+    System.arraycopy(ki2Parts, 0, tempParts, ki1Parts.length, ki2Parts.length);
+    System.arraycopy(ki3Parts, 0, tempParts, ki1Parts.length + ki2Parts.length, ki3Parts.length);
     mParts = tempParts;
     mPartsLen = mParts.length;
     mLast = ki3;
@@ -65,6 +74,14 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
     @SuppressWarnings("unchecked")
     KeySPI<O> temp = (KeySPI<O>) mParts[mPartsLen - 1];
     mLast = temp;
+  }
+
+  /**
+   * @see com.diamondq.cachly.spi.KeySPI#getOutputType()
+   */
+  @Override
+  public Type getOutputType() {
+    return mLast.getOutputType();
   }
 
   /**
