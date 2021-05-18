@@ -113,7 +113,7 @@ public class CacheEngine implements Cache {
 
     mStorageKey =
       (KeySPI<CacheInfo>) KeyBuilder.<CacheInfo> of(CacheInfoLoader.CACHE_INFO_NAME, new TypeReference<CacheInfo>() {
-      }.getType());
+      });
     setupKey(mStorageKey);
     CacheResult<CacheInfo> cacheInfoResult = mStorageKey.getLastStorage().queryForKey(mStorageKey);
     if (cacheInfoResult.entryFound() == false)

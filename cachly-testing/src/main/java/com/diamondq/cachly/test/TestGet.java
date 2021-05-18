@@ -8,11 +8,11 @@ import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderDetails;
 import com.diamondq.cachly.CacheResult;
-import com.diamondq.cachly.CommonTypes;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.test.TestGet.Keys.Strings;
+import com.diamondq.common.types.Types;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,10 +40,10 @@ public class TestGet {
     }
 
     public static final Key<Map<String, String>>       PROCESS_DEFINITIONS =
-      KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS, CommonTypes.MAP_STRING_TO_STRING);
+      KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS, Types.MAP_STRING_TO_STRING);
 
     public static final KeyPlaceholder<String, String> PD_BY_ID_PLACE      =
-      KeyBuilder.placeholder(Strings.PARTIAL_ID, CommonTypes.STRING);
+      KeyBuilder.placeholder(Strings.PARTIAL_ID, Types.STRING);
 
     public static final Key<String>                    PD_BY_ID            =
       KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
