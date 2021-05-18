@@ -2,9 +2,10 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
+
+import java.lang.reflect.Type;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -15,7 +16,7 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
 
   private final KeySPI<O>                 mLast;
 
-  private final int                            mPartsLen;
+  private final int                       mPartsLen;
 
   public CompositeKey(Key<?> pKey1, Key<O> pKey2) {
     if (pKey1 instanceof KeySPI == false)
@@ -36,7 +37,7 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
    * @see com.diamondq.cachly.spi.KeySPI#getOutputType()
    */
   @Override
-  public TypeReference<O> getOutputType() {
+  public Type getOutputType() {
     return mLast.getOutputType();
   }
 

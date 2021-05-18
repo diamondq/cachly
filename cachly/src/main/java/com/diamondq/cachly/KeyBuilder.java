@@ -4,11 +4,13 @@ import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.StaticKey;
 import com.diamondq.cachly.impl.StaticKeyPlaceholder;
 
+import java.lang.reflect.Type;
+
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class KeyBuilder {
 
-  public static <O> Key<O> of(String pTextKey, TypeReference<O> pOutputType) {
+  public static <O> Key<O> of(String pTextKey, Type pOutputType) {
     return new StaticKey<O>(pTextKey, pOutputType);
   }
 
@@ -24,7 +26,7 @@ public class KeyBuilder {
     return new CompositeKey<O>(pKey1, pKey2, pKey3);
   }
 
-  public static <@NonNull K, O> KeyPlaceholder<K, O> placeholder(String pPlaceholderKey, TypeReference<O> pOutputType) {
+  public static <@NonNull K, O> KeyPlaceholder<K, O> placeholder(String pPlaceholderKey, Type pOutputType) {
     return new StaticKeyPlaceholder<K, O>(pPlaceholderKey, pOutputType);
   }
 

@@ -26,7 +26,7 @@ public class MicronautCacheStorage implements CacheStorage {
   @Override
   public <V> CacheResult<V> queryForKey(KeySPI<V> pKey) {
     Optional<V> opt = mCache.get(pKey.toString(),
-      new DefaultArgument<V>(pKey.getOutputType().getType(), null, AnnotationMetadata.EMPTY_METADATA));
+      new DefaultArgument<V>(pKey.getOutputType(), null, AnnotationMetadata.EMPTY_METADATA));
     if (opt.isPresent() == false)
       return CacheResult.notFound();
     V result = opt.get();

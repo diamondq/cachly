@@ -1,11 +1,11 @@
 package com.diamondq.cachly.impl;
 
-import com.diamondq.cachly.TypeReference;
+import java.lang.reflect.Type;
 
 public class StaticKey<O> extends AbstractKey<O> {
 
-  public StaticKey(String pTextKey, TypeReference<O> pTypeReference) {
-    super(pTextKey, pTypeReference);
+  public StaticKey(String pTextKey, Type pType) {
+    super(pTextKey, pType);
   }
 
 }

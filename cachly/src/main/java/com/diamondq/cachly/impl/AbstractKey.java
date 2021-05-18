@@ -2,10 +2,10 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -13,15 +13,15 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class AbstractKey<O> implements Key<O>, KeySPI<O> {
 
-  private final String                         mKey;
+  private final String                    mKey;
 
-  private @Nullable KeyDetails<O>              mKeyDetails;
+  private @Nullable KeyDetails<O>         mKeyDetails;
 
   private final @NonNull KeySPI<Object>[] mParts;
 
-  private final TypeReference<O>               mOutputType;
+  private final Type                      mOutputType;
 
-  public AbstractKey(String pKey, TypeReference<O> pOutputType) {
+  public AbstractKey(String pKey, Type pOutputType) {
     mKey = pKey;
     mOutputType = pOutputType;
     @SuppressWarnings({"null", "unchecked"})
@@ -42,7 +42,7 @@ public class AbstractKey<O> implements Key<O>, KeySPI<O> {
    * @see com.diamondq.cachly.spi.KeySPI#getOutputType()
    */
   @Override
-  public TypeReference<O> getOutputType() {
+  public Type getOutputType() {
     return mOutputType;
   }
 

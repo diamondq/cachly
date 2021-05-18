@@ -7,12 +7,12 @@ import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
-import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.KeyDetails;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
 import com.diamondq.cachly.spi.BeanNameLocator;
 import com.diamondq.cachly.spi.KeySPI;
+import com.diamondq.common.TypeReference;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,8 +111,9 @@ public class CacheEngine implements Cache {
 
     /* Setup the storage key and cache info */
 
-    mStorageKey = (KeySPI<CacheInfo>) KeyBuilder.of(CacheInfoLoader.CACHE_INFO_NAME, new TypeReference<CacheInfo>() {
-    });
+    mStorageKey =
+      (KeySPI<CacheInfo>) KeyBuilder.<CacheInfo> of(CacheInfoLoader.CACHE_INFO_NAME, new TypeReference<CacheInfo>() {
+      }.getType());
     setupKey(mStorageKey);
     CacheResult<CacheInfo> cacheInfoResult = mStorageKey.getLastStorage().queryForKey(mStorageKey);
     if (cacheInfoResult.entryFound() == false)

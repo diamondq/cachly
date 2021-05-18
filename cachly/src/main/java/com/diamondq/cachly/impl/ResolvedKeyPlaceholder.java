@@ -2,9 +2,10 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
+
+import java.lang.reflect.Type;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -13,7 +14,7 @@ public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
 
   private final KeySPI<O>                 mPlaceholder;
 
-  private final String                         mKey;
+  private final String                    mKey;
 
   private final @NonNull KeySPI<Object>[] mParts;
 
@@ -38,7 +39,7 @@ public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
    * @see com.diamondq.cachly.spi.KeySPI#getOutputType()
    */
   @Override
-  public TypeReference<O> getOutputType() {
+  public Type getOutputType() {
     return mPlaceholder.getOutputType();
   }
 
