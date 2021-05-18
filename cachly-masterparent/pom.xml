@@ -26,11 +26,11 @@
   <distributionManagement>
     <snapshotRepository>
       <id>1-dq-snapshot</id>
-      <url>https://nexus.diamondq.com/repository/maven-snapshots/</url>
+      <url>https://nexus.diamondq.com/repository/maven-public-snapshots/</url>
     </snapshotRepository>
     <repository>
       <id>2-dq-release</id>
-      <url>https://nexus.diamondq.com/repository/maven-releases/</url>
+      <url>https://nexus.diamondq.com/repository/maven-public-releases/</url>
     </repository>
   </distributionManagement>
   <profiles>
@@ -45,7 +45,7 @@
       <repositories>
         <repository>
           <id>1-dq-snapshot</id>
-          <url>https://nexus.diamondq.com/repository/maven-snapshots/</url>
+          <url>https://nexus.diamondq.com/repository/maven-public-snapshots/</url>
           <snapshots>
             <enabled>true</enabled>
             <updatePolicy>always</updatePolicy>
@@ -56,7 +56,7 @@
         </repository>
         <repository>
           <id>2-dq-release</id>
-          <url>https://nexus.diamondq.com/repository/maven-public/</url>
+          <url>https://nexus.diamondq.com/repository/maven-public-releases/</url>
           <snapshots>
             <enabled>false</enabled>
           </snapshots>
@@ -95,7 +95,7 @@
       <repositories>
         <repository>
           <id>1-dq-snapshot</id>
-          <url>https://nexus.diamondq.com/repository/maven-snapshots/</url>
+          <url>https://nexus.diamondq.com/repository/maven-public-snapshots/</url>
           <snapshots>
             <enabled>true</enabled>
             <updatePolicy>daily</updatePolicy>
@@ -106,7 +106,7 @@
         </repository>
         <repository>
           <id>2-dq-release</id>
-          <url>https://nexus.diamondq.com/repository/maven-public/</url>
+          <url>https://nexus.diamondq.com/repository/maven-public-releases/</url>
           <snapshots>
             <enabled>false</enabled>
           </snapshots>
