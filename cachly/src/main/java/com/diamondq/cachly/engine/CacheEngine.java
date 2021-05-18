@@ -129,7 +129,7 @@ public class CacheEngine implements Cache {
    * @param pKey the key
    * @return the result
    */
-  private <O> CacheResult<O> lookup(KeySPI<O> pKey) {
+  private <O> CacheResult<O> lookup(KeySPI<O> pKey, boolean pLoadIfMissing) {
 
     String keyStr = pKey.toString();
 
@@ -148,7 +148,7 @@ public class CacheEngine implements Cache {
 
     CacheResult<O> queryResult = storage.queryForKey(pKey);
 
-    if (queryResult.entryFound() == true)
+    if ((pLoadIfMissing == false) || (queryResult.entryFound() == true))
       return queryResult;
 
     /* Now attempt to lookup the data */
@@ -298,7 +298,7 @@ public class CacheEngine implements Cache {
     KeySPI<V> ki = (KeySPI<V>) pKey;
     if (ki.hasKeyDetails() == false)
       setupKey(ki);
-    CacheResult<V> result = lookup(ki);
+    CacheResult<V> result = lookup(ki, true);
     if (result.entryFound() == true) {
       if (result.isNull() == true) {
         if (ki.supportsNull() == true) {
@@ -316,6 +316,20 @@ public class CacheEngine implements Cache {
       return r;
     }
     throw new NoSuchElementException();
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key)
+   */
+  @Override
+  public <V> CacheResult<V> getIfPresent(Key<V> pKey) {
+    if ((pKey instanceof KeySPI) == false)
+      throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (ki.hasKeyDetails() == false)
+      setupKey(ki);
+    CacheResult<V> result = lookup(ki, false);
+    return result;
   }
 
   /**
@@ -369,6 +383,62 @@ public class CacheEngine implements Cache {
     KeySPI<V> ki = (KeySPI<V>) pKey;
     return get(resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4,
       pValue4));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object)
+   */
+  @Override
+  public <@NonNull K1, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1) {
+    if ((pKey instanceof KeySPI) == false)
+      throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    return getIfPresent(resolve(ki, pHolder1, pValue1));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   */
+  @Override
+  public <@NonNull K1, @NonNull K2, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1,
+    K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2) {
+    if ((pKey instanceof KeySPI) == false)
+      throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    return getIfPresent(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object)
+   */
+  @Override
+  public <@NonNull K1, @NonNull K2, @NonNull K3, V> CacheResult<V> getIfPresent(Key<V> pKey,
+    KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
+    KeyPlaceholder<K3, ?> pHolder3, K3 pValue3) {
+    if ((pKey instanceof KeySPI) == false)
+      throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    return getIfPresent(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   */
+  @Override
+  public <@NonNull K1, @NonNull K2, @NonNull K3, @NonNull K4, V> CacheResult<V> getIfPresent(Key<V> pKey,
+    KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
+    KeyPlaceholder<K3, ?> pHolder3, K3 pValue3, KeyPlaceholder<K4, ?> pHolder4, K4 pValue4) {
+    if ((pKey instanceof KeySPI) == false)
+      throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    return getIfPresent(resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3),
+      pHolder4, pValue4));
   }
 
   /**
