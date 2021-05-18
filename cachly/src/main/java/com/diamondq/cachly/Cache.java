@@ -1,5 +1,7 @@
 package com.diamondq.cachly;
 
+import java.util.Map;
+
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 public interface Cache {
@@ -237,4 +239,5 @@ public interface Cache {
     KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
     KeyPlaceholder<K3, ?> pHolder3, K3 pValue3, KeyPlaceholder<K4, ?> pHolder4, K4 pValue4);
 
+  public Map<String, CacheLoaderInfo<?>> getCacheLoadersByPath();
 }

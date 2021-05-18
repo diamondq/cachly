@@ -2,7 +2,7 @@ package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
-import com.diamondq.cachly.CacheLoaderDetails;
+import com.diamondq.cachly.CacheLoaderInfo;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
@@ -30,26 +30,15 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @Singleton
 public class CacheEngine implements Cache {
 
-  private final Map<String, CacheStorage>              mCacheStorageByPath;
+  private final Map<String, CacheStorage>            mCacheStorageByPath;
 
-  private final Map<String, LoaderAndSupports<Object>> mLoadersByPath;
+  private final Map<String, CacheLoaderInfo<Object>> mLoadersByPath;
 
-  private final ThreadLocal<Stack<Set<String>>>        mMonitored = ThreadLocal.withInitial(() -> new Stack<>());
+  private final ThreadLocal<Stack<Set<String>>>      mMonitored = ThreadLocal.withInitial(() -> new Stack<>());
 
-  private final KeySPI<CacheInfo>                      mStorageKey;
+  private final KeySPI<CacheInfo>                    mStorageKey;
 
-  private final CacheInfo                              mCacheInfo;
-
-  private static class LoaderAndSupports<O> {
-    public final CacheLoader<O> loader;
-
-    public final boolean        supportsNull;
-
-    public LoaderAndSupports(CacheLoader<O> pLoader, boolean pSupportsNull) {
-      loader = pLoader;
-      supportsNull = pSupportsNull;
-    }
-  }
+  private final CacheInfo                            mCacheInfo;
 
   @Inject
   public CacheEngine(List<CachlyPathConfiguration> pPaths, List<BeanNameLocator> pNameLocators,
@@ -94,16 +83,12 @@ public class CacheEngine implements Cache {
 
     /* Build the map of loaders by path */
 
-    Map<String, LoaderAndSupports<Object>> loadersByPath = new HashMap<>();
+    Map<String, CacheLoaderInfo<Object>> loadersByPath = new HashMap<>();
     for (CacheLoader<?> loader : pCacheLoaders) {
-      CacheLoaderDetails details = loader.getClass().getAnnotation(CacheLoaderDetails.class);
-      if (details == null)
-        throw new IllegalArgumentException(
-          "The class " + loader.getClass().getName() + " must have a @CacheLoaderDetails annotation");
-      String path = details.path();
       @SuppressWarnings("unchecked")
-      CacheLoader<Object> obj = (CacheLoader<Object>) loader;
-      loadersByPath.put(path, new LoaderAndSupports<>(obj, details.supportsNull()));
+      CacheLoaderInfo<Object> details = (CacheLoaderInfo<Object>) loader.getInfo();
+      String path = details.key.toString();
+      loadersByPath.put(path, details);
     }
 
     mCacheStorageByPath = storagesByPath;
@@ -243,7 +228,7 @@ public class CacheEngine implements Cache {
 
       /* Now lookup the loader */
 
-      LoaderAndSupports<Object> loaderInfo = mLoadersByPath.get(currentPath);
+      CacheLoaderInfo<Object> loaderInfo = mLoadersByPath.get(currentPath);
       if (loaderInfo == null)
         throw new IllegalStateException("Unable to find a cache loader that will cover " + currentPath);
 
@@ -507,5 +492,13 @@ public class CacheEngine implements Cache {
     KeySPI<V> ki = (KeySPI<V>) pKey;
     invalidate(resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4,
       pValue4));
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#getCacheLoadersByPath()
+   */
+  @Override
+  public Map<String, CacheLoaderInfo<?>> getCacheLoadersByPath() {
+    return new HashMap<>(mLoadersByPath);
   }
 }

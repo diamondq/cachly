@@ -8,6 +8,13 @@ package com.diamondq.cachly;
 public interface CacheLoader<O> {
 
   /**
+   * Returns information about this CacheLoader
+   *
+   * @return the info
+   */
+  public CacheLoaderInfo<O> getInfo();
+
+  /**
    * Called to load a specific key
    *
    * @param pCache the cache

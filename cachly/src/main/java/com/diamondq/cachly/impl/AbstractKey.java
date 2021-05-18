@@ -20,10 +20,13 @@ public class AbstractKey<O> implements Key<O>, KeySPI<O> {
 
   private final @NonNull KeySPI<Object>[] mParts;
 
+  private final TypeReference<O>          mOutputTypeRef;
+
   private final Type                      mOutputType;
 
   public AbstractKey(String pKey, TypeReference<O> pOutputType) {
     mKey = pKey;
+    mOutputTypeRef = pOutputType;
     mOutputType = pOutputType.getType();
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
@@ -37,6 +40,14 @@ public class AbstractKey<O> implements Key<O>, KeySPI<O> {
   @Override
   public String getKey() {
     return mKey;
+  }
+
+  /**
+   * @see com.diamondq.cachly.Key#getOutputTypeReference()
+   */
+  @Override
+  public TypeReference<O> getOutputTypeReference() {
+    return mOutputTypeRef;
   }
 
   /**

@@ -6,12 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
-import com.diamondq.cachly.CacheLoaderDetails;
+import com.diamondq.cachly.CacheLoaderInfo;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
-import com.diamondq.cachly.test.TestGet.Keys.Strings;
 import com.diamondq.common.types.Types;
 
 import java.util.HashMap;
@@ -51,7 +50,6 @@ public class TestGet {
   }
 
   @Singleton
-  @CacheLoaderDetails(path = Keys.Strings.FULL_PROCESS_DEFINITIONS)
   public static class PDLoader implements CacheLoader<Map<String, String>> {
 
     private static final Map<String, String> sMap;
@@ -62,6 +60,11 @@ public class TestGet {
     }
 
     @Override
+    public CacheLoaderInfo<Map<String, String>> getInfo() {
+      return new CacheLoaderInfo<>(Keys.PROCESS_DEFINITIONS, false, "", this);
+    }
+
+    @Override
     public CacheResult<Map<String, String>> load(Cache pCache, Key<Map<String, String>> pKey) {
       return new CacheResult<>(sMap, true);
     }
@@ -69,8 +72,12 @@ public class TestGet {
   }
 
   @Singleton
-  @CacheLoaderDetails(path = Strings.FULL_PD_BY_ID)
   public static class PDIDLoader implements CacheLoader<String> {
+
+    @Override
+    public CacheLoaderInfo<String> getInfo() {
+      return new CacheLoaderInfo<>(Keys.PD_BY_ID, false, "", this);
+    }
 
     @Override
     public CacheResult<String> load(Cache pCache, Key<String> pKey) {

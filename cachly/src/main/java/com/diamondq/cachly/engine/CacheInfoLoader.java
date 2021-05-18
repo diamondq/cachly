@@ -2,20 +2,27 @@ package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
-import com.diamondq.cachly.CacheLoaderDetails;
+import com.diamondq.cachly.CacheLoaderInfo;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
+import com.diamondq.cachly.KeyBuilder;
+import com.diamondq.common.TypeReference;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@CacheLoaderDetails(path = CacheInfoLoader.CACHE_INFO_NAME)
 public class CacheInfoLoader implements CacheLoader<CacheInfo> {
-  public static final String CACHE_INFO_NAME = "__CacheEngine__";
+  public static final String                   CACHE_INFO_NAME = "__CacheEngine__";
 
-  @Inject
-  public CacheInfoLoader() {
+  public static final TypeReference<CacheInfo> TYPEREF         = new TypeReference<CacheInfo>() {
+                                                               };
+
+  /**
+   * @see com.diamondq.cachly.CacheLoader#getInfo()
+   */
+  @Override
+  public CacheLoaderInfo<CacheInfo> getInfo() {
+    return new CacheLoaderInfo<>(KeyBuilder.of(CACHE_INFO_NAME, TYPEREF), false, "", this);
   }
 
   /**
