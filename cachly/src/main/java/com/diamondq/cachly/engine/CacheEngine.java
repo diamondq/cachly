@@ -499,6 +499,8 @@ public class CacheEngine implements Cache {
    */
   @Override
   public Map<String, CacheLoaderInfo<?>> getCacheLoadersByPath() {
-    return new HashMap<>(mLoadersByPath);
+    Map<String, CacheLoaderInfo<?>> result = new HashMap<>(mLoadersByPath);
+    result.remove(CacheInfoLoader.CACHE_INFO_NAME);
+    return result;
   }
 }
