@@ -1,9 +1,8 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.CacheResult;
-import com.diamondq.cachly.impl.KeyInternal;
+import com.diamondq.cachly.spi.KeySPI;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -16,10 +15,10 @@ public class MemoryCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#queryForKey(com.diamondq.cachly.impl.KeyInternal)
+   * @see com.diamondq.cachly.engine.CacheStorage#queryForKey(com.diamondq.cachly.spi.KeySPI)
    */
   @Override
-  public <V> CacheResult<V> queryForKey(KeyInternal<?, V> pKey) {
+  public <V> CacheResult<V> queryForKey(KeySPI<V> pKey) {
     Object obj = mData.get(pKey.toString());
     if (obj == null)
       return CacheResult.notFound();
@@ -29,11 +28,11 @@ public class MemoryCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.impl.KeyInternal,
+   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.spi.KeySPI,
    *      com.diamondq.cachly.CacheResult)
    */
   @Override
-  public <V> void store(KeyInternal<?, V> pKey, CacheResult<V> pLoadedResult) {
+  public <V> void store(KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
     if (pLoadedResult.entryFound() == true)
       mData.put(pKey.toString(), pLoadedResult.getValue());
     else
@@ -41,16 +40,11 @@ public class MemoryCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.impl.KeyInternal)
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.spi.KeySPI)
    */
   @Override
-  public <V> void invalidate(KeyInternal<?, V> pKey) {
+  public <V> void invalidate(KeySPI<V> pKey) {
     mData.remove(pKey.toString());
-  }
-
-  @Override
-  public List<String> getBasePaths() {
-    throw new IllegalStateException();
   }
 
 }

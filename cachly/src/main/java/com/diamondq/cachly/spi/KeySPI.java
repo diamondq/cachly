@@ -1,17 +1,18 @@
-package com.diamondq.cachly.impl;
+package com.diamondq.cachly.spi;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
+import com.diamondq.cachly.impl.KeyDetails;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public interface KeyInternal<I, O> extends Key<I, O> {
+public interface KeySPI<O> extends Key<O> {
 
   @Nullable
-  public KeyInternal<Object, Object> getPreviousKey();
+  public KeySPI<Object> getPreviousKey();
 
   public TypeReference<O> getOutputType();
 
@@ -19,13 +20,13 @@ public interface KeyInternal<I, O> extends Key<I, O> {
 
   public boolean supportsNull();
 
-  public CacheLoader<I, O> getLoader();
+  public CacheLoader<O> getLoader();
 
-  public void storeKeyDetails(KeyDetails<I, O> pDetails);
+  public void storeKeyDetails(KeyDetails<O> pDetails);
 
   public boolean hasKeyDetails();
 
-  public @NonNull KeyInternal<Object, Object>[] getParts();
+  public @NonNull KeySPI<Object>[] getParts();
 
   @Override
   public String getKey();

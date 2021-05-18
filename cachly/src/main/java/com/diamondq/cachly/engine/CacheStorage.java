@@ -1,18 +1,14 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.CacheResult;
-import com.diamondq.cachly.impl.KeyInternal;
-
-import java.util.List;
+import com.diamondq.cachly.spi.KeySPI;
 
 public interface CacheStorage {
 
-  <V> CacheResult<V> queryForKey(KeyInternal<?, V> pKey);
+  <V> CacheResult<V> queryForKey(KeySPI<V> pKey);
 
-  <V> void store(KeyInternal<?, V> pKey, CacheResult<V> pLoadedResult);
+  <V> void store(KeySPI<V> pKey, CacheResult<V> pLoadedResult);
 
-  List<String> getBasePaths();
-
-  <V> void invalidate(KeyInternal<?, V> pKey);
+  <V> void invalidate(KeySPI<V> pKey);
 
 }

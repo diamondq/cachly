@@ -2,80 +2,80 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.ROOT;
 import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
+import com.diamondq.cachly.spi.KeySPI;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class CompositeKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
+public class CompositeKey<O> implements Key<O>, KeySPI<O> {
 
-  private final @NonNull KeyInternal<Object, Object>[] mParts;
+  private final @NonNull KeySPI<Object>[] mParts;
 
-  private final KeyInternal<I, O>                      mLast;
+  private final KeySPI<O>                 mLast;
 
-  private final int                                    mPartsLen;
+  private final int                            mPartsLen;
 
-  public CompositeKey(Key<ROOT, I> pKey1, Key<I, O> pKey2) {
-    if (pKey1 instanceof KeyInternal == false)
+  public CompositeKey(Key<?> pKey1, Key<O> pKey2) {
+    if (pKey1 instanceof KeySPI == false)
       throw new IllegalStateException();
-    KeyInternal<ROOT, I> ki1 = (KeyInternal<ROOT, I>) pKey1;
-    if (pKey2 instanceof KeyInternal == false)
+    KeySPI<?> ki1 = (KeySPI<?>) pKey1;
+    if (pKey2 instanceof KeySPI == false)
       throw new IllegalStateException();
-    KeyInternal<I, O> ki2 = (KeyInternal<I, O>) pKey2;
+    KeySPI<O> ki2 = (KeySPI<O>) pKey2;
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
-    KeyInternal<Object, Object>[] tempParts = new KeyInternal[] {ki1, ki2};
+    KeySPI<Object>[] tempParts = new KeySPI[] {ki1, ki2};
     mParts = tempParts;
     mPartsLen = mParts.length;
     mLast = ki2;
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getOutputType()
+   * @see com.diamondq.cachly.spi.KeySPI#getOutputType()
    */
   @Override
   public TypeReference<O> getOutputType() {
     return mLast.getOutputType();
   }
 
-  public <M1> CompositeKey(Key<ROOT, M1> pKey1, Key<M1, I> pKey2, Key<I, O> pKey3) {
-    if (pKey1 instanceof KeyInternal == false)
+  public CompositeKey(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
+    if (pKey1 instanceof KeySPI == false)
       throw new IllegalStateException();
-    KeyInternal<ROOT, M1> ki1 = (KeyInternal<ROOT, M1>) pKey1;
-    if (pKey2 instanceof KeyInternal == false)
+    KeySPI<?> ki1 = (KeySPI<?>) pKey1;
+    if (pKey2 instanceof KeySPI == false)
       throw new IllegalStateException();
-    KeyInternal<M1, I> ki2 = (KeyInternal<M1, I>) pKey2;
-    if (pKey3 instanceof KeyInternal == false)
+    KeySPI<?> ki2 = (KeySPI<?>) pKey2;
+    if (pKey3 instanceof KeySPI == false)
       throw new IllegalStateException();
-    KeyInternal<I, O> ki3 = (KeyInternal<I, O>) pKey3;
+    KeySPI<O> ki3 = (KeySPI<O>) pKey3;
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
-    KeyInternal<Object, Object>[] tempParts = new KeyInternal[] {ki1, ki2, ki3};
+    KeySPI<Object>[] tempParts = new KeySPI[] {ki1, ki2, ki3};
     mParts = tempParts;
     mPartsLen = mParts.length;
     mLast = ki3;
   }
 
-  public CompositeKey(@NonNull KeyInternal<Object, Object>[] pNewParts) {
+  public CompositeKey(@NonNull KeySPI<Object>[] pNewParts) {
     mParts = pNewParts;
     mPartsLen = mParts.length;
     @SuppressWarnings("unchecked")
-    KeyInternal<I, O> temp = (KeyInternal<I, O>) mParts[mPartsLen - 1];
+    KeySPI<O> temp = (KeySPI<O>) mParts[mPartsLen - 1];
     mLast = temp;
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getParts()
+   * @see com.diamondq.cachly.spi.KeySPI#getParts()
    */
   @Override
-  public @NonNull KeyInternal<Object, Object>[] getParts() {
+  public @NonNull KeySPI<Object>[] getParts() {
     return mParts;
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getKey()
+   * @see com.diamondq.cachly.spi.KeySPI#getKey()
    */
   @Override
   public String getKey() {
@@ -83,7 +83,7 @@ public class CompositeKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getBaseKey()
+   * @see com.diamondq.cachly.spi.KeySPI#getBaseKey()
    */
   @Override
   public String getBaseKey() {
@@ -91,7 +91,7 @@ public class CompositeKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getLastStorage()
+   * @see com.diamondq.cachly.spi.KeySPI#getLastStorage()
    */
   @Override
   public CacheStorage getLastStorage() {
@@ -99,48 +99,48 @@ public class CompositeKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getLoader()
+   * @see com.diamondq.cachly.spi.KeySPI#getLoader()
    */
   @Override
-  public CacheLoader<I, O> getLoader() {
+  public CacheLoader<O> getLoader() {
     return mLast.getLoader();
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getPreviousKey()
+   * @see com.diamondq.cachly.spi.KeySPI#getPreviousKey()
    */
   @Override
-  public @Nullable KeyInternal<Object, Object> getPreviousKey() {
+  public @Nullable KeySPI<Object> getPreviousKey() {
     if (mPartsLen == 1)
       return null;
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
-    KeyInternal<Object, Object>[] parentParts = new KeyInternal[mPartsLen - 1];
+    KeySPI<Object>[] parentParts = new KeySPI[mPartsLen - 1];
     System.arraycopy(mParts, 0, parentParts, 0, mPartsLen - 1);
     return new CompositeKey<>(parentParts);
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#hasKeyDetails()
+   * @see com.diamondq.cachly.spi.KeySPI#hasKeyDetails()
    */
   @Override
   public boolean hasKeyDetails() {
-    for (KeyInternal<?, ?> part : mParts)
+    for (KeySPI<?> part : mParts)
       if (part.hasKeyDetails() == false)
         return false;
     return true;
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#storeKeyDetails(com.diamondq.cachly.impl.KeyDetails)
+   * @see com.diamondq.cachly.spi.KeySPI#storeKeyDetails(com.diamondq.cachly.impl.KeyDetails)
    */
   @Override
-  public void storeKeyDetails(KeyDetails<I, O> pDetails) {
+  public void storeKeyDetails(KeyDetails<O> pDetails) {
     throw new IllegalStateException();
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#supportsNull()
+   * @see com.diamondq.cachly.spi.KeySPI#supportsNull()
    */
   @Override
   public boolean supportsNull() {
@@ -150,7 +150,7 @@ public class CompositeKey<I, O> implements Key<I, O>, KeyInternal<I, O> {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    for (KeyInternal<?, ?> part : mParts) {
+    for (KeySPI<?> part : mParts) {
       sb.append(part.toString());
       sb.append("/");
     }

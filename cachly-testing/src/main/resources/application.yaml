@@ -1,10 +1,10 @@
 cachly:
-  micronaut:
-    my-cache:
-     paths:
-      - processDefinitions
+  paths:
+    process-definitions:
+      storage: my-cache
+      serializer: kryo
 ehcache:
+  storage-path: "data"
   caches:
     my-cache:
       enabled: true
-    

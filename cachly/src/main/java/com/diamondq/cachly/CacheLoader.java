@@ -3,10 +3,9 @@ package com.diamondq.cachly;
 /**
  * This represents a cache loader that is capable of calculating or retrieving a given value
  *
- * @param <I> the parent's type
  * @param <O> the expected result type
  */
-public interface CacheLoader<I, O> {
+public interface CacheLoader<O> {
 
   /**
    * Called to load a specific key
@@ -15,10 +14,6 @@ public interface CacheLoader<I, O> {
    * @param pKey the key to load
    * @return the result
    */
-  public CacheResult<O> load(Cache pCache, Key<I, O> pKey);
-
-  public boolean supportsNull();
-
-  public String getPath();
+  public CacheResult<O> load(Cache pCache, Key<O> pKey);
 
 }

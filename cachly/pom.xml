@@ -10,5 +10,9 @@
   <artifactId>cachly</artifactId>
   <name>DiamondQ Cachly: Cachly</name>
   <dependencies>
+    <dependency>
+      <groupId>com.diamondq.common</groupId>
+      <artifactId>common-utils</artifactId>
+    </dependency>
   </dependencies>
 </project>

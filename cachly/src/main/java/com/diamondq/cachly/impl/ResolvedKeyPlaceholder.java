@@ -4,29 +4,30 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.TypeReference;
 import com.diamondq.cachly.engine.CacheStorage;
+import com.diamondq.cachly.spi.KeySPI;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class ResolvedKeyPlaceholder<I, O> implements Key<I, O>, KeyInternal<I, O> {
+public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
 
-  private final KeyInternal<I, O>                      mPlaceholder;
+  private final KeySPI<O>                 mPlaceholder;
 
-  private final String                                 mKey;
+  private final String                         mKey;
 
-  private final @NonNull KeyInternal<Object, Object>[] mParts;
+  private final @NonNull KeySPI<Object>[] mParts;
 
-  public ResolvedKeyPlaceholder(KeyInternal<I, O> pPlaceholder, String pKey) {
+  public ResolvedKeyPlaceholder(KeySPI<O> pPlaceholder, String pKey) {
     mPlaceholder = pPlaceholder;
     mKey = pKey;
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
-    KeyInternal<Object, Object>[] tempParts = new KeyInternal[] {this};
+    KeySPI<Object>[] tempParts = new KeySPI[] {this};
     mParts = tempParts;
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getKey()
+   * @see com.diamondq.cachly.spi.KeySPI#getKey()
    */
   @Override
   public String getKey() {
@@ -34,7 +35,7 @@ public class ResolvedKeyPlaceholder<I, O> implements Key<I, O>, KeyInternal<I, O
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getOutputType()
+   * @see com.diamondq.cachly.spi.KeySPI#getOutputType()
    */
   @Override
   public TypeReference<O> getOutputType() {
@@ -47,7 +48,7 @@ public class ResolvedKeyPlaceholder<I, O> implements Key<I, O>, KeyInternal<I, O
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getLastStorage()
+   * @see com.diamondq.cachly.spi.KeySPI#getLastStorage()
    */
   @Override
   public CacheStorage getLastStorage() {
@@ -55,31 +56,31 @@ public class ResolvedKeyPlaceholder<I, O> implements Key<I, O>, KeyInternal<I, O
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getLoader()
+   * @see com.diamondq.cachly.spi.KeySPI#getLoader()
    */
   @Override
-  public CacheLoader<I, O> getLoader() {
+  public CacheLoader<O> getLoader() {
     return mPlaceholder.getLoader();
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getParts()
+   * @see com.diamondq.cachly.spi.KeySPI#getParts()
    */
   @Override
-  public @NonNull KeyInternal<Object, Object>[] getParts() {
+  public @NonNull KeySPI<Object>[] getParts() {
     return mParts;
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#getPreviousKey()
+   * @see com.diamondq.cachly.spi.KeySPI#getPreviousKey()
    */
   @Override
-  public @Nullable KeyInternal<Object, Object> getPreviousKey() {
+  public @Nullable KeySPI<Object> getPreviousKey() {
     return null;
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#supportsNull()
+   * @see com.diamondq.cachly.spi.KeySPI#supportsNull()
    */
   @Override
   public boolean supportsNull() {
@@ -87,7 +88,7 @@ public class ResolvedKeyPlaceholder<I, O> implements Key<I, O>, KeyInternal<I, O
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#hasKeyDetails()
+   * @see com.diamondq.cachly.spi.KeySPI#hasKeyDetails()
    */
   @Override
   public boolean hasKeyDetails() {
@@ -95,10 +96,10 @@ public class ResolvedKeyPlaceholder<I, O> implements Key<I, O>, KeyInternal<I, O
   }
 
   /**
-   * @see com.diamondq.cachly.impl.KeyInternal#storeKeyDetails(com.diamondq.cachly.impl.KeyDetails)
+   * @see com.diamondq.cachly.spi.KeySPI#storeKeyDetails(com.diamondq.cachly.impl.KeyDetails)
    */
   @Override
-  public void storeKeyDetails(KeyDetails<I, O> pDetails) {
+  public void storeKeyDetails(KeyDetails<O> pDetails) {
     mPlaceholder.storeKeyDetails(pDetails);
   }
 

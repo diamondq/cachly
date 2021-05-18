@@ -4,14 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.diamondq.cachly.AbstractCacheLoader;
 import com.diamondq.cachly.Cache;
+import com.diamondq.cachly.CacheLoader;
+import com.diamondq.cachly.CacheLoaderDetails;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.CommonTypeReferences;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
-import com.diamondq.cachly.ROOT;
+import com.diamondq.cachly.test.TestGet.Keys.Strings;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,21 +27,32 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 @MicronautTest
 public class TestGet {
 
-  public static class KEYS {
+  public static class Keys {
 
-    public static final Key<ROOT, Map<String, String>>                      PROCESS_DEFINITIONS =
-      KeyBuilder.of("processDefinitions", CommonTypeReferences.MAP_STRING_TO_STRING);
+    public static class Strings {
+      public static final String PARTIAL_PROCESS_DEFINITIONS = "process-definitions";
 
-    public static final KeyPlaceholder<Map<String, String>, String, String> PD_BY_ID_PLACE      =
-      KeyBuilder.placeholder("id", CommonTypeReferences.STRING);
+      public static final String PARTIAL_ID                  = "id";
 
-    public static final Key<Map<String, String>, String>                    PD_BY_ID            =
+      public static final String FULL_PROCESS_DEFINITIONS    = PARTIAL_PROCESS_DEFINITIONS;
+
+      public static final String FULL_PD_BY_ID               = FULL_PROCESS_DEFINITIONS + "/" + PARTIAL_ID;
+    }
+
+    public static final Key<Map<String, String>>       PROCESS_DEFINITIONS =
+      KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS, CommonTypeReferences.MAP_STRING_TO_STRING);
+
+    public static final KeyPlaceholder<String, String> PD_BY_ID_PLACE      =
+      KeyBuilder.placeholder(Strings.PARTIAL_ID, CommonTypeReferences.STRING);
+
+    public static final Key<String>                    PD_BY_ID            =
       KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
 
   }
 
   @Singleton
-  public static class PDLoader extends AbstractCacheLoader<ROOT, Map<String, String>> {
+  @CacheLoaderDetails(path = Keys.Strings.FULL_PROCESS_DEFINITIONS)
+  public static class PDLoader implements CacheLoader<Map<String, String>> {
 
     private static final Map<String, String> sMap;
 
@@ -49,30 +61,21 @@ public class TestGet {
       sMap.put("123", "ProcessDef123");
     }
 
-    @Inject
-    public PDLoader() {
-      super(false, KEYS.PROCESS_DEFINITIONS);
-    }
-
     @Override
-    public CacheResult<Map<String, String>> load(Cache pCache, Key<ROOT, Map<String, String>> pKey) {
+    public CacheResult<Map<String, String>> load(Cache pCache, Key<Map<String, String>> pKey) {
       return new CacheResult<>(sMap, true);
     }
 
   }
 
   @Singleton
-  public static class PDIDLoader extends AbstractCacheLoader<Map<String, String>, String> {
-
-    @Inject
-    public PDIDLoader() {
-      super(false, KEYS.PD_BY_ID);
-    }
+  @CacheLoaderDetails(path = Strings.FULL_PD_BY_ID)
+  public static class PDIDLoader implements CacheLoader<String> {
 
     @Override
-    public CacheResult<String> load(Cache pCache, Key<Map<String, String>, String> pKey) {
+    public CacheResult<String> load(Cache pCache, Key<String> pKey) {
       @SuppressWarnings("unused")
-      Map<String, String> map = pCache.get(KEYS.PROCESS_DEFINITIONS);
+      Map<String, String> map = pCache.get(Keys.PROCESS_DEFINITIONS);
       // String r = map.get(pKey.getKey());
       return new CacheResult<>(String.valueOf(System.currentTimeMillis()), true);
     }
@@ -84,13 +87,13 @@ public class TestGet {
 
   @Test
   void test() {
-    String r = cache.get(KEYS.PD_BY_ID, KEYS.PD_BY_ID_PLACE, "123");
+    String r = cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r);
-    String r2 = cache.get(KEYS.PD_BY_ID, KEYS.PD_BY_ID_PLACE, "123");
+    String r2 = cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r2);
     assertEquals(r, r2);
-    cache.invalidate(KEYS.PROCESS_DEFINITIONS);
-    String r3 = cache.get(KEYS.PD_BY_ID, KEYS.PD_BY_ID_PLACE, "123");
+    cache.invalidate(Keys.PROCESS_DEFINITIONS);
+    String r3 = cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r3);
     assertNotEquals(r, r3);
   }

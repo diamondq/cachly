@@ -3,15 +3,15 @@ package com.diamondq.cachly.impl;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.engine.CacheStorage;
 
-public class KeyDetails<I, O> {
+public class KeyDetails<O> {
 
-  private final CacheStorage      mLastStorage;
+  private final CacheStorage   mLastStorage;
 
-  private final boolean           mSupportsNull;
+  private final boolean        mSupportsNull;
 
-  private final CacheLoader<I, O> mLoader;
+  private final CacheLoader<O> mLoader;
 
-  public KeyDetails(CacheStorage pLastStorage, boolean pSupportsNull, CacheLoader<I, O> pLoader) {
+  public KeyDetails(CacheStorage pLastStorage, boolean pSupportsNull, CacheLoader<O> pLoader) {
     mLastStorage = pLastStorage;
     mSupportsNull = pSupportsNull;
     mLoader = pLoader;
@@ -25,7 +25,7 @@ public class KeyDetails<I, O> {
     return mSupportsNull;
   }
 
-  public CacheLoader<I, O> getLoader() {
+  public CacheLoader<O> getLoader() {
     return mLoader;
   }
 
