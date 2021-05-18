@@ -15,4 +15,5 @@ public @interface CacheLoaderDetails {
 
   boolean supportsNull() default false;
 
+  String help() default "";
 }
