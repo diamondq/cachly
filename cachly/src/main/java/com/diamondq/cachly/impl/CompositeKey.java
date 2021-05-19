@@ -148,6 +148,20 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
   }
 
   /**
+   * @see com.diamondq.cachly.Key#getPreviousKey(com.diamondq.cachly.Key)
+   */
+  @Override
+  public <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
+    if (mPartsLen == 1)
+      return null;
+    @SuppressWarnings({"null", "unchecked"})
+    @NonNull
+    KeySPI<Object>[] parentParts = new KeySPI[mPartsLen - 1];
+    System.arraycopy(mParts, 0, parentParts, 0, mPartsLen - 1);
+    return new CompositeKey<>(parentParts);
+  }
+
+  /**
    * @see com.diamondq.cachly.spi.KeySPI#hasKeyDetails()
    */
   @Override

@@ -90,6 +90,14 @@ public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
   }
 
   /**
+   * @see com.diamondq.cachly.Key#getPreviousKey(com.diamondq.cachly.Key)
+   */
+  @Override
+  public <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
+    return null;
+  }
+
+  /**
    * @see com.diamondq.cachly.spi.KeySPI#supportsNull()
    */
   @Override
