@@ -10,9 +10,11 @@ import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.KeyDetails;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
+import com.diamondq.cachly.impl.StaticKey;
 import com.diamondq.cachly.spi.BeanNameLocator;
 import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.TypeReference;
+import com.diamondq.common.types.Types;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -179,6 +182,14 @@ public class CacheEngine implements Cache {
 
     return loadedResult;
 
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#invalidateAll()
+   */
+  @Override
+  public void invalidateAll() {
+    mCacheStorageByPath.values().stream().distinct().forEach((cs) -> cs.invalidateAll());
   }
 
   private <O> void invalidate(KeySPI<O> pKey) {
@@ -502,5 +513,31 @@ public class CacheEngine implements Cache {
     Map<String, CacheLoaderInfo<?>> result = new HashMap<>(mLoadersByPath);
     result.remove(CacheInfoLoader.CACHE_INFO_NAME);
     return result;
+  }
+
+  private Key<?> from(String pFullKey) {
+    @NonNull
+    String[] partStrs = pFullKey.split("/");
+    int partsLen = partStrs.length;
+    @SuppressWarnings({"unchecked", "null"})
+    @NonNull
+    KeySPI<Object>[] parts = new KeySPI[partsLen];
+    for (int i = 0; i < partsLen; i++)
+      parts[i] = new StaticKey<Object>(partStrs[i], Types.OBJECT);
+    return new CompositeKey<Object>(parts);
+  }
+
+  /**
+   * @see com.diamondq.cachly.Cache#streamKeys()
+   */
+  @Override
+  public Stream<Key<?>> streamKeys() {
+    return //
+    /* Get the distinct list of CacheStorages */
+    mCacheStorageByPath.values().stream().distinct() //
+      /* Expand each into a stream of string keys */
+      .flatMap((cs) -> cs.streamKeys())
+      /* Convert the strings to Keys */
+      .map((strKey) -> from(strKey));
   }
 }

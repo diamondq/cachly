@@ -1,6 +1,7 @@
 package com.diamondq.cachly;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -239,5 +240,23 @@ public interface Cache {
     KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
     KeyPlaceholder<K3, ?> pHolder3, K3 pValue3, KeyPlaceholder<K4, ?> pHolder4, K4 pValue4);
 
+  /**
+   * Invalidate all keys
+   */
+  public void invalidateAll();
+
+  /**
+   * Returns all the existing CacheLoaderInfo associated to their path
+   *
+   * @return the Map of path to CacheLoaderInfo
+   */
   public Map<String, CacheLoaderInfo<?>> getCacheLoadersByPath();
+
+  /**
+   * Returns a stream of Keys for everything stored in the cache
+   *
+   * @return the stream
+   */
+  public Stream<Key<?>> streamKeys();
+
 }

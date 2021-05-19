@@ -15,10 +15,12 @@ import com.diamondq.common.types.Types;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -92,6 +94,11 @@ public class TestGet {
   @Inject
   Cache cache;
 
+  @BeforeEach
+  public void before() {
+    cache.invalidateAll();
+  }
+
   @Test
   void test() {
     String r = cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
@@ -105,4 +112,17 @@ public class TestGet {
     assertNotEquals(r, r3);
   }
 
+  @Test
+  void keysTest() {
+    String emptyKeys = cache.streamKeys().map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    assertEquals("", emptyKeys);
+
+    /* Grab some entries which will populate the cache */
+
+    cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
+
+    String popKeys = cache.streamKeys().map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    assertEquals("__CacheEngine__,process-definitions,process-definitions/123", popKeys);
+
+  }
 }

@@ -5,6 +5,7 @@ import com.diamondq.cachly.spi.KeySPI;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 
 public class MemoryCacheStorage implements CacheStorage {
 
@@ -28,8 +29,7 @@ public class MemoryCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.spi.KeySPI,
-   *      com.diamondq.cachly.CacheResult)
+   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.spi.KeySPI, com.diamondq.cachly.CacheResult)
    */
   @Override
   public <V> void store(KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
@@ -47,4 +47,19 @@ public class MemoryCacheStorage implements CacheStorage {
     mData.remove(pKey.toString());
   }
 
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll()
+   */
+  @Override
+  public void invalidateAll() {
+    mData.clear();
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#streamKeys()
+   */
+  @Override
+  public Stream<String> streamKeys() {
+    return mData.keySet().stream();
+  }
 }

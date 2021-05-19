@@ -5,6 +5,7 @@ import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
@@ -47,6 +48,28 @@ public class MicronautCacheStorage implements CacheStorage {
   @Override
   public <V> void invalidate(KeySPI<V> pKey) {
     mCache.invalidate(pKey.toString());
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll()
+   */
+  @Override
+  public void invalidateAll() {
+    mCache.invalidateAll();
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#streamKeys()
+   */
+  @Override
+  public Stream<String> streamKeys() {
+    Object nativeCache = mCache.getNativeCache();
+    String nativeName = nativeCache.getClass().getName();
+    if ((nativeName.equals("org.ehcache.core.Ehcache"))
+      || (nativeName.equals("org.ehcache.core.PersistentUserManagedEhcache")))
+      return EhcacheKeyExtractor.getKeys(nativeCache);
+    else
+      throw new IllegalStateException("The cache " + nativeName + " is not able to be key iterated");
   }
 
 }
