@@ -52,9 +52,20 @@ public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
     return mPlaceholder.getOutputTypeReference();
   }
 
+  /**
+   * @see com.diamondq.cachly.spi.KeySPI#getBaseKey()
+   */
   @Override
   public String getBaseKey() {
     return mPlaceholder.getKey();
+  }
+
+  /**
+   * @see com.diamondq.cachly.spi.KeySPI#getFullBaseKey()
+   */
+  @Override
+  public String getFullBaseKey() {
+    return mKey;
   }
 
   /**
@@ -121,6 +132,9 @@ public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
     mPlaceholder.storeKeyDetails(pDetails);
   }
 
+  /**
+   * @see java.lang.Object#toString()
+   */
   @Override
   public String toString() {
     return mKey;

@@ -117,6 +117,17 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
     throw new IllegalStateException();
   }
 
+  @Override
+  public String getFullBaseKey() {
+    StringBuilder sb = new StringBuilder();
+    for (KeySPI<?> part : mParts) {
+      sb.append(part.getBaseKey());
+      sb.append("/");
+    }
+    sb.setLength(sb.length() - 1);
+    return sb.toString();
+  }
+
   /**
    * @see com.diamondq.cachly.spi.KeySPI#getLastStorage()
    */
@@ -152,13 +163,17 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
    */
   @Override
   public <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
-    if (mPartsLen == 1)
-      return null;
-    @SuppressWarnings({"null", "unchecked"})
-    @NonNull
-    KeySPI<Object>[] parentParts = new KeySPI[mPartsLen - 1];
-    System.arraycopy(mParts, 0, parentParts, 0, mPartsLen - 1);
-    return new CompositeKey<>(parentParts);
+    KeySPI<Object> testKey = getPreviousKey();
+    String testKeyStr = pTemplate.toString();
+    while (testKey != null) {
+      if (testKey.getFullBaseKey().equals(testKeyStr)) {
+        @SuppressWarnings("unchecked")
+        Key<P> result = (Key<P>) testKey;
+        return result;
+      }
+      testKey = testKey.getPreviousKey();
+    }
+    return null;
   }
 
   /**
@@ -185,14 +200,17 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
    */
   @Override
   public boolean supportsNull() {
-    throw new IllegalStateException();
+    return mLast.supportsNull();
   }
 
+  /**
+   * @see java.lang.Object#toString()
+   */
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     for (KeySPI<?> part : mParts) {
-      sb.append(part.toString());
+      sb.append(part.getKey());
       sb.append("/");
     }
     sb.setLength(sb.length() - 1);

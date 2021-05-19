@@ -134,6 +134,14 @@ public class AbstractKey<O> implements Key<O>, KeySPI<O> {
   }
 
   /**
+   * @see com.diamondq.cachly.spi.KeySPI#getFullBaseKey()
+   */
+  @Override
+  public String getFullBaseKey() {
+    return mKey;
+  }
+
+  /**
    * @see java.lang.Object#toString()
    */
   @Override

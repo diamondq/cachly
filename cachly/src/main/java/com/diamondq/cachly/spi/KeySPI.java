@@ -33,4 +33,11 @@ public interface KeySPI<O> extends Key<O> {
   public String getKey();
 
   public String getBaseKey();
+
+  /**
+   * Returns the base keys of all the parts
+   *
+   * @return the full base key
+   */
+  public String getFullBaseKey();
 }
