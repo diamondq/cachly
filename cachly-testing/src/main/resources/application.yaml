@@ -3,8 +3,16 @@ cachly:
     process-definitions:
       storage: my-cache
       serializer: kryo
+    load-timestamp:
+      storage: my-cache
+  ehcache:
+    my-cache:
+      disk:
+        persist: true
 ehcache:
   storage-path: "data"
   caches:
     my-cache:
       enabled: true
+      disk:
+        max-size: 10Mb

@@ -4,6 +4,8 @@ import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
 
+import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -17,11 +19,18 @@ import io.micronaut.core.type.DefaultArgument;
 @EachBean(SyncCache.class)
 public class MicronautCacheStorage implements CacheStorage {
 
-  private final SyncCache<?> mCache;
+  private final SyncCache<?>        mCache;
+
+  private final List<KeyExtractor>  mKeyExtractors;
+
+  private final List<ExpiryHandler> mExpiryHandlers;
 
   @Inject
-  public MicronautCacheStorage(SyncCache<?> pCache) {
+  public MicronautCacheStorage(SyncCache<?> pCache, List<KeyExtractor> pKeyExtractors,
+    List<ExpiryHandler> pExpiryHandlers) {
     mCache = pCache;
+    mKeyExtractors = pKeyExtractors;
+    mExpiryHandlers = pExpiryHandlers;
   }
 
   @Override
@@ -39,7 +48,12 @@ public class MicronautCacheStorage implements CacheStorage {
    */
   @Override
   public <V> void store(KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
-    mCache.put(pKey.toString(), pLoadedResult.getValue());
+    Duration overrideExpiry = pLoadedResult.getOverrideExpiry();
+    String key = pKey.toString();
+    if (overrideExpiry != null)
+      for (ExpiryHandler eh : mExpiryHandlers)
+        eh.markForExpiry(key, overrideExpiry);
+    mCache.put(key, pLoadedResult.getValue());
   }
 
   /**
@@ -47,7 +61,10 @@ public class MicronautCacheStorage implements CacheStorage {
    */
   @Override
   public <V> void invalidate(KeySPI<V> pKey) {
-    mCache.invalidate(pKey.toString());
+    String key = pKey.toString();
+    for (ExpiryHandler eh : mExpiryHandlers)
+      eh.invalidate(key);
+    mCache.invalidate(key);
   }
 
   /**
@@ -55,6 +72,8 @@ public class MicronautCacheStorage implements CacheStorage {
    */
   @Override
   public void invalidateAll() {
+    for (ExpiryHandler eh : mExpiryHandlers)
+      eh.invalidateAll();
     mCache.invalidateAll();
   }
 
@@ -64,12 +83,13 @@ public class MicronautCacheStorage implements CacheStorage {
   @Override
   public Stream<String> streamKeys() {
     Object nativeCache = mCache.getNativeCache();
-    String nativeName = nativeCache.getClass().getName();
-    if ((nativeName.equals("org.ehcache.core.Ehcache"))
-      || (nativeName.equals("org.ehcache.core.PersistentUserManagedEhcache")))
-      return EhcacheKeyExtractor.getKeys(nativeCache);
-    else
-      throw new IllegalStateException("The cache " + nativeName + " is not able to be key iterated");
+    for (KeyExtractor ke : mKeyExtractors) {
+      Stream<String> keys = ke.getKeys(nativeCache);
+      if (keys != null)
+        return keys;
+    }
+    throw new IllegalStateException(
+      "The cache " + nativeCache.getClass().getName() + " is not able to be key iterated");
   }
 
 }

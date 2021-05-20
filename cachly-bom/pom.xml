@@ -22,6 +22,11 @@
         <artifactId>cachly-micronaut</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.diamondq.cachly</groupId>
+        <artifactId>cachly-micronaut-ehcache</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 </project>

@@ -30,14 +30,10 @@ public class TestGet {
 
   public static class Keys {
 
-    public static class Strings {
+    private static class Strings {
       public static final String PARTIAL_PROCESS_DEFINITIONS = "process-definitions";
 
       public static final String PARTIAL_ID                  = "id";
-
-      public static final String FULL_PROCESS_DEFINITIONS    = PARTIAL_PROCESS_DEFINITIONS;
-
-      public static final String FULL_PD_BY_ID               = FULL_PROCESS_DEFINITIONS + "/" + PARTIAL_ID;
     }
 
     public static final Key<Map<String, String>>       PROCESS_DEFINITIONS =
@@ -125,4 +121,5 @@ public class TestGet {
     assertEquals("__CacheEngine__,process-definitions,process-definitions/123", popKeys);
 
   }
+
 }

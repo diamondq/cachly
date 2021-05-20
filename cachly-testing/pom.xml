@@ -12,7 +12,7 @@
   <dependencies>
     <dependency>
       <groupId>com.diamondq.cachly</groupId>
-      <artifactId>cachly-micronaut</artifactId>
+      <artifactId>cachly-micronaut-ehcache</artifactId>
     </dependency>
     <dependency>
       <groupId>io.micronaut.test</groupId>
