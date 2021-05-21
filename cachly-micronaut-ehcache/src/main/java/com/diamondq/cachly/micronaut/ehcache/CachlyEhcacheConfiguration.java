@@ -8,7 +8,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.naming.Named;
 
 @EachProperty("cachly.ehcache")
-public class CachlyEhCacheConfiguration implements Named {
+public class CachlyEhcacheConfiguration implements Named {
   private final String                                 mName;
 
   private @Nullable CachlyDiskTieredCacheConfiguration mDisk;
@@ -16,7 +16,7 @@ public class CachlyEhCacheConfiguration implements Named {
   /**
    * @param name the cache name
    */
-  public CachlyEhCacheConfiguration(@Parameter String name) {
+  public CachlyEhcacheConfiguration(@Parameter String name) {
     mName = name;
   }
 
