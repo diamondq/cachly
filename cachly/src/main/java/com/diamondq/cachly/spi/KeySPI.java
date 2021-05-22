@@ -19,6 +19,8 @@ public interface KeySPI<O> extends Key<O> {
 
   public CacheStorage getLastStorage();
 
+  public String getLastSerializerName();
+
   public boolean supportsNull();
 
   public CacheLoader<O> getLoader();

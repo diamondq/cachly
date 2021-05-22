@@ -5,8 +5,6 @@ import com.diamondq.cachly.impl.StaticKey;
 import com.diamondq.cachly.impl.StaticKeyPlaceholder;
 import com.diamondq.common.TypeReference;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-
 public class KeyBuilder {
 
   public static <O> Key<O> of(String pTextKey, TypeReference<O> pOutputType) {
@@ -25,8 +23,8 @@ public class KeyBuilder {
     return new CompositeKey<O>(pKey1, pKey2, pKey3);
   }
 
-  public static <@NonNull K, O> KeyPlaceholder<K, O> placeholder(String pPlaceholderKey, TypeReference<O> pOutputType) {
-    return new StaticKeyPlaceholder<K, O>(pPlaceholderKey, pOutputType);
+  public static <O> KeyPlaceholder<O> placeholder(String pPlaceholderKey, TypeReference<O> pOutputType) {
+    return new StaticKeyPlaceholder<O>(pPlaceholderKey, pOutputType);
   }
 
 }

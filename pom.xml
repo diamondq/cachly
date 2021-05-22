@@ -18,6 +18,7 @@
     <module>cachly-micronaut-ehcache</module>
     <module>cachly-masterparent</module>
     <module>cachly-parent</module>
+    <module>cachly-serializer-kryo</module>
     <module>cachly-testing</module>
   </modules>
 </project>

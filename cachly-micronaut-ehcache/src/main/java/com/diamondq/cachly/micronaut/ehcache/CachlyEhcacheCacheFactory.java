@@ -1,6 +1,7 @@
 package com.diamondq.cachly.micronaut.ehcache;
 
-import com.diamondq.cachly.micronaut.ehcache.CachlyEhCacheConfiguration.CachlyDiskTieredCacheConfiguration;
+import com.diamondq.cachly.micronaut.ValueName;
+import com.diamondq.cachly.micronaut.ehcache.CachlyEhcacheConfiguration.CachlyDiskTieredCacheConfiguration;
 import com.diamondq.common.Holder;
 
 import java.util.EnumSet;
@@ -90,17 +91,21 @@ public class CachlyEhcacheCacheFactory {
   @EachBean(EhcacheConfiguration.class)
   EhcacheSyncCache syncCache(@Parameter EhcacheConfiguration configuration, CacheManager cacheManager,
     ConversionService<?> conversionService, @Named(TaskExecutors.IO) ExecutorService executorService,
-    StatisticsService statisticsService, ApplicationContext pApplicationContext) {
-    Optional<CachlyEhCacheConfiguration> cachlyConfigOpt =
-      pApplicationContext.findBean(CachlyEhCacheConfiguration.class, Qualifiers.byName(configuration.getName()));
+    StatisticsService statisticsService, CachlyEhcacheSerializer pSerializer, ApplicationContext pApplicationContext) {
+    Optional<CachlyEhcacheConfiguration> cachlyConfigOpt =
+      pApplicationContext.findBean(CachlyEhcacheConfiguration.class, Qualifiers.byName(configuration.getName()));
     @SuppressWarnings({"unchecked", "rawtypes"})
     Optional<ExpiryPolicy<Object, Object>> expiryPolicyOpt =
       (Optional) pApplicationContext.findBean(ExpiryPolicy.class);
     @SuppressWarnings("unchecked")
-    CacheConfigurationBuilder<Object, Object> builder =
-      (CacheConfigurationBuilder<Object, Object>) configuration.getBuilder();
+    CacheConfigurationBuilder<ValueName<?>, ValueName<?>> builder =
+      (CacheConfigurationBuilder<ValueName<?>, ValueName<?>>) configuration.getBuilder();
     if (cachlyConfigOpt.isPresent()) {
-      CachlyEhCacheConfiguration cachlyConfig = cachlyConfigOpt.get();
+      CachlyEhcacheConfiguration cachlyConfig = cachlyConfigOpt.get();
+      Boolean enableSerializer = cachlyConfig.getSerializer();
+      if ((enableSerializer != null) && (enableSerializer == true)) {
+        builder = builder.withValueSerializer(pSerializer);
+      }
       /* Get the list of resource pools */
       Holder<@Nullable ResourcePools> resourcePoolsHolder = new Holder<>(null);
       builder.updateResourcePools((rps) -> {

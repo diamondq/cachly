@@ -17,7 +17,7 @@
       <dependency>
         <groupId>com.diamondq.common</groupId>
         <artifactId>common-bom</artifactId>
-        <version>0.3.255-d801ade</version>
+        <version>0.3.257-75245fe</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -27,6 +27,11 @@
         <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.esotericsoftware</groupId>
+        <artifactId>kryo</artifactId>
+        <version>5.1.1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

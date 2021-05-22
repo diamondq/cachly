@@ -11,6 +11,8 @@ import io.micronaut.core.naming.Named;
 public class CachlyEhcacheConfiguration implements Named {
   private final String                                 mName;
 
+  private @Nullable Boolean                            mSerializer;
+
   private @Nullable CachlyDiskTieredCacheConfiguration mDisk;
 
   /**
@@ -23,6 +25,14 @@ public class CachlyEhcacheConfiguration implements Named {
   @Override
   public String getName() {
     return mName;
+  }
+
+  public @Nullable Boolean getSerializer() {
+    return mSerializer;
+  }
+
+  public void setSerializer(@Nullable Boolean pSerializer) {
+    mSerializer = pSerializer;
   }
 
   /**

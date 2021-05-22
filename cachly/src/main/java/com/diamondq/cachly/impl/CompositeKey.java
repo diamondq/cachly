@@ -137,6 +137,14 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
   }
 
   /**
+   * @see com.diamondq.cachly.spi.KeySPI#getLastSerializerName()
+   */
+  @Override
+  public String getLastSerializerName() {
+    return mLast.getLastSerializerName();
+  }
+
+  /**
    * @see com.diamondq.cachly.spi.KeySPI#getLoader()
    */
   @Override

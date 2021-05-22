@@ -14,16 +14,19 @@ import javax.inject.Inject;
 import io.micronaut.cache.SyncCache;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.DefaultArgument;
 
 @EachBean(SyncCache.class)
 public class MicronautCacheStorage implements CacheStorage {
 
-  private final SyncCache<?>        mCache;
+  private final SyncCache<?>           mCache;
 
-  private final List<KeyExtractor>  mKeyExtractors;
+  private final List<KeyExtractor>     mKeyExtractors;
 
-  private final List<ExpiryHandler> mExpiryHandlers;
+  private final List<ExpiryHandler>    mExpiryHandlers;
+
+  private final Argument<ValueName<?>> mValueNameArg;
 
   @Inject
   public MicronautCacheStorage(SyncCache<?> pCache, List<KeyExtractor> pKeyExtractors,
@@ -31,15 +34,17 @@ public class MicronautCacheStorage implements CacheStorage {
     mCache = pCache;
     mKeyExtractors = pKeyExtractors;
     mExpiryHandlers = pExpiryHandlers;
+    mValueNameArg = new DefaultArgument<>(ValueName.class, null, AnnotationMetadata.EMPTY_METADATA);
   }
 
   @Override
   public <V> CacheResult<V> queryForKey(KeySPI<V> pKey) {
-    Optional<V> opt = mCache.get(pKey.toString(),
-      new DefaultArgument<V>(pKey.getOutputType(), null, AnnotationMetadata.EMPTY_METADATA));
+    Optional<ValueName<?>> opt = mCache.get(pKey.toString(), mValueNameArg);
     if (opt.isPresent() == false)
       return CacheResult.notFound();
-    V result = opt.get();
+    ValueName<?> valueName = opt.get();
+    @SuppressWarnings("unchecked")
+    V result = (V) valueName.value;
     return new CacheResult<V>(result, true);
   }
 
@@ -53,7 +58,7 @@ public class MicronautCacheStorage implements CacheStorage {
     if (overrideExpiry != null)
       for (ExpiryHandler eh : mExpiryHandlers)
         eh.markForExpiry(key, overrideExpiry);
-    mCache.put(key, pLoadedResult.getValue());
+    mCache.put(key, new ValueName<>(pLoadedResult.getValue(), pKey.getLastSerializerName()));
   }
 
   /**

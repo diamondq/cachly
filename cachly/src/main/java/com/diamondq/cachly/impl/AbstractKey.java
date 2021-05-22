@@ -113,6 +113,14 @@ public class AbstractKey<O> implements Key<O>, KeySPI<O> {
   }
 
   /**
+   * @see com.diamondq.cachly.spi.KeySPI#getLastSerializerName()
+   */
+  @Override
+  public String getLastSerializerName() {
+    return Objects.requireNonNull(mKeyDetails).getLastSerializerName();
+  }
+
+  /**
    * @see com.diamondq.cachly.spi.KeySPI#supportsNull()
    */
   @Override

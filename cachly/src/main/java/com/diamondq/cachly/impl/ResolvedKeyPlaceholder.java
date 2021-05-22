@@ -77,6 +77,14 @@ public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
   }
 
   /**
+   * @see com.diamondq.cachly.spi.KeySPI#getLastSerializerName()
+   */
+  @Override
+  public String getLastSerializerName() {
+    return mPlaceholder.getLastSerializerName();
+  }
+
+  /**
    * @see com.diamondq.cachly.spi.KeySPI#getLoader()
    */
   @Override

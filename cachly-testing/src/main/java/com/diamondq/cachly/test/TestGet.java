@@ -36,13 +36,13 @@ public class TestGet {
       public static final String PARTIAL_ID                  = "id";
     }
 
-    public static final Key<Map<String, String>>       PROCESS_DEFINITIONS =
-      KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS, Types.MAP_STRING_TO_STRING);
+    public static final Key<Map<String, String>> PROCESS_DEFINITIONS =
+      KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS, Types.MAP_OF_STRING_TO_STRING);
 
-    public static final KeyPlaceholder<String, String> PD_BY_ID_PLACE      =
+    public static final KeyPlaceholder<String>   PD_BY_ID_PLACE      =
       KeyBuilder.placeholder(Strings.PARTIAL_ID, Types.STRING);
 
-    public static final Key<String>                    PD_BY_ID            =
+    public static final Key<String>              PD_BY_ID            =
       KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
 
   }

@@ -3,9 +3,9 @@ package com.diamondq.cachly;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-
 public interface Cache {
+
+  public static final String DEFAULT_SERIALIZER = "__DEFAULT__";
 
   /**
    * Retrieves a value from the cache
@@ -26,7 +26,7 @@ public interface Cache {
    * @param pValue1 the value for the first placeholder
    * @return the result
    */
-  public <@NonNull K1, V> V get(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1);
+  public <K1, V> V get(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
 
   /**
    * Retrieves a value from the cache
@@ -41,8 +41,8 @@ public interface Cache {
    * @param pValue2 the value for the first placeholder
    * @return the result
    */
-  public <@NonNull K1, @NonNull K2, V> V get(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1,
-    KeyPlaceholder<K2, ?> pHolder2, K2 pValue2);
+  public <K1, K2, V> V get(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2);
 
   /**
    * Retrieves a value from the cache
@@ -60,8 +60,8 @@ public interface Cache {
    * @param pValue3 the value for the third placeholder
    * @return the result
    */
-  public <@NonNull K1, @NonNull K2, @NonNull K3, V> V get(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1,
-    KeyPlaceholder<K2, ?> pHolder2, K2 pValue2, KeyPlaceholder<K3, ?> pHolder3, K3 pValue3);
+  public <K1, K2, K3, V> V get(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
 
   /**
    * Retrieves a value from the cache
@@ -82,9 +82,9 @@ public interface Cache {
    * @param pValue4 the value for the fourth placeholder
    * @return the result
    */
-  public <@NonNull K1, @NonNull K2, @NonNull K3, @NonNull K4, V> V get(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1,
-    K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2, KeyPlaceholder<K3, ?> pHolder3, K3 pValue3,
-    KeyPlaceholder<K4, ?> pHolder4, K4 pValue4);
+  public <K1, K2, K3, K4, V> V get(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4);
 
   /**
    * Retrieves a value from the cache
@@ -105,7 +105,7 @@ public interface Cache {
    * @param pValue1 the value for the first placeholder
    * @return the result
    */
-  public <@NonNull K1, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1);
+  public <K1, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
 
   /**
    * Retrieves a value from the cache
@@ -120,8 +120,8 @@ public interface Cache {
    * @param pValue2 the value for the first placeholder
    * @return the result
    */
-  public <@NonNull K1, @NonNull K2, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1,
-    K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2);
+  public <K1, K2, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2);
 
   /**
    * Retrieves a value from the cache
@@ -139,9 +139,8 @@ public interface Cache {
    * @param pValue3 the value for the third placeholder
    * @return the result
    */
-  public <@NonNull K1, @NonNull K2, @NonNull K3, V> CacheResult<V> getIfPresent(Key<V> pKey,
-    KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
-    KeyPlaceholder<K3, ?> pHolder3, K3 pValue3);
+  public <K1, K2, K3, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
 
   /**
    * Retrieves a value from the cache
@@ -162,9 +161,9 @@ public interface Cache {
    * @param pValue4 the value for the fourth placeholder
    * @return the result
    */
-  public <@NonNull K1, @NonNull K2, @NonNull K3, @NonNull K4, V> CacheResult<V> getIfPresent(Key<V> pKey,
-    KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
-    KeyPlaceholder<K3, ?> pHolder3, K3 pValue3, KeyPlaceholder<K4, ?> pHolder4, K4 pValue4);
+  public <K1, K2, K3, K4, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4);
 
   /**
    * Invalidates an entry in the cache
@@ -183,7 +182,7 @@ public interface Cache {
    * @param pHolder1 the first placeholder
    * @param pValue1 the value for the first placeholder
    */
-  public <@NonNull K1, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1);
+  public <K1, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
 
   /**
    * Invalidates an entry in the cache
@@ -197,8 +196,8 @@ public interface Cache {
    * @param pHolder2 the second placeholder
    * @param pValue2 the value for the first placeholder
    */
-  public <@NonNull K1, @NonNull K2, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1,
-    KeyPlaceholder<K2, ?> pHolder2, K2 pValue2);
+  public <K1, K2, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2);
 
   /**
    * Invalidates an entry in the cache
@@ -215,8 +214,8 @@ public interface Cache {
    * @param pHolder3 the third placeholder
    * @param pValue3 the value for the third placeholder
    */
-  public <@NonNull K1, @NonNull K2, @NonNull K3, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1,
-    K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2, KeyPlaceholder<K3, ?> pHolder3, K3 pValue3);
+  public <K1, K2, K3, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
 
   /**
    * Invalidates an entry in the cache
@@ -236,9 +235,9 @@ public interface Cache {
    * @param pHolder4 the fourth placeholder
    * @param pValue4 the value for the fourth placeholder
    */
-  public <@NonNull K1, @NonNull K2, @NonNull K3, @NonNull K4, V> void invalidate(Key<V> pKey,
-    KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
-    KeyPlaceholder<K3, ?> pHolder3, K3 pValue3, KeyPlaceholder<K4, ?> pHolder4, K4 pValue4);
+  public <K1, K2, K3, K4, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4);
 
   /**
    * Invalidate all keys

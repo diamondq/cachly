@@ -37,6 +37,8 @@ public class CacheEngine implements Cache {
 
   private final Map<String, CacheLoaderInfo<Object>> mLoadersByPath;
 
+  private final Map<String, String>                  mSerializerNameByPath;
+
   private final ThreadLocal<Stack<Set<String>>>      mMonitored = ThreadLocal.withInitial(() -> new Stack<>());
 
   private final KeySPI<CacheInfo>                    mStorageKey;
@@ -70,18 +72,26 @@ public class CacheEngine implements Cache {
     /* Build the storages by path */
 
     Map<String, CacheStorage> storagesByPath = new HashMap<>();
+    Map<String, String> serializerNameByPath = new HashMap<>();
     for (CachlyPathConfiguration pathConfig : pPaths) {
       String storage = pathConfig.getStorage();
+      String serializerName = pathConfig.getSerializer();
       String path = pathConfig.getName();
       CacheStorage cacheStorage = storagesByName.get(storage);
       if (cacheStorage == null)
         throw new IllegalArgumentException(
           "Configuration has a storage called " + storage + " at path " + path + " which cannot be located");
       storagesByPath.put(path, cacheStorage);
+      if (serializerName == null)
+        serializerName = DEFAULT_SERIALIZER;
+      serializerNameByPath.put(path, serializerName);
     }
 
     if (storagesByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME) == false) {
       storagesByPath.put(CacheInfoLoader.CACHE_INFO_NAME, new MemoryCacheStorage());
+    }
+    if (serializerNameByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME) == false) {
+      serializerNameByPath.put(CacheInfoLoader.CACHE_INFO_NAME, DEFAULT_SERIALIZER);
     }
 
     /* Build the map of loaders by path */
@@ -96,6 +106,7 @@ public class CacheEngine implements Cache {
 
     mCacheStorageByPath = storagesByPath;
     mLoadersByPath = loadersByPath;
+    mSerializerNameByPath = serializerNameByPath;
 
     /* Setup the storage key and cache info */
 
@@ -224,18 +235,27 @@ public class CacheEngine implements Cache {
     KeySPI<Object>[] parts = pKey.getParts();
     StringBuilder sb = new StringBuilder();
     CacheStorage lastStorage = null;
+    String lastSerializerName = null;
     for (KeySPI<Object> part : parts) {
       sb.append(part.getBaseKey());
 
+      String currentPath = sb.toString();
+
       /* Lookup the storage */
 
-      String currentPath = sb.toString();
       CacheStorage testCacheStorage = mCacheStorageByPath.get(currentPath);
       if (testCacheStorage != null)
         lastStorage = testCacheStorage;
-
       if (lastStorage == null)
         throw new IllegalStateException("Unable to find a cache storage that will cover " + currentPath);
+
+      /* Lookup the serializer */
+
+      String testSerializerName = mSerializerNameByPath.get(currentPath);
+      if (testSerializerName != null)
+        lastSerializerName = testSerializerName;
+      if (lastSerializerName == null)
+        throw new IllegalStateException("Unable to find a serializer that will cover " + currentPath);
 
       /* Now lookup the loader */
 
@@ -243,7 +263,8 @@ public class CacheEngine implements Cache {
       if (loaderInfo == null)
         throw new IllegalStateException("Unable to find a cache loader that will cover " + currentPath);
 
-      KeyDetails<Object> keyDetails = new KeyDetails<>(lastStorage, loaderInfo.supportsNull, loaderInfo.loader);
+      KeyDetails<Object> keyDetails =
+        new KeyDetails<>(lastStorage, lastSerializerName, loaderInfo.supportsNull, loaderInfo.loader);
       part.storeKeyDetails(keyDetails);
 
       sb.append("/");
@@ -260,7 +281,7 @@ public class CacheEngine implements Cache {
    * @param pValue the value
    * @return the new composite key with the placeholder removed
    */
-  private <@NonNull K, V> KeySPI<V> resolve(KeySPI<V> pKey, KeyPlaceholder<K, ?> pHolder, K pValue) {
+  private <K, V> KeySPI<V> resolve(KeySPI<V> pKey, KeyPlaceholder<K> pHolder, String pValue) {
     if (pHolder instanceof KeySPI == false)
       throw new IllegalStateException();
     @SuppressWarnings("unchecked")
@@ -329,10 +350,10 @@ public class CacheEngine implements Cache {
   }
 
   /**
-   * @see com.diamondq.cachly.Cache#get(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   * @see com.diamondq.cachly.Cache#get(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <@NonNull K1, V> V get(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1) {
+  public <K1, V> V get(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -340,12 +361,12 @@ public class CacheEngine implements Cache {
   }
 
   /**
-   * @see com.diamondq.cachly.Cache#get(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder, java.lang.Object,
-   *      com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   * @see com.diamondq.cachly.Cache#get(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder, java.lang.String,
+   *      com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, V> V get(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1,
-    KeyPlaceholder<K2, ?> pHolder2, K2 pValue2) {
+  public <K1, K2, V> V get(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -353,12 +374,12 @@ public class CacheEngine implements Cache {
   }
 
   /**
-   * @see com.diamondq.cachly.Cache#get(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder, java.lang.Object,
-   *      com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   * @see com.diamondq.cachly.Cache#get(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder, java.lang.String,
+   *      com.diamondq.cachly.KeyPlaceholder, java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, @NonNull K3, V> V get(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1,
-    KeyPlaceholder<K2, ?> pHolder2, K2 pValue2, KeyPlaceholder<K3, ?> pHolder3, K3 pValue3) {
+  public <K1, K2, K3, V> V get(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -366,14 +387,14 @@ public class CacheEngine implements Cache {
   }
 
   /**
-   * @see com.diamondq.cachly.Cache#get(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder, java.lang.Object,
-   *      com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object,
-   *      com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   * @see com.diamondq.cachly.Cache#get(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder, java.lang.String,
+   *      com.diamondq.cachly.KeyPlaceholder, java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String,
+   *      com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, @NonNull K3, @NonNull K4, V> V get(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1,
-    K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2, KeyPlaceholder<K3, ?> pHolder3, K3 pValue3,
-    KeyPlaceholder<K4, ?> pHolder4, K4 pValue4) {
+  public <K1, K2, K3, K4, V> V get(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -383,10 +404,10 @@ public class CacheEngine implements Cache {
 
   /**
    * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object)
+   *      java.lang.String)
    */
   @Override
-  public <@NonNull K1, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1) {
+  public <K1, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -395,11 +416,11 @@ public class CacheEngine implements Cache {
 
   /**
    * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1,
-    K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2) {
+  public <K1, K2, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -408,13 +429,12 @@ public class CacheEngine implements Cache {
 
   /**
    * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object)
+   *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, @NonNull K3, V> CacheResult<V> getIfPresent(Key<V> pKey,
-    KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
-    KeyPlaceholder<K3, ?> pHolder3, K3 pValue3) {
+  public <K1, K2, K3, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -423,13 +443,13 @@ public class CacheEngine implements Cache {
 
   /**
    * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, @NonNull K3, @NonNull K4, V> CacheResult<V> getIfPresent(Key<V> pKey,
-    KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
-    KeyPlaceholder<K3, ?> pHolder3, K3 pValue3, KeyPlaceholder<K4, ?> pHolder4, K4 pValue4) {
+  public <K1, K2, K3, K4, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -452,10 +472,10 @@ public class CacheEngine implements Cache {
 
   /**
    * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object)
+   *      java.lang.String)
    */
   @Override
-  public <@NonNull K1, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1) {
+  public <K1, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -464,11 +484,11 @@ public class CacheEngine implements Cache {
 
   /**
    * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1, K1 pValue1,
-    KeyPlaceholder<K2, ?> pHolder2, K2 pValue2) {
+  public <K1, K2, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -477,12 +497,12 @@ public class CacheEngine implements Cache {
 
   /**
    * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object)
+   *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, @NonNull K3, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1, ?> pHolder1,
-    K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2, KeyPlaceholder<K3, ?> pHolder3, K3 pValue3) {
+  public <K1, K2, K3, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -491,13 +511,13 @@ public class CacheEngine implements Cache {
 
   /**
    * @see com.diamondq.cachly.Cache#invalidate(com.diamondq.cachly.Key, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object, com.diamondq.cachly.KeyPlaceholder,
-   *      java.lang.Object, com.diamondq.cachly.KeyPlaceholder, java.lang.Object)
+   *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String, com.diamondq.cachly.KeyPlaceholder,
+   *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <@NonNull K1, @NonNull K2, @NonNull K3, @NonNull K4, V> void invalidate(Key<V> pKey,
-    KeyPlaceholder<K1, ?> pHolder1, K1 pValue1, KeyPlaceholder<K2, ?> pHolder2, K2 pValue2,
-    KeyPlaceholder<K3, ?> pHolder3, K3 pValue3, KeyPlaceholder<K4, ?> pHolder4, K4 pValue4) {
+  public <K1, K2, K3, K4, V> void invalidate(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;

@@ -44,7 +44,7 @@ public class TestExpires {
 
     @Override
     public CacheResult<Long> load(Cache pCache, Key<Long> pKey) {
-      return new CacheResult<>(System.currentTimeMillis(), true, Duration.ofMillis(100));
+      return new CacheResult<>(System.currentTimeMillis(), true, Duration.ofMillis(500));
     }
 
   }
@@ -62,7 +62,7 @@ public class TestExpires {
     Long firstResult = cache.get(Keys.LOAD_TIMESTAMP);
     Long secondResult = cache.get(Keys.LOAD_TIMESTAMP);
     assertEquals(firstResult, secondResult);
-    Thread.sleep(200L);
+    Thread.sleep(2000L);
     Long thirdResult = cache.get(Keys.LOAD_TIMESTAMP);
     assertNotEquals(firstResult, thirdResult);
   }
