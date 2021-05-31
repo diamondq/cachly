@@ -28,6 +28,11 @@ public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
     mParts = tempParts;
   }
 
+  @Override
+  public boolean hasPlaceholders() {
+    return false;
+  }
+
   /**
    * @see com.diamondq.cachly.spi.KeySPI#getKey()
    */

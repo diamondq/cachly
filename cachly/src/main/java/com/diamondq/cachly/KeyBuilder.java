@@ -3,6 +3,7 @@ package com.diamondq.cachly;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.StaticKey;
 import com.diamondq.cachly.impl.StaticKeyPlaceholder;
+import com.diamondq.cachly.impl.StaticKeyPlaceholderWithDefault;
 import com.diamondq.common.TypeReference;
 
 public class KeyBuilder {
@@ -27,4 +28,8 @@ public class KeyBuilder {
     return new StaticKeyPlaceholder<O>(pPlaceholderKey, pOutputType);
   }
 
+  public static KeyPlaceholder<String> placeholder(String pPlaceholderKey, TypeReference<String> pOutputType,
+    Key<String> pDefaultKey) {
+    return new StaticKeyPlaceholderWithDefault(pPlaceholderKey, pOutputType, pDefaultKey);
+  }
 }

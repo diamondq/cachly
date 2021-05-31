@@ -24,7 +24,9 @@ public class AbstractKey<O> implements Key<O>, KeySPI<O> {
 
   private final Type                      mOutputType;
 
-  public AbstractKey(String pKey, TypeReference<O> pOutputType) {
+  private final boolean                   mHasPlaceholders;
+
+  public AbstractKey(String pKey, TypeReference<O> pOutputType, boolean pHasPlaceholders) {
     mKey = pKey;
     mOutputTypeRef = pOutputType;
     mOutputType = pOutputType.getType();
@@ -32,6 +34,15 @@ public class AbstractKey<O> implements Key<O>, KeySPI<O> {
     @NonNull
     KeySPI<Object>[] tempParts = new KeySPI[] {this};
     mParts = tempParts;
+    mHasPlaceholders = pHasPlaceholders;
+  }
+
+  /**
+   * @see com.diamondq.cachly.spi.KeySPI#hasPlaceholders()
+   */
+  @Override
+  public boolean hasPlaceholders() {
+    return mHasPlaceholders;
   }
 
   /**

@@ -2,6 +2,7 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
+import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.TypeReference;
@@ -18,6 +19,8 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
   private final KeySPI<O>                 mLast;
 
   private final int                       mPartsLen;
+
+  private final boolean                   mHasPlaceholders;
 
   public CompositeKey(Key<?> pKey1, Key<O> pKey2) {
     if (pKey1 instanceof KeySPI == false)
@@ -39,6 +42,12 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
     mParts = tempParts;
     mPartsLen = mParts.length;
     mLast = ki2;
+    boolean hasPlaceHolders = false;
+    for (int i = 0; i < mParts.length; i++) {
+      if (mParts[i] instanceof KeyPlaceholder)
+        hasPlaceHolders = true;
+    }
+    mHasPlaceholders = hasPlaceHolders;
   }
 
   public CompositeKey(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
@@ -67,6 +76,12 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
     mParts = tempParts;
     mPartsLen = mParts.length;
     mLast = ki3;
+    boolean hasPlaceHolders = false;
+    for (int i = 0; i < mParts.length; i++) {
+      if (mParts[i] instanceof KeyPlaceholder)
+        hasPlaceHolders = true;
+    }
+    mHasPlaceholders = hasPlaceHolders;
   }
 
   public CompositeKey(@NonNull KeySPI<Object>[] pNewParts) {
@@ -75,6 +90,20 @@ public class CompositeKey<O> implements Key<O>, KeySPI<O> {
     @SuppressWarnings("unchecked")
     KeySPI<O> temp = (KeySPI<O>) mParts[mPartsLen - 1];
     mLast = temp;
+    boolean hasPlaceHolders = false;
+    for (int i = 0; i < mParts.length; i++) {
+      if (mParts[i] instanceof KeyPlaceholder)
+        hasPlaceHolders = true;
+    }
+    mHasPlaceholders = hasPlaceHolders;
+  }
+
+  /**
+   * @see com.diamondq.cachly.spi.KeySPI#hasPlaceholders()
+   */
+  @Override
+  public boolean hasPlaceholders() {
+    return mHasPlaceholders;
   }
 
   /**

@@ -42,4 +42,11 @@ public interface KeySPI<O> extends Key<O> {
    * @return the full base key
    */
   public String getFullBaseKey();
+
+  /**
+   * Returns true if there are any unresolved placeholders in the composite key
+   *
+   * @return true if there are placeholders or false if there are not
+   */
+  public boolean hasPlaceholders();
 }

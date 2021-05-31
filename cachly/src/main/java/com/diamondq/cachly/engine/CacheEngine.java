@@ -12,6 +12,7 @@ import com.diamondq.cachly.impl.KeyDetails;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
 import com.diamondq.cachly.impl.StaticKey;
 import com.diamondq.cachly.spi.BeanNameLocator;
+import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.TypeReference;
 import com.diamondq.common.types.Types;
@@ -130,11 +131,54 @@ public class CacheEngine implements Cache {
    */
   private <O> CacheResult<O> lookup(KeySPI<O> pKey, boolean pLoadIfMissing) {
 
+    Stack<Set<String>> dependencyStack = mMonitored.get();
+
+    /*
+     * If there are still defaults, since they need to be resolved. This is done here since some of the defaults may
+     * require lookups, and we want them included in the dependencies
+     */
+
+    Set<String> placeholderDependencies;
+    if (pKey.hasPlaceholders() == true) {
+      @NonNull
+      KeySPI<Object>[] parts = pKey.getParts();
+      int partsLen = parts.length;
+      @SuppressWarnings({"null", "unchecked"})
+      @NonNull
+      KeySPI<Object>[] newParts = new KeySPI[partsLen];
+
+      dependencyStack.add(new HashSet<>());
+      try {
+        for (int i = 0; i < partsLen; i++) {
+          KeySPI<Object> part = parts[i];
+          if (part instanceof KeyPlaceholderSPI) {
+            @SuppressWarnings("unchecked")
+            KeyPlaceholderSPI<Object> sspi = (KeyPlaceholderSPI<Object>) part;
+            newParts[i] = sspi.resolveDefault(this);
+          }
+          else
+            newParts[i] = part;
+        }
+      }
+      finally {
+
+        /* Pull the dependency set off the stack */
+
+        placeholderDependencies = dependencyStack.pop();
+        if (placeholderDependencies.isEmpty() == true)
+          placeholderDependencies = null;
+      }
+
+      pKey = new CompositeKey<O>(newParts);
+      setupKey(pKey);
+    }
+    else
+      placeholderDependencies = null;
+
     String keyStr = pKey.toString();
 
     /* Are we monitoring? */
 
-    Stack<Set<String>> dependencyStack = mMonitored.get();
     if (dependencyStack.isEmpty() == false) {
       dependencyStack.peek().add(keyStr);
     }
@@ -168,6 +212,8 @@ public class CacheEngine implements Cache {
       /* Pull the dependency set off the stack */
 
       dependencies = dependencyStack.pop();
+      if (placeholderDependencies != null)
+        dependencies.addAll(placeholderDependencies);
     }
 
     /* Now store the result */

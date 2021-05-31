@@ -9,6 +9,12 @@ cachly:
     map:
       storage: my-cache
       serializer: kryo
+    this:
+      storage: my-cache
+      serializer: kryo
+    actual:
+      storage: my-cache
+      serializer: kryo
   ehcache:
     my-cache:
       serializer: true
