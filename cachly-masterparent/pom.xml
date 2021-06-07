@@ -4,7 +4,7 @@
   <parent>
     <groupId>com.diamondq</groupId>
     <artifactId>diamondq-parent</artifactId>
-    <version>6.3.6</version>
+    <version>6.3.7</version>
     <relativePath>../../common-maven/diamondq-parent</relativePath>
   </parent>
   <groupId>com.diamondq.cachly</groupId>
