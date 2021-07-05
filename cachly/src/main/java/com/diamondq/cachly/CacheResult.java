@@ -13,7 +13,21 @@ public interface CacheResult<V> {
 
   public CacheResult<V> setOverrideExpiry(@Nullable Duration pDuration);
 
-  public CacheResult<V> setValue(V pValue);
+  /**
+   * Sets the value. If the value is null, then it's actually equivalent to setNotFound()
+   *
+   * @param pValue the optional value
+   * @return the cache result
+   */
+  public CacheResult<V> setValue(@Nullable V pValue);
+
+  /**
+   * Sets the value. If the value is null, it's still marked as found
+   *
+   * @param pValue the nullable value
+   * @return the cache result
+   */
+  public CacheResult<V> setNullableVaue(@Nullable V pValue);
 
   public CacheResult<V> setNotFound();
 

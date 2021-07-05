@@ -57,7 +57,17 @@ public class StaticCacheResult<V> implements CacheResult<V> {
    * @see com.diamondq.cachly.CacheResult#setValue(java.lang.Object)
    */
   @Override
-  public CacheResult<V> setValue(V pValue) {
+  public CacheResult<V> setValue(@Nullable V pValue) {
+    mValue = pValue;
+    mFound = (pValue != null);
+    return this;
+  }
+
+  /**
+   * @see com.diamondq.cachly.CacheResult#setNullableVaue(java.lang.Object)
+   */
+  @Override
+  public CacheResult<V> setNullableVaue(@Nullable V pValue) {
     mValue = pValue;
     mFound = true;
     return this;
