@@ -15,6 +15,7 @@ public class CacheInfoLoader implements CacheLoader<CacheInfo> {
   public static final String                   CACHE_INFO_NAME = "__CacheEngine__";
 
   public static final TypeReference<CacheInfo> TYPEREF         = new TypeReference<CacheInfo>() {
+                                                                 // type reference
                                                                };
 
   /**

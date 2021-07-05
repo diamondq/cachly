@@ -33,7 +33,7 @@ public class GuavaKryoInitializer implements KryoInitializer {
       Class.forName("com.google.common.collect.ImmutableMap");
       hasGuava = true;
     }
-    catch (ClassNotFoundException ex) {
+    catch (@SuppressWarnings("unused") ClassNotFoundException ex) {
       hasGuava = false;
     }
     if (hasGuava) {

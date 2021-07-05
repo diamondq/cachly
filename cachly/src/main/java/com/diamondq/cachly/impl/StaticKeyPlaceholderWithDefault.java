@@ -6,8 +6,7 @@ import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.TypeReference;
 
-public class StaticKeyPlaceholderWithDefault extends AbstractKey<String>
-  implements KeyPlaceholderSPI<String>, KeySPI<String> {
+public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> implements KeyPlaceholderSPI<String> {
 
   private final Key<String> mDefaultKey;
 

@@ -47,11 +47,13 @@ public class TestSerializing {
 
     private static class LocalTypes {
       public static final TypeReference<@Nullable SerializeTest>    NULLABLE_SERIALIZE_TEST         =
-        new TypeReference<@Nullable SerializeTest>() {
+        new TypeReference<@Nullable SerializeTest>() {                                                                          // type
+                                                                                                                                // reference
                                                                                                       };
 
       public static final TypeReference<Map<String, SerializeTest>> MAP_OF_STRING_TO_SERIALIZE_TEST =
-        new TypeReference<Map<String, SerializeTest>>() {
+        new TypeReference<Map<String, SerializeTest>>() {                                                                       // type
+                                                                                                                                // reference
                                                                                                       };
     }
 
@@ -109,7 +111,7 @@ public class TestSerializing {
   }
 
   @Test
-  void testCache() throws InterruptedException {
+  void testCache() {
     SerializeTest test = cache.get(Keys.MAP_BY_ID, Keys.MAP_BY_ID_PLACEHOLDER, "abc");
     assertNotNull(test);
   }

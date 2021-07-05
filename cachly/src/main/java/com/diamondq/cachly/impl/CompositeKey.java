@@ -12,7 +12,7 @@ import java.lang.reflect.Type;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class CompositeKey<O> implements Key<O>, KeySPI<O> {
+public class CompositeKey<O> implements KeySPI<O> {
 
   private final @NonNull KeySPI<Object>[] mParts;
 

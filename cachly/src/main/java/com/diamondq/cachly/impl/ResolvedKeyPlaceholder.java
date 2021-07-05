@@ -11,7 +11,7 @@ import java.lang.reflect.Type;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class ResolvedKeyPlaceholder<O> implements Key<O>, KeySPI<O> {
+public class ResolvedKeyPlaceholder<O> implements KeySPI<O> {
 
   private final KeySPI<O>                 mPlaceholder;
 
