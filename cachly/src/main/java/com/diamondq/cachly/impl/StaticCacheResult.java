@@ -75,9 +75,10 @@ public class StaticCacheResult<V> implements CacheResult<V> {
    * @see com.diamondq.cachly.CacheResult#setNotFound()
    */
   @Override
-  public void setNotFound() {
+  public CacheResult<V> setNotFound() {
     mFound = false;
     mValue = null;
+    return this;
   }
 
   /**

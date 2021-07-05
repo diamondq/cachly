@@ -15,7 +15,7 @@ public interface CacheResult<V> {
 
   public CacheResult<V> setValue(V pValue);
 
-  public void setNotFound();
+  public CacheResult<V> setNotFound();
 
   public boolean entryFound();
 
