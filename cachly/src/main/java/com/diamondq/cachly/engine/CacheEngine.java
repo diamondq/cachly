@@ -10,6 +10,7 @@ import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.KeyDetails;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
+import com.diamondq.cachly.impl.StaticCacheResult;
 import com.diamondq.cachly.impl.StaticKey;
 import com.diamondq.cachly.spi.BeanNameLocator;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
@@ -204,10 +205,10 @@ public class CacheEngine implements Cache {
 
     dependencyStack.add(new HashSet<>());
 
-    CacheResult<O> loadedResult;
+    CacheResult<O> loadedResult = new StaticCacheResult<>();
     Set<String> dependencies;
     try {
-      loadedResult = cacheLoader.load(this, pKey);
+      cacheLoader.load(this, pKey, loadedResult);
     }
     finally {
 
@@ -234,7 +235,7 @@ public class CacheEngine implements Cache {
         }
         set.add(pKey);
       }
-      mStorageKey.getLastStorage().store(mStorageKey, new CacheResult<>(mCacheInfo, true));
+      mStorageKey.getLastStorage().store(mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
     }
 
     /* Return */
@@ -268,7 +269,7 @@ public class CacheEngine implements Cache {
 
       /* Save the updated CacheInfo */
 
-      mStorageKey.getLastStorage().store(mStorageKey, new CacheResult<>(mCacheInfo, true));
+      mStorageKey.getLastStorage().store(mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
 
       /* Invalidate all the subkeys */
 

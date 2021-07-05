@@ -27,11 +27,12 @@ public class CacheInfoLoader implements CacheLoader<CacheInfo> {
   }
 
   /**
-   * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.Key)
+   * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.Key,
+   *      com.diamondq.cachly.CacheResult)
    */
   @Override
-  public CacheResult<CacheInfo> load(Cache pCache, Key<CacheInfo> pKey) {
-    return new CacheResult<>(new CacheInfo(), true);
+  public void load(Cache pCache, Key<CacheInfo> pKey, CacheResult<CacheInfo> pResult) {
+    pResult.setValue(new CacheInfo());
   }
 
 }

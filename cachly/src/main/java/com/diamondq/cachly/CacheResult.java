@@ -1,54 +1,32 @@
 package com.diamondq.cachly;
 
+import com.diamondq.cachly.impl.StaticCacheResult;
+
 import java.time.Duration;
-import java.util.Objects;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class CacheResult<V> {
+public interface CacheResult<V> {
 
-  private final @Nullable V        mValue;
+  public @Nullable Duration getOverrideExpiry();
 
-  private final boolean            mFound;
+  public CacheResult<V> setOverrideExpiry(@Nullable Duration pDuration);
 
-  private final @Nullable Duration mOverrideExpiry;
+  public CacheResult<V> setValue(V pValue);
 
-  public CacheResult(@Nullable V pValue, boolean pFound) {
-    super();
-    mValue = pValue;
-    mFound = pFound;
-    mOverrideExpiry = null;
-  }
+  public void setNotFound();
 
-  public CacheResult(@Nullable V pValue, boolean pFound, @Nullable Duration pOverrideExpiry) {
-    super();
-    mValue = pValue;
-    mFound = pFound;
-    mOverrideExpiry = pOverrideExpiry;
-  }
+  public boolean entryFound();
 
-  public @Nullable Duration getOverrideExpiry() {
-    return mOverrideExpiry;
-  }
+  public boolean isNull();
 
-  public boolean entryFound() {
-    return mFound;
-  }
-
-  public boolean isNull() {
-    return mValue == null;
-  }
-
-  public @NonNull V getValue() {
-    return Objects.requireNonNull(mValue);
-  }
-
-  private static final CacheResult<Object> sNOT_FOUND = new CacheResult<>(null, false);
+  public @NonNull V getValue();
 
   public static <A> CacheResult<A> notFound() {
     @SuppressWarnings("unchecked")
-    CacheResult<A> r = (CacheResult<A>) sNOT_FOUND;
+    CacheResult<A> r = (CacheResult<A>) StaticCacheResult.sNOT_FOUND;
     return r;
   }
+
 }

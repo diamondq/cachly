@@ -1,6 +1,6 @@
 package com.diamondq.cachly;
 
-import com.diamondq.common.lambda.interfaces.Function2;
+import com.diamondq.common.lambda.interfaces.Consumer3;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -15,8 +15,8 @@ public class CacheLoaderFactoryHelper {
     }
 
     @Override
-    public CacheResult<@Nullable Void> load(Cache pCache, Key<@Nullable Void> pKey) {
-      return new CacheResult<>(null, true);
+    public void load(Cache pCache, Key<@Nullable Void> pKey, CacheResult<@Nullable Void> pResult) {
+      pResult.setNotFound();
     }
 
     @Override
@@ -30,7 +30,7 @@ public class CacheLoaderFactoryHelper {
   }
 
   public static <V> CacheLoader<V> of(Key<V> pKey, boolean pSupportsNull, String pHelp,
-    Function2<Cache, Key<V>, CacheResult<V>> pProvider) {
+    Consumer3<Cache, Key<V>, CacheResult<V>> pProvider) {
     return new CacheLoader<V>() {
 
       /**
@@ -42,11 +42,12 @@ public class CacheLoaderFactoryHelper {
       }
 
       /**
-       * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.Key)
+       * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.Key,
+       *      com.diamondq.cachly.CacheResult)
        */
       @Override
-      public CacheResult<V> load(Cache pCache, Key<V> pLoadKey) {
-        return pProvider.apply(pCache, pLoadKey);
+      public void load(Cache pCache, Key<V> pLoadKey, CacheResult<V> pResult) {
+        pProvider.accept(pCache, pLoadKey, pResult);
       }
     };
   }

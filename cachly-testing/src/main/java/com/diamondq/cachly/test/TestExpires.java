@@ -43,8 +43,8 @@ public class TestExpires {
     }
 
     @Override
-    public CacheResult<Long> load(Cache pCache, Key<Long> pKey) {
-      return new CacheResult<>(System.currentTimeMillis(), true, Duration.ofMillis(500));
+    public void load(Cache pCache, Key<Long> pKey, CacheResult<Long> pResult) {
+      pResult.setValue(System.currentTimeMillis()).setOverrideExpiry(Duration.ofMillis(500));
     }
 
   }

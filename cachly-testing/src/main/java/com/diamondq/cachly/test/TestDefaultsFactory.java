@@ -2,7 +2,6 @@ package com.diamondq.cachly.test;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderFactoryHelper;
-import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.test.TestDefaults.Keys;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,13 +28,13 @@ public class TestDefaultsFactory {
 
   @Singleton
   public @Named("thisOrg") CacheLoader<String> thisOrgFactory() {
-    return CacheLoaderFactoryHelper.of(Keys.THIS_ORG, false, "", (c, k) -> new CacheResult<>(k.getKey(), true));
+    return CacheLoaderFactoryHelper.of(Keys.THIS_ORG, false, "", (c, k, r) -> r.setValue(k.getKey()));
   }
 
   @Singleton
   public @Named("actualOrg") CacheLoader<String> actualOrgFactory() {
     AtomicInteger counter = new AtomicInteger(0);
     return CacheLoaderFactoryHelper.of(Keys.ACTUAL_ORG, false, "",
-      (c, k) -> new CacheResult<>("actual_" + String.valueOf(counter.incrementAndGet()), true));
+      (c, k, r) -> r.setValue("actual_" + String.valueOf(counter.incrementAndGet())));
   }
 }

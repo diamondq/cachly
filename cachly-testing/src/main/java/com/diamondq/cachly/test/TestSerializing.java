@@ -47,13 +47,13 @@ public class TestSerializing {
 
     private static class LocalTypes {
       public static final TypeReference<@Nullable SerializeTest>    NULLABLE_SERIALIZE_TEST         =
-        new TypeReference<@Nullable SerializeTest>() {                                                                          // type
-                                                                                                                                // reference
+        new TypeReference<@Nullable SerializeTest>() {                                                                                                              // type
+                                                                                                                                                                    // reference
                                                                                                       };
 
       public static final TypeReference<Map<String, SerializeTest>> MAP_OF_STRING_TO_SERIALIZE_TEST =
-        new TypeReference<Map<String, SerializeTest>>() {                                                                       // type
-                                                                                                                                // reference
+        new TypeReference<Map<String, SerializeTest>>() {                                                                                                           // type
+                                                                                                                                                                    // reference
                                                                                                       };
     }
 
@@ -82,8 +82,9 @@ public class TestSerializing {
     }
 
     @Override
-    public CacheResult<Map<String, SerializeTest>> load(Cache pCache, Key<Map<String, SerializeTest>> pKey) {
-      return new CacheResult<>(sMap, true);
+    public void load(Cache pCache, Key<Map<String, SerializeTest>> pKey,
+      CacheResult<Map<String, SerializeTest>> pResult) {
+      pResult.setValue(sMap);
     }
   }
 
@@ -95,10 +96,10 @@ public class TestSerializing {
     }
 
     @Override
-    public CacheResult<@Nullable SerializeTest> load(Cache pCache, Key<@Nullable SerializeTest> pKey) {
+    public void load(Cache pCache, Key<@Nullable SerializeTest> pKey, CacheResult<@Nullable SerializeTest> pResult) {
       Map<String, SerializeTest> map = pCache.get(Keys.MAP);
       SerializeTest serializeTest = map.get(pKey.getKey());
-      return new CacheResult<>(serializeTest, serializeTest != null);
+      pResult.setValue(serializeTest);
     }
   }
 

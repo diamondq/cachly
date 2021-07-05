@@ -1,6 +1,7 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.CacheResult;
+import com.diamondq.cachly.impl.StaticCacheResult;
 import com.diamondq.cachly.spi.KeySPI;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +26,7 @@ public class MemoryCacheStorage implements CacheStorage {
       return CacheResult.notFound();
     @SuppressWarnings("unchecked")
     V v = (V) obj;
-    return new CacheResult<V>(v, true);
+    return new StaticCacheResult<V>(v, true);
   }
 
   /**

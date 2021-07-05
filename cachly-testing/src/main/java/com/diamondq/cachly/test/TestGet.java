@@ -63,8 +63,8 @@ public class TestGet {
     }
 
     @Override
-    public CacheResult<Map<String, String>> load(Cache pCache, Key<Map<String, String>> pKey) {
-      return new CacheResult<>(sMap, true);
+    public void load(Cache pCache, Key<Map<String, String>> pKey, CacheResult<Map<String, String>> pResult) {
+      pResult.setValue(sMap);
     }
 
   }
@@ -78,11 +78,11 @@ public class TestGet {
     }
 
     @Override
-    public CacheResult<String> load(Cache pCache, Key<String> pKey) {
+    public void load(Cache pCache, Key<String> pKey, CacheResult<String> pResult) {
       @SuppressWarnings("unused")
       Map<String, String> map = pCache.get(Keys.PROCESS_DEFINITIONS);
       // String r = map.get(pKey.getKey());
-      return new CacheResult<>(String.valueOf(System.currentTimeMillis()), true);
+      pResult.setValue(String.valueOf(System.currentTimeMillis()));
     }
 
   }

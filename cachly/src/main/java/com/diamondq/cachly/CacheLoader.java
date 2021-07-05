@@ -19,8 +19,8 @@ public interface CacheLoader<O> {
    *
    * @param pCache the cache
    * @param pKey the key to load
-   * @return the result
+   * @param pResult the place to store the result
    */
-  public CacheResult<O> load(Cache pCache, Key<O> pKey);
+  public void load(Cache pCache, Key<O> pKey, CacheResult<O> pResult);
 
 }

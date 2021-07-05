@@ -2,6 +2,7 @@ package com.diamondq.cachly.micronaut;
 
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.engine.CacheStorage;
+import com.diamondq.cachly.impl.StaticCacheResult;
 import com.diamondq.cachly.spi.KeySPI;
 
 import java.time.Duration;
@@ -45,7 +46,7 @@ public class MicronautCacheStorage implements CacheStorage {
     ValueName<?> valueName = opt.get();
     @SuppressWarnings("unchecked")
     V result = (V) valueName.value;
-    return new CacheResult<V>(result, true);
+    return new StaticCacheResult<V>(result, true);
   }
 
   /**
