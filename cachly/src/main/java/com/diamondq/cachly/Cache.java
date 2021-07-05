@@ -1,6 +1,7 @@
 package com.diamondq.cachly;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface Cache {
@@ -93,7 +94,7 @@ public interface Cache {
    * @param pKey the key
    * @return the result
    */
-  public <V> CacheResult<V> getIfPresent(Key<V> pKey);
+  public <V> Optional<V> getIfPresent(Key<V> pKey);
 
   /**
    * Retrieves a value from the cache
@@ -105,7 +106,7 @@ public interface Cache {
    * @param pValue1 the value for the first placeholder
    * @return the result
    */
-  public <K1, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
+  public <K1, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
 
   /**
    * Retrieves a value from the cache
@@ -120,7 +121,7 @@ public interface Cache {
    * @param pValue2 the value for the first placeholder
    * @return the result
    */
-  public <K1, K2, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+  public <K1, K2, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2);
 
   /**
@@ -139,7 +140,7 @@ public interface Cache {
    * @param pValue3 the value for the third placeholder
    * @return the result
    */
-  public <K1, K2, K3, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+  public <K1, K2, K3, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
 
   /**
@@ -161,7 +162,7 @@ public interface Cache {
    * @param pValue4 the value for the fourth placeholder
    * @return the result
    */
-  public <K1, K2, K3, K4, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+  public <K1, K2, K3, K4, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     KeyPlaceholder<K4> pHolder4, String pValue4);
 

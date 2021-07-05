@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Stream;
@@ -112,7 +113,8 @@ public class CacheEngine implements Cache {
     /* Setup the storage key and cache info */
 
     mStorageKey =
-      (KeySPI<CacheInfo>) KeyBuilder.<CacheInfo> of(CacheInfoLoader.CACHE_INFO_NAME, new TypeReference<CacheInfo>() {
+      (KeySPI<CacheInfo>) KeyBuilder.<CacheInfo> of(CacheInfoLoader.CACHE_INFO_NAME, new TypeReference<CacheInfo>() { // type
+                                                                                                                      // reference
       });
     setupKey(mStorageKey);
     CacheResult<CacheInfo> cacheInfoResult = mStorageKey.getLastStorage().queryForKey(mStorageKey);
@@ -365,7 +367,6 @@ public class CacheEngine implements Cache {
     if (result.entryFound() == true) {
       if (result.isNull() == true) {
         if (ki.supportsNull() == true) {
-          @SuppressWarnings("null")
           V r = null;
           return r;
         }
@@ -374,7 +375,6 @@ public class CacheEngine implements Cache {
       return result.getValue();
     }
     if (ki.supportsNull() == true) {
-      @SuppressWarnings("null")
       V r = null;
       return r;
     }
@@ -385,14 +385,16 @@ public class CacheEngine implements Cache {
    * @see com.diamondq.cachly.Cache#getIfPresent(com.diamondq.cachly.Key)
    */
   @Override
-  public <V> CacheResult<V> getIfPresent(Key<V> pKey) {
+  public <V> Optional<V> getIfPresent(Key<V> pKey) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
     if (ki.hasKeyDetails() == false)
       setupKey(ki);
     CacheResult<V> result = lookup(ki, false);
-    return result;
+    if (result.entryFound())
+      return Optional.ofNullable(result.getValue());
+    return Optional.empty();
   }
 
   /**
@@ -453,7 +455,7 @@ public class CacheEngine implements Cache {
    *      java.lang.String)
    */
   @Override
-  public <K1, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
+  public <K1, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
     KeySPI<V> ki = (KeySPI<V>) pKey;
@@ -465,7 +467,7 @@ public class CacheEngine implements Cache {
    *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <K1, K2, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+  public <K1, K2, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
@@ -479,7 +481,7 @@ public class CacheEngine implements Cache {
    *      java.lang.String)
    */
   @Override
-  public <K1, K2, K3, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+  public <K1, K2, K3, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
     if ((pKey instanceof KeySPI) == false)
       throw new IllegalStateException();
@@ -493,7 +495,7 @@ public class CacheEngine implements Cache {
    *      java.lang.String, com.diamondq.cachly.KeyPlaceholder, java.lang.String)
    */
   @Override
-  public <K1, K2, K3, K4, V> CacheResult<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+  public <K1, K2, K3, K4, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     KeyPlaceholder<K4> pHolder4, String pValue4) {
     if ((pKey instanceof KeySPI) == false)
