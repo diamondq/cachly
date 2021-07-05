@@ -16,6 +16,8 @@ import com.diamondq.cachly.spi.BeanNameLocator;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.TypeReference;
+import com.diamondq.common.context.Context;
+import com.diamondq.common.context.ContextFactory;
 import com.diamondq.common.types.Types;
 
 import java.util.HashMap;
@@ -36,6 +38,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @Singleton
 public class CacheEngine implements Cache {
 
+  private final ContextFactory                       mContextFactory;
+
   private final Map<String, CacheStorage>            mCacheStorageByPath;
 
   private final Map<String, CacheLoaderInfo<Object>> mLoadersByPath;
@@ -49,8 +53,10 @@ public class CacheEngine implements Cache {
   private final CacheInfo                            mCacheInfo;
 
   @Inject
-  public CacheEngine(List<CachlyPathConfiguration> pPaths, List<BeanNameLocator> pNameLocators,
-    List<CacheStorage> pCacheStorages, List<CacheLoader<?>> pCacheLoaders) {
+  public CacheEngine(ContextFactory pContextFactory, List<CachlyPathConfiguration> pPaths,
+    List<BeanNameLocator> pNameLocators, List<CacheStorage> pCacheStorages, List<CacheLoader<?>> pCacheLoaders) {
+
+    mContextFactory = pContextFactory;
 
     /* Build the map of storages by name */
 
@@ -253,31 +259,30 @@ public class CacheEngine implements Cache {
   }
 
   private <O> void invalidate(KeySPI<O> pKey) {
+    try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
+      String keyStr = pKey.toString();
 
-    String keyStr = pKey.toString();
+      /* Find the last storage given the key */
 
-    /* Find the last storage given the key */
+      CacheStorage storage = pKey.getLastStorage();
 
-    CacheStorage storage = pKey.getLastStorage();
+      storage.invalidate(pKey);
 
-    storage.invalidate(pKey);
+      /* Were there dependencies? */
 
-    /* Were there dependencies? */
+      Set<KeySPI<?>> depSet = mCacheInfo.dependencyMap.remove(keyStr);
+      if (depSet != null) {
 
-    Set<KeySPI<?>> depSet = mCacheInfo.dependencyMap.remove(keyStr);
-    if (depSet != null) {
+        /* Save the updated CacheInfo */
 
-      /* Save the updated CacheInfo */
+        mStorageKey.getLastStorage().store(mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
 
-      mStorageKey.getLastStorage().store(mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
+        /* Invalidate all the subkeys */
 
-      /* Invalidate all the subkeys */
-
-      for (KeySPI<?> dep : depSet)
-        invalidate(dep);
-
+        for (KeySPI<?> dep : depSet)
+          invalidate(dep);
+      }
     }
-
   }
 
   private <O> void setupKey(KeySPI<O> pKey) {
@@ -359,27 +364,29 @@ public class CacheEngine implements Cache {
    */
   @Override
   public <V> V get(Key<V> pKey) {
-    if ((pKey instanceof KeySPI) == false)
-      throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
-    if (ki.hasKeyDetails() == false)
-      setupKey(ki);
-    CacheResult<V> result = lookup(ki, true);
-    if (result.entryFound() == true) {
-      if (result.isNull() == true) {
-        if (ki.supportsNull() == true) {
-          V r = null;
-          return r;
+    try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
+      if ((pKey instanceof KeySPI) == false)
+        throw ctx.reportThrowable(new IllegalStateException());
+      KeySPI<V> ki = (KeySPI<V>) pKey;
+      if (ki.hasKeyDetails() == false)
+        setupKey(ki);
+      CacheResult<V> result = lookup(ki, true);
+      if (result.entryFound() == true) {
+        if (result.isNull() == true) {
+          if (ki.supportsNull() == true) {
+            V r = null;
+            return ctx.exit(r);
+          }
+          throw ctx.reportThrowable(new NullPointerException());
         }
-        throw new NullPointerException();
+        return ctx.exit(result.getValue());
       }
-      return result.getValue();
+      if (ki.supportsNull() == true) {
+        V r = null;
+        return ctx.exit(r);
+      }
+      throw ctx.reportThrowable(new NoSuchElementException());
     }
-    if (ki.supportsNull() == true) {
-      V r = null;
-      return r;
-    }
-    throw new NoSuchElementException();
   }
 
   /**
@@ -387,15 +394,17 @@ public class CacheEngine implements Cache {
    */
   @Override
   public <V> Optional<V> getIfPresent(Key<V> pKey) {
-    if ((pKey instanceof KeySPI) == false)
-      throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
-    if (ki.hasKeyDetails() == false)
-      setupKey(ki);
-    CacheResult<V> result = lookup(ki, false);
-    if (result.entryFound())
-      return Optional.ofNullable(result.getValue());
-    return Optional.empty();
+    try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
+      if ((pKey instanceof KeySPI) == false)
+        throw ctx.reportThrowable(new IllegalStateException());
+      KeySPI<V> ki = (KeySPI<V>) pKey;
+      if (ki.hasKeyDetails() == false)
+        setupKey(ki);
+      CacheResult<V> result = lookup(ki, false);
+      if (result.entryFound())
+        return ctx.exit(Optional.ofNullable(result.getValue()));
+      return ctx.exit(Optional.empty());
+    }
   }
 
   /**
