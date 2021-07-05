@@ -14,17 +14,17 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class AbstractKey<O> implements KeySPI<O> {
 
-  private final String                    mKey;
+  protected final String                    mKey;
 
-  private @Nullable KeyDetails<O>         mKeyDetails;
+  protected @Nullable KeyDetails<O>         mKeyDetails;
 
-  private final @NonNull KeySPI<Object>[] mParts;
+  protected final @NonNull KeySPI<Object>[] mParts;
 
-  private final TypeReference<O>          mOutputTypeRef;
+  protected final TypeReference<O>          mOutputTypeRef;
 
-  private final Type                      mOutputType;
+  protected final Type                      mOutputType;
 
-  private final boolean                   mHasPlaceholders;
+  protected final boolean                   mHasPlaceholders;
 
   public AbstractKey(String pKey, TypeReference<O> pOutputType, boolean pHasPlaceholders) {
     mKey = pKey;
@@ -166,5 +166,32 @@ public class AbstractKey<O> implements KeySPI<O> {
   @Override
   public String toString() {
     return mKey;
+  }
+
+  /**
+   * @see java.lang.Object#hashCode()
+   */
+  @Override
+  public int hashCode() {
+    return Objects.hash(mKey, mOutputType, mHasPlaceholders);
+  }
+
+  /**
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  @Override
+  public boolean equals(@Nullable Object pObj) {
+    if (pObj == null)
+      return false;
+    if (pObj == this)
+      return true;
+    if (pObj.getClass().equals(this.getClass()) == false)
+      return false;
+    @SuppressWarnings("unchecked")
+    AbstractKey<O> other = (AbstractKey<O>) pObj;
+    if (Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType)
+      && Objects.equals(mHasPlaceholders, other.mHasPlaceholders))
+      return true;
+    return false;
   }
 }

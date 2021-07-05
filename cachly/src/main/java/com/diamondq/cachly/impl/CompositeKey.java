@@ -8,6 +8,7 @@ import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.TypeReference;
 
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -252,5 +253,31 @@ public class CompositeKey<O> implements KeySPI<O> {
     }
     sb.setLength(sb.length() - 1);
     return sb.toString();
+  }
+
+  /**
+   * @see java.lang.Object#hashCode()
+   */
+  @Override
+  public int hashCode() {
+    return Objects.hash(mParts, mHasPlaceholders);
+  }
+
+  /**
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  @Override
+  public boolean equals(@Nullable Object pObj) {
+    if (pObj == null)
+      return false;
+    if (pObj == this)
+      return true;
+    if (pObj.getClass().equals(CompositeKey.class) == false)
+      return false;
+    @SuppressWarnings("unchecked")
+    CompositeKey<O> other = (CompositeKey<O>) pObj;
+    if (Objects.equals(mParts, other.mParts) && Objects.equals(mHasPlaceholders, other.mHasPlaceholders))
+      return true;
+    return false;
   }
 }
