@@ -400,7 +400,7 @@ public class CacheEngine implements Cache {
       KeySPI<V> ki = (KeySPI<V>) pKey;
       if (ki.hasKeyDetails() == false)
         setupKey(ki);
-      CacheResult<V> result = lookup(ki, false);
+      CacheResult<V> result = lookup(ki, true);
       if (result.entryFound())
         return ctx.exit(Optional.ofNullable(result.getValue()));
       return ctx.exit(Optional.empty());

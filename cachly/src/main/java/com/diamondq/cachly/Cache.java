@@ -92,7 +92,7 @@ public interface Cache {
    *
    * @param <V> the type of the result
    * @param pKey the key
-   * @return the result
+   * @return the optional result
    */
   public <V> Optional<V> getIfPresent(Key<V> pKey);
 
@@ -104,7 +104,7 @@ public interface Cache {
    * @param pKey the key
    * @param pHolder1 the first placeholder
    * @param pValue1 the value for the first placeholder
-   * @return the result
+   * @return the optional result
    */
   public <K1, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
 
@@ -119,7 +119,7 @@ public interface Cache {
    * @param pValue1 the value for the first placeholder
    * @param pHolder2 the second placeholder
    * @param pValue2 the value for the first placeholder
-   * @return the result
+   * @return the optional result
    */
   public <K1, K2, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2);
@@ -138,7 +138,7 @@ public interface Cache {
    * @param pValue2 the value for the first placeholder
    * @param pHolder3 the third placeholder
    * @param pValue3 the value for the third placeholder
-   * @return the result
+   * @return the optional result
    */
   public <K1, K2, K3, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
@@ -160,7 +160,7 @@ public interface Cache {
    * @param pValue3 the value for the third placeholder
    * @param pHolder4 the fourth placeholder
    * @param pValue4 the value for the fourth placeholder
-   * @return the result
+   * @return the optional result
    */
   public <K1, K2, K3, K4, V> Optional<V> getIfPresent(Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,

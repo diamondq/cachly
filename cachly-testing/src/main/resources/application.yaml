@@ -1,5 +1,8 @@
 cachly:
   paths:
+    ifpresent-process-definitions:
+      storage: my-cache
+      serializer: kryo
     process-definitions:
       storage: my-cache
       serializer: kryo
