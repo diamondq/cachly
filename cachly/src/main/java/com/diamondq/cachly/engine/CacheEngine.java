@@ -258,7 +258,7 @@ public class CacheEngine implements Cache {
     mCacheStorageByPath.values().stream().distinct().forEach((cs) -> cs.invalidateAll());
   }
 
-  private <O> void invalidate(KeySPI<O> pKey) {
+  private <O> void invalidateInternal(KeySPI<O> pKey) {
     try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
       String keyStr = pKey.toString();
 
@@ -525,7 +525,7 @@ public class CacheEngine implements Cache {
     KeySPI<V> ki = (KeySPI<V>) pKey;
     if (ki.hasKeyDetails() == false)
       setupKey(ki);
-    invalidate(ki);
+    invalidateInternal(ki);
   }
 
   /**
