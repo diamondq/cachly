@@ -1,5 +1,6 @@
 package com.diamondq.cachly.micronaut;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.impl.StaticCacheResult;
@@ -38,8 +39,12 @@ public class MicronautCacheStorage implements CacheStorage {
     mValueNameArg = new DefaultArgument<>(ValueName.class, null, AnnotationMetadata.EMPTY_METADATA);
   }
 
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#queryForKey(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI)
+   */
   @Override
-  public <V> CacheResult<V> queryForKey(KeySPI<V> pKey) {
+  public <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey) {
     Optional<ValueName<?>> opt = mCache.get(pKey.toString(), mValueNameArg);
     if (opt.isPresent() == false)
       return CacheResult.notFound();
@@ -50,10 +55,11 @@ public class MicronautCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.spi.KeySPI, com.diamondq.cachly.CacheResult)
+   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI, com.diamondq.cachly.CacheResult)
    */
   @Override
-  public <V> void store(KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
+  public <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
     Duration overrideExpiry = pLoadedResult.getOverrideExpiry();
     String key = pKey.toString();
     if (overrideExpiry != null)
@@ -63,10 +69,11 @@ public class MicronautCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.spi.KeySPI)
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI)
    */
   @Override
-  public <V> void invalidate(KeySPI<V> pKey) {
+  public <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey) {
     String key = pKey.toString();
     for (ExpiryHandler eh : mExpiryHandlers)
       eh.invalidate(key);
@@ -74,20 +81,20 @@ public class MicronautCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll()
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll(com.diamondq.cachly.AccessContext)
    */
   @Override
-  public void invalidateAll() {
+  public void invalidateAll(AccessContext pAccessContext) {
     for (ExpiryHandler eh : mExpiryHandlers)
       eh.invalidateAll();
     mCache.invalidateAll();
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#streamKeys()
+   * @see com.diamondq.cachly.engine.CacheStorage#streamKeys(com.diamondq.cachly.AccessContext)
    */
   @Override
-  public Stream<String> streamKeys() {
+  public Stream<String> streamKeys(AccessContext pAccessContext) {
     Object nativeCache = mCache.getNativeCache();
     for (KeyExtractor ke : mKeyExtractors) {
       Stream<String> keys = ke.getKeys(nativeCache);

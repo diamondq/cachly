@@ -3,6 +3,7 @@ package com.diamondq.cachly.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
@@ -43,7 +44,7 @@ public class TestExpires {
     }
 
     @Override
-    public void load(Cache pCache, Key<Long> pKey, CacheResult<Long> pResult) {
+    public void load(Cache pCache, AccessContext pAccessContext, Key<Long> pKey, CacheResult<Long> pResult) {
       pResult.setValue(System.currentTimeMillis()).setOverrideExpiry(Duration.ofMillis(500));
     }
 
@@ -54,16 +55,17 @@ public class TestExpires {
 
   @BeforeEach
   public void before() {
-    cache.invalidateAll();
+    cache.invalidateAll(cache.createAccessContext(null));
   }
 
   @Test
   void testExpires() throws InterruptedException {
-    Long firstResult = cache.get(Keys.LOAD_TIMESTAMP);
-    Long secondResult = cache.get(Keys.LOAD_TIMESTAMP);
+    AccessContext ac = cache.createAccessContext(null);
+    Long firstResult = cache.get(ac, Keys.LOAD_TIMESTAMP);
+    Long secondResult = cache.get(ac, Keys.LOAD_TIMESTAMP);
     assertEquals(firstResult, secondResult);
     Thread.sleep(2000L);
-    Long thirdResult = cache.get(Keys.LOAD_TIMESTAMP);
+    Long thirdResult = cache.get(ac, Keys.LOAD_TIMESTAMP);
     assertNotEquals(firstResult, thirdResult);
   }
 

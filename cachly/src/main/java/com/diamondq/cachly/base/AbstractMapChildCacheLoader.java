@@ -1,5 +1,6 @@
 package com.diamondq.cachly.base;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
@@ -31,15 +32,15 @@ public class AbstractMapChildCacheLoader<VALUE> extends AbstractCacheLoader<VALU
   }
 
   /**
-   * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.Key,
-   *      com.diamondq.cachly.CacheResult)
+   * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
    */
   @Override
-  public void load(Cache pCache, Key<VALUE> pKey, CacheResult<VALUE> pResult) {
+  public void load(Cache pCache, AccessContext pAccessContext, Key<VALUE> pKey, CacheResult<VALUE> pResult) {
 
     /* Query for the map */
 
-    Map<String, VALUE> map = pCache.get(mMapKey);
+    Map<String, VALUE> map = pCache.get(pAccessContext, mMapKey);
 
     /* Attempt to get the requested key from the map. This may return NULL */
 

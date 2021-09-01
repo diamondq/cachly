@@ -1,5 +1,6 @@
 package com.diamondq.cachly.impl;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
@@ -12,7 +13,7 @@ public class StaticKeyPlaceholder<O> extends AbstractKey<O> implements KeyPlaceh
   }
 
   @Override
-  public KeySPI<O> resolveDefault(Cache pCache) {
+  public KeySPI<O> resolveDefault(Cache pCache, AccessContext pAccessContext) {
     throw new IllegalStateException();
   }
 

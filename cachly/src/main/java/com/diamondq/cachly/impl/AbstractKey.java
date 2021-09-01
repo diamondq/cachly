@@ -120,7 +120,10 @@ public class AbstractKey<O> implements KeySPI<O> {
    */
   @Override
   public CacheStorage getLastStorage() {
-    return Objects.requireNonNull(mKeyDetails).getLastStorage();
+    KeyDetails<O> keyDetails = mKeyDetails;
+    if (keyDetails == null)
+      throw new IllegalStateException("Unable to find a cache storage that will cover " + getFullBaseKey());
+    return keyDetails.getLastStorage();
   }
 
   /**
@@ -128,7 +131,10 @@ public class AbstractKey<O> implements KeySPI<O> {
    */
   @Override
   public String getLastSerializerName() {
-    return Objects.requireNonNull(mKeyDetails).getLastSerializerName();
+    KeyDetails<O> keyDetails = mKeyDetails;
+    if (keyDetails == null)
+      throw new IllegalStateException("Unable to find a serializer that will cover " + getFullBaseKey());
+    return keyDetails.getLastSerializerName();
   }
 
   /**
@@ -136,7 +142,10 @@ public class AbstractKey<O> implements KeySPI<O> {
    */
   @Override
   public boolean supportsNull() {
-    return Objects.requireNonNull(mKeyDetails).supportsNull();
+    KeyDetails<O> keyDetails = mKeyDetails;
+    if (keyDetails == null)
+      throw new IllegalStateException("Unable to find a cache loader that will cover " + getFullBaseKey());
+    return keyDetails.supportsNull();
   }
 
   /**
@@ -144,7 +153,10 @@ public class AbstractKey<O> implements KeySPI<O> {
    */
   @Override
   public CacheLoader<O> getLoader() {
-    return Objects.requireNonNull(mKeyDetails).getLoader();
+    KeyDetails<O> keyDetails = mKeyDetails;
+    if (keyDetails == null)
+      throw new IllegalStateException("Unable to find a cache loader that will cover " + getFullBaseKey());
+    return keyDetails.getLoader();
   }
 
   @Override

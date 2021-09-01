@@ -1,5 +1,6 @@
 package com.diamondq.cachly.impl;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
@@ -20,8 +21,8 @@ public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> impleme
   }
 
   @Override
-  public KeySPI<String> resolveDefault(Cache pCache) {
-    String cacheValue = pCache.get(mDefaultKey);
+  public KeySPI<String> resolveDefault(Cache pCache, AccessContext pAccessContext) {
+    String cacheValue = pCache.get(pAccessContext, mDefaultKey);
     return new ResolvedKeyPlaceholder<>(this, cacheValue);
   }
 

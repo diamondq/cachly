@@ -1,5 +1,6 @@
 package com.diamondq.cachly.engine;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.impl.StaticCacheResult;
 import com.diamondq.cachly.spi.KeySPI;
@@ -17,10 +18,11 @@ public class MemoryCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#queryForKey(com.diamondq.cachly.spi.KeySPI)
+   * @see com.diamondq.cachly.engine.CacheStorage#queryForKey(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI)
    */
   @Override
-  public <V> CacheResult<V> queryForKey(KeySPI<V> pKey) {
+  public <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey) {
     Object obj = mData.get(pKey.toString());
     if (obj == null)
       return CacheResult.notFound();
@@ -30,10 +32,11 @@ public class MemoryCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.spi.KeySPI, com.diamondq.cachly.CacheResult)
+   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI, com.diamondq.cachly.CacheResult)
    */
   @Override
-  public <V> void store(KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
+  public <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
     if (pLoadedResult.entryFound() == true)
       mData.put(pKey.toString(), pLoadedResult.getValue());
     else
@@ -41,26 +44,27 @@ public class MemoryCacheStorage implements CacheStorage {
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.spi.KeySPI)
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI)
    */
   @Override
-  public <V> void invalidate(KeySPI<V> pKey) {
+  public <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey) {
     mData.remove(pKey.toString());
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll()
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll(com.diamondq.cachly.AccessContext)
    */
   @Override
-  public void invalidateAll() {
+  public void invalidateAll(AccessContext pAccessContext) {
     mData.clear();
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#streamKeys()
+   * @see com.diamondq.cachly.engine.CacheStorage#streamKeys(com.diamondq.cachly.AccessContext)
    */
   @Override
-  public Stream<String> streamKeys() {
+  public Stream<String> streamKeys(AccessContext pAccessContext) {
     return mData.keySet().stream();
   }
 }

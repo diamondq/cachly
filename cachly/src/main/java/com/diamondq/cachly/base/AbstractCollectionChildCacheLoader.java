@@ -1,5 +1,6 @@
 package com.diamondq.cachly.base;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
@@ -38,15 +39,15 @@ public class AbstractCollectionChildCacheLoader<VALUE, COLL extends Collection<V
   }
 
   /**
-   * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.Key,
-   *      com.diamondq.cachly.CacheResult)
+   * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
    */
   @Override
-  public void load(Cache pCache, Key<VALUE> pKey, CacheResult<VALUE> pResult) {
+  public void load(Cache pCache, AccessContext pAccessContext, Key<VALUE> pKey, CacheResult<VALUE> pResult) {
 
     /* Query for the map */
 
-    Collection<VALUE> coll = pCache.get(mListKey);
+    Collection<VALUE> coll = pCache.get(pAccessContext, mListKey);
 
     /* Attempt to get the requested key from the collection. */
 

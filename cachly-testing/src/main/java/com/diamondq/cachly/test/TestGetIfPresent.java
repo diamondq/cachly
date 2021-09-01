@@ -3,6 +3,7 @@ package com.diamondq.cachly.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
@@ -63,7 +64,8 @@ public class TestGetIfPresent {
     }
 
     @Override
-    public void load(Cache pCache, Key<Map<String, String>> pKey, CacheResult<Map<String, String>> pResult) {
+    public void load(Cache pCache, AccessContext pAccessContext, Key<Map<String, String>> pKey,
+      CacheResult<Map<String, String>> pResult) {
       pResult.setValue(sMap);
     }
 
@@ -78,8 +80,8 @@ public class TestGetIfPresent {
     }
 
     @Override
-    public void load(Cache pCache, Key<String> pKey, CacheResult<String> pResult) {
-      Map<String, String> map = pCache.get(Keys.PROCESS_DEFINITIONS);
+    public void load(Cache pCache, AccessContext pAccessContext, Key<String> pKey, CacheResult<String> pResult) {
+      Map<String, String> map = pCache.get(pAccessContext, Keys.PROCESS_DEFINITIONS);
       String r = map.get(pKey.getKey());
       pResult.setValue(r);
     }
@@ -91,39 +93,42 @@ public class TestGetIfPresent {
 
   @BeforeEach
   public void before() {
-    cache.invalidateAll();
+    cache.invalidateAll(cache.createAccessContext(null));
   }
 
   @Test
   void test() {
-    String r = cache.getIfPresent(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
+    AccessContext ac = cache.createAccessContext(null);
+    String r = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
     assertNotNull(r);
-    String r2 = cache.getIfPresent(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
+    String r2 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
     assertNotNull(r2);
     assertEquals(r, r2);
-    cache.invalidate(Keys.PROCESS_DEFINITIONS);
-    String r3 = cache.getIfPresent(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
+    cache.invalidate(ac, Keys.PROCESS_DEFINITIONS);
+    String r3 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
     assertNotNull(r3);
     assertEquals(r, r3);
   }
 
   @Test
   void keysTest() {
-    String emptyKeys = cache.streamKeys().map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    AccessContext ac = cache.createAccessContext(null);
+    String emptyKeys = cache.streamKeys(ac).map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
     assertEquals("", emptyKeys);
 
     /* Grab some entries which will populate the cache */
 
-    cache.getIfPresent(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
+    cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
 
-    String popKeys = cache.streamKeys().map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    String popKeys = cache.streamKeys(ac).map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
     assertEquals("__CacheEngine__,ifpresent-process-definitions,ifpresent-process-definitions/123", popKeys);
 
   }
 
   @Test
   void missingTest() {
-    Optional<String> opt = cache.getIfPresent(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "abc");
+    AccessContext ac = cache.createAccessContext(null);
+    Optional<String> opt = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "abc");
     assertEquals(false, opt.isPresent());
   }
 }

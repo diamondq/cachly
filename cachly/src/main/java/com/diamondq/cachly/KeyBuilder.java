@@ -1,6 +1,7 @@
 package com.diamondq.cachly;
 
 import com.diamondq.cachly.impl.CompositeKey;
+import com.diamondq.cachly.impl.StaticAccessContextPlaceholder;
 import com.diamondq.cachly.impl.StaticKey;
 import com.diamondq.cachly.impl.StaticKeyPlaceholder;
 import com.diamondq.cachly.impl.StaticKeyPlaceholderWithDefault;
@@ -22,6 +23,11 @@ public class KeyBuilder {
 
   public static <O> Key<O> from(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
     return new CompositeKey<O>(pKey1, pKey2, pKey3);
+  }
+
+  public static <A, O> AccessContextPlaceholder<O> accessContext(String pAccessContextKey,
+    Class<A> pAccessContextValueClass, TypeReference<O> pOutputType) {
+    return new StaticAccessContextPlaceholder<A, O>(pAccessContextKey, pAccessContextValueClass, pOutputType);
   }
 
   public static <O> KeyPlaceholder<O> placeholder(String pPlaceholderKey, TypeReference<O> pOutputType) {

@@ -2,6 +2,7 @@ package com.diamondq.cachly.test;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
@@ -47,13 +48,13 @@ public class TestSerializing {
 
     private static class LocalTypes {
       public static final TypeReference<@Nullable SerializeTest>    NULLABLE_SERIALIZE_TEST         =
-        new TypeReference<@Nullable SerializeTest>() {                                                                                                              // type
-                                                                                                                                                                    // reference
+        new TypeReference<@Nullable SerializeTest>() {                                                                                                                                                                                                              // type
+                                                                                                                                                                                                                                                                    // reference
                                                                                                       };
 
       public static final TypeReference<Map<String, SerializeTest>> MAP_OF_STRING_TO_SERIALIZE_TEST =
-        new TypeReference<Map<String, SerializeTest>>() {                                                                                                           // type
-                                                                                                                                                                    // reference
+        new TypeReference<Map<String, SerializeTest>>() {                                                                                                                                                                                                           // type
+                                                                                                                                                                                                                                                                    // reference
                                                                                                       };
     }
 
@@ -82,7 +83,7 @@ public class TestSerializing {
     }
 
     @Override
-    public void load(Cache pCache, Key<Map<String, SerializeTest>> pKey,
+    public void load(Cache pCache, AccessContext pAccessContext, Key<Map<String, SerializeTest>> pKey,
       CacheResult<Map<String, SerializeTest>> pResult) {
       pResult.setValue(sMap);
     }
@@ -96,8 +97,9 @@ public class TestSerializing {
     }
 
     @Override
-    public void load(Cache pCache, Key<@Nullable SerializeTest> pKey, CacheResult<@Nullable SerializeTest> pResult) {
-      Map<String, SerializeTest> map = pCache.get(Keys.MAP);
+    public void load(Cache pCache, AccessContext pAccessContext, Key<@Nullable SerializeTest> pKey,
+      CacheResult<@Nullable SerializeTest> pResult) {
+      Map<String, SerializeTest> map = pCache.get(pAccessContext, Keys.MAP);
       SerializeTest serializeTest = map.get(pKey.getKey());
       pResult.setValue(serializeTest);
     }
@@ -108,12 +110,13 @@ public class TestSerializing {
 
   @BeforeEach
   public void before() {
-    cache.invalidateAll();
+    cache.invalidateAll(cache.createAccessContext(null));
   }
 
   @Test
   void testCache() {
-    SerializeTest test = cache.get(Keys.MAP_BY_ID, Keys.MAP_BY_ID_PLACEHOLDER, "abc");
+    AccessContext ac = cache.createAccessContext(null);
+    SerializeTest test = cache.get(ac, Keys.MAP_BY_ID, Keys.MAP_BY_ID_PLACEHOLDER, "abc");
     assertNotNull(test);
   }
 

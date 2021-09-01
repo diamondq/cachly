@@ -1,5 +1,6 @@
 package com.diamondq.cachly.impl;
 
+import com.diamondq.cachly.AccessContextPlaceholder;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyPlaceholder;
@@ -47,6 +48,8 @@ public class CompositeKey<O> implements KeySPI<O> {
     for (int i = 0; i < mParts.length; i++) {
       if (mParts[i] instanceof KeyPlaceholder)
         hasPlaceHolders = true;
+      else if (mParts[i] instanceof AccessContextPlaceholder)
+        hasPlaceHolders = true;
     }
     mHasPlaceholders = hasPlaceHolders;
   }
@@ -81,6 +84,8 @@ public class CompositeKey<O> implements KeySPI<O> {
     for (int i = 0; i < mParts.length; i++) {
       if (mParts[i] instanceof KeyPlaceholder)
         hasPlaceHolders = true;
+      else if (mParts[i] instanceof AccessContextPlaceholder)
+        hasPlaceHolders = true;
     }
     mHasPlaceholders = hasPlaceHolders;
   }
@@ -94,6 +99,8 @@ public class CompositeKey<O> implements KeySPI<O> {
     boolean hasPlaceHolders = false;
     for (int i = 0; i < mParts.length; i++) {
       if (mParts[i] instanceof KeyPlaceholder)
+        hasPlaceHolders = true;
+      else if (mParts[i] instanceof AccessContextPlaceholder)
         hasPlaceHolders = true;
     }
     mHasPlaceholders = hasPlaceHolders;
@@ -201,7 +208,8 @@ public class CompositeKey<O> implements KeySPI<O> {
    */
   @Override
   public <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
-    KeySPI<Object> testKey = getPreviousKey();
+    @SuppressWarnings("unchecked")
+    KeySPI<Object> testKey = (KeySPI<Object>) this;
     String testKeyStr = pTemplate.toString();
     while (testKey != null) {
       if (testKey.getFullBaseKey().equals(testKeyStr)) {

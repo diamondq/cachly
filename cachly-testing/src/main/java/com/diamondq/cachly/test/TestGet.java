@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
@@ -63,7 +64,8 @@ public class TestGet {
     }
 
     @Override
-    public void load(Cache pCache, Key<Map<String, String>> pKey, CacheResult<Map<String, String>> pResult) {
+    public void load(Cache pCache, AccessContext pAccessContext, Key<Map<String, String>> pKey,
+      CacheResult<Map<String, String>> pResult) {
       pResult.setValue(sMap);
     }
 
@@ -78,9 +80,9 @@ public class TestGet {
     }
 
     @Override
-    public void load(Cache pCache, Key<String> pKey, CacheResult<String> pResult) {
+    public void load(Cache pCache, AccessContext pAccessContext, Key<String> pKey, CacheResult<String> pResult) {
       @SuppressWarnings("unused")
-      Map<String, String> map = pCache.get(Keys.PROCESS_DEFINITIONS);
+      Map<String, String> map = pCache.get(pAccessContext, Keys.PROCESS_DEFINITIONS);
       // String r = map.get(pKey.getKey());
       pResult.setValue(String.valueOf(System.currentTimeMillis()));
     }
@@ -92,32 +94,34 @@ public class TestGet {
 
   @BeforeEach
   public void before() {
-    cache.invalidateAll();
+    cache.invalidateAll(cache.createAccessContext(null));
   }
 
   @Test
   void test() {
-    String r = cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
+    AccessContext ac = cache.createAccessContext(null);
+    String r = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r);
-    String r2 = cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
+    String r2 = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r2);
     assertEquals(r, r2);
-    cache.invalidate(Keys.PROCESS_DEFINITIONS);
-    String r3 = cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
+    cache.invalidate(ac, Keys.PROCESS_DEFINITIONS);
+    String r3 = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r3);
     assertNotEquals(r, r3);
   }
 
   @Test
   void keysTest() {
-    String emptyKeys = cache.streamKeys().map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    AccessContext ac = cache.createAccessContext(null);
+    String emptyKeys = cache.streamKeys(ac).map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
     assertEquals("", emptyKeys);
 
     /* Grab some entries which will populate the cache */
 
-    cache.get(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
+    cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
 
-    String popKeys = cache.streamKeys().map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    String popKeys = cache.streamKeys(ac).map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
     assertEquals("__CacheEngine__,process-definitions,process-definitions/123", popKeys);
 
   }

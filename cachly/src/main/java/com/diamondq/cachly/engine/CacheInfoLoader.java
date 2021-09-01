@@ -1,5 +1,6 @@
 package com.diamondq.cachly.engine;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
@@ -27,11 +28,11 @@ public class CacheInfoLoader implements CacheLoader<CacheInfo> {
   }
 
   /**
-   * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.Key,
-   *      com.diamondq.cachly.CacheResult)
+   * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
    */
   @Override
-  public void load(Cache pCache, Key<CacheInfo> pKey, CacheResult<CacheInfo> pResult) {
+  public void load(Cache pCache, AccessContext pAccessContext, Key<CacheInfo> pKey, CacheResult<CacheInfo> pResult) {
     pResult.setValue(new CacheInfo());
   }
 

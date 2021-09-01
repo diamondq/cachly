@@ -2,6 +2,7 @@ package com.diamondq.cachly.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
@@ -48,17 +49,18 @@ public class TestDefaults {
 
   @BeforeEach
   public void before() {
-    cache.invalidateAll();
+    cache.invalidateAll(cache.createAccessContext(null));
   }
 
   @Test
   void test() {
-    String r = cache.get(Keys.THIS_ORG);
+    AccessContext ac = cache.createAccessContext(null);
+    String r = cache.get(ac, Keys.THIS_ORG);
     assertEquals("actual_1", r);
-    String r1 = cache.get(Keys.THIS_ORG);
+    String r1 = cache.get(ac, Keys.THIS_ORG);
     assertEquals("actual_1", r1);
-    cache.invalidate(Keys.ACTUAL_ORG);
-    String r2 = cache.get(Keys.THIS_ORG);
+    cache.invalidate(ac, Keys.ACTUAL_ORG);
+    String r2 = cache.get(ac, Keys.THIS_ORG);
     assertEquals("actual_2", r2);
   }
 

@@ -14,15 +14,24 @@ public class CacheLoaderFactoryHelper {
       mCacheLoaderInfo = new CacheLoaderInfo<>(pKey, true, pHelp, this);
     }
 
-    @Override
-    public void load(Cache pCache, Key<@Nullable Void> pKey, CacheResult<@Nullable Void> pResult) {
-      pResult.setNotFound();
-    }
-
+    /**
+     * @see com.diamondq.cachly.CacheLoader#getInfo()
+     */
     @Override
     public CacheLoaderInfo<@Nullable Void> getInfo() {
       return mCacheLoaderInfo;
     }
+
+    /**
+     * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.AccessContext,
+     *      com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
+     */
+    @Override
+    public void load(Cache pCache, AccessContext pAccessContext, Key<@Nullable Void> pKey,
+      CacheResult<@Nullable Void> pResult) {
+      pResult.setNotFound();
+    }
+
   }
 
   public static CacheLoader<@Nullable Void> ofNull(Key<@Nullable Void> pKey, String pHelp) {
@@ -42,11 +51,11 @@ public class CacheLoaderFactoryHelper {
       }
 
       /**
-       * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.Key,
-       *      com.diamondq.cachly.CacheResult)
+       * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.AccessContext,
+       *      com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
        */
       @Override
-      public void load(Cache pCache, Key<V> pLoadKey, CacheResult<V> pResult) {
+      public void load(Cache pCache, AccessContext pAccessContext, Key<V> pLoadKey, CacheResult<V> pResult) {
         pProvider.accept(pCache, pLoadKey, pResult);
       }
     };
