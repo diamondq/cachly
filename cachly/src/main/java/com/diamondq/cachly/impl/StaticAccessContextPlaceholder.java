@@ -16,7 +16,7 @@ public class StaticAccessContextPlaceholder<A, O> extends AbstractKey<O> impleme
   private volatile @Nullable AccessContextSPI<A> mAccessContextSPI;
 
   public StaticAccessContextPlaceholder(String pKey, Class<A> pAccessContextValueClass, TypeReference<O> pType) {
-    super(pKey, pType, true);
+    super("{ac:" + pKey + "}", pType, true);
     mAccessContextValueClass = pAccessContextValueClass;
   }
 

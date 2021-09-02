@@ -16,7 +16,7 @@ public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> impleme
   private final Key<String> mDefaultKey;
 
   public StaticKeyPlaceholderWithDefault(String pKey, TypeReference<String> pType, Key<String> pDefaultKey) {
-    super(pKey, pType, true);
+    super("{" + pKey + "}", pType, true);
     mDefaultKey = pDefaultKey;
   }
 

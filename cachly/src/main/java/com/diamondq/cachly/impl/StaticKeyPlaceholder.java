@@ -9,7 +9,7 @@ import com.diamondq.common.TypeReference;
 public class StaticKeyPlaceholder<O> extends AbstractKey<O> implements KeyPlaceholderSPI<O> {
 
   public StaticKeyPlaceholder(String pKey, TypeReference<O> pType) {
-    super(pKey, pType, true);
+    super("{" + pKey + "}", pType, true);
   }
 
   @Override
