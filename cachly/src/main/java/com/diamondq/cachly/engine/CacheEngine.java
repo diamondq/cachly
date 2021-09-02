@@ -240,7 +240,7 @@ public class CacheEngine implements Cache {
 
       currentClass = currentClass.getSuperclass();
     }
-    return Collections.emptyList();
+    return result;
   }
 
   /**
