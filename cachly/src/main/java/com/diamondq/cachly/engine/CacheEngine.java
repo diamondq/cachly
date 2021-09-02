@@ -25,6 +25,7 @@ import com.diamondq.common.context.Context;
 import com.diamondq.common.context.ContextFactory;
 import com.diamondq.common.types.Types;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -62,6 +64,8 @@ public class CacheEngine implements Cache {
   private final AccessContext                        mEmptyAccessContext;
 
   private final Map<Class<?>, AccessContextSPI<?>>   mAccessContextSPIMap;
+
+  private final Map<Class<?>, Class<?>>              mAccessContextClassMap;
 
   @Inject
   public CacheEngine(ContextFactory pContextFactory, List<CachlyPathConfiguration> pPaths,
@@ -138,6 +142,7 @@ public class CacheEngine implements Cache {
     mSerializerNameByPath = serializerNameByPath;
     mAccessContextSPIMap = accessContextsSPIMap;
     mEmptyAccessContext = new AccessContextImpl(Collections.emptyMap());
+    mAccessContextClassMap = new ConcurrentHashMap<>();
 
     /* Setup the storage key and cache info */
 
@@ -181,10 +186,61 @@ public class CacheEngine implements Cache {
     if (localData != null)
       for (@Nullable
       Object accessData : localData) {
-        if (accessData != null)
-          data.put(accessData.getClass(), accessData);
+        if (accessData != null) {
+          Class<?> accessDataClass = accessData.getClass();
+          Class<?> acClass = mAccessContextClassMap.get(accessDataClass);
+          if (acClass == null) {
+
+            /* Pull apart the class and try to find a matching AccessContextSPI */
+
+            for (Class<?> testClass : getAllClasses(accessDataClass)) {
+              AccessContextSPI<?> spi = mAccessContextSPIMap.get(testClass);
+              if (spi != null) {
+                acClass = testClass;
+                break;
+              }
+            }
+            if (acClass == null)
+              acClass = accessDataClass;
+
+            mAccessContextClassMap.put(accessDataClass, acClass);
+          }
+          data.put(acClass, accessData);
+        }
       }
     return new AccessContextImpl(data);
+  }
+
+  /**
+   * Build a list of classes that make up this class. They must be sorted starting with the most specific and ending
+   * with the most generic
+   *
+   * @param pClass the starting class
+   * @return the list of classes
+   */
+  private List<Class<?>> getAllClasses(Class<?> pClass) {
+    Class<?> currentClass = pClass;
+    Set<Class<?>> seen = new HashSet<>();
+    List<Class<?>> result = new ArrayList<>();
+    while (currentClass != null) {
+      seen.add(currentClass);
+      result.add(currentClass);
+
+      /* Now look at the interfaces */
+
+      @NonNull
+      Class<?>[] interfaceClasses = currentClass.getInterfaces();
+      for (Class<?> ic : interfaceClasses) {
+        List<Class<?>> icChildren = getAllClasses(ic);
+        for (Class<?> icChild : icChildren) {
+          if (seen.add(icChild) == true)
+            result.add(icChild);
+        }
+      }
+
+      currentClass = currentClass.getSuperclass();
+    }
+    return Collections.emptyList();
   }
 
   /**
