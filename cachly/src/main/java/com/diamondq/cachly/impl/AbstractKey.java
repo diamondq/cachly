@@ -4,7 +4,6 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
-import com.diamondq.common.TypeReference;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -20,16 +19,13 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   protected final @NonNull KeySPI<Object>[] mParts;
 
-  protected final TypeReference<O>          mOutputTypeRef;
-
   protected final Type                      mOutputType;
 
   protected final boolean                   mHasPlaceholders;
 
-  public AbstractKey(String pKey, TypeReference<O> pOutputType, boolean pHasPlaceholders) {
+  public AbstractKey(String pKey, Type pOutputType, boolean pHasPlaceholders) {
     mKey = pKey;
-    mOutputTypeRef = pOutputType;
-    mOutputType = pOutputType.getType();
+    mOutputType = pOutputType;
     @SuppressWarnings({"null", "unchecked"})
     @NonNull
     KeySPI<Object>[] tempParts = new KeySPI[] {this};
@@ -51,14 +47,6 @@ public class AbstractKey<O> implements KeySPI<O> {
   @Override
   public String getKey() {
     return mKey;
-  }
-
-  /**
-   * @see com.diamondq.cachly.Key#getOutputTypeReference()
-   */
-  @Override
-  public TypeReference<O> getOutputTypeReference() {
-    return mOutputTypeRef;
   }
 
   /**

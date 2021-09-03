@@ -4,7 +4,6 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
-import com.diamondq.common.TypeReference;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -48,14 +47,6 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
   @Override
   public Type getOutputType() {
     return mPlaceholder.getOutputType();
-  }
-
-  /**
-   * @see com.diamondq.cachly.Key#getOutputTypeReference()
-   */
-  @Override
-  public TypeReference<O> getOutputTypeReference() {
-    return mPlaceholder.getOutputTypeReference();
   }
 
   /**
@@ -144,6 +135,10 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
   @Override
   public void storeKeyDetails(KeyDetails<O> pDetails) {
     mPlaceholder.storeKeyDetails(pDetails);
+  }
+
+  public KeySPI<O> getPlaceholder() {
+    return mPlaceholder;
   }
 
   /**

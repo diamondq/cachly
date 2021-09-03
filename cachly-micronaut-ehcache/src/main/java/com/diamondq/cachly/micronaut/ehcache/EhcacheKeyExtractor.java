@@ -2,6 +2,8 @@ package com.diamondq.cachly.micronaut.ehcache;
 
 import com.diamondq.cachly.micronaut.KeyExtractor;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
@@ -17,11 +19,12 @@ import org.ehcache.Cache;
 public class EhcacheKeyExtractor implements KeyExtractor {
 
   @Override
-  public @Nullable Stream<String> getKeys(Object pNativeCache) {
+  public <K, V> @Nullable Stream<Map.Entry<K, V>> getEntries(Object pNativeCache) {
     if (pNativeCache instanceof Cache) {
-      Cache<@NonNull ?, ?> cache = (Cache<@NonNull ?, ?>) pNativeCache;
+      @SuppressWarnings("unchecked")
+      Cache<@NonNull K, V> cache = (Cache<@NonNull K, V>) pNativeCache;
       return StreamSupport.stream(Spliterators.spliteratorUnknownSize(cache.iterator(), Spliterator.NONNULL), false) //
-        .map((entry) -> entry.getKey().toString());
+        .map((entry) -> new SimpleEntry<K, V>(entry.getKey(), entry.getValue()));
     }
     return null;
   }

@@ -1,108 +1,105 @@
 package com.diamondq.cachly.micronaut;
 
-import com.diamondq.cachly.AccessContext;
-import com.diamondq.cachly.CacheResult;
-import com.diamondq.cachly.engine.CacheStorage;
-import com.diamondq.cachly.impl.StaticCacheResult;
-import com.diamondq.cachly.spi.KeySPI;
+import com.diamondq.cachly.engine.AbstractSerializingCacheStorage;
+import com.diamondq.common.converters.ConverterManager;
 
 import java.time.Duration;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import io.micronaut.cache.SyncCache;
 import io.micronaut.context.annotation.EachBean;
-import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.type.Argument;
-import io.micronaut.core.type.DefaultArgument;
 
 @EachBean(SyncCache.class)
-public class MicronautCacheStorage implements CacheStorage {
+public class MicronautCacheStorage extends AbstractSerializingCacheStorage<SyncCache<?>, String, byte[]> {
 
-  private final SyncCache<?>           mCache;
+  private final List<KeyExtractor>  mKeyExtractors;
 
-  private final List<KeyExtractor>     mKeyExtractors;
-
-  private final List<ExpiryHandler>    mExpiryHandlers;
-
-  private final Argument<ValueName<?>> mValueNameArg;
+  private final List<ExpiryHandler> mExpiryHandlers;
 
   @Inject
-  public MicronautCacheStorage(SyncCache<?> pCache, List<KeyExtractor> pKeyExtractors,
-    List<ExpiryHandler> pExpiryHandlers) {
-    mCache = pCache;
+  public MicronautCacheStorage(ConverterManager pConverterManager, SyncCache<?> pCache,
+    List<KeyExtractor> pKeyExtractors, List<ExpiryHandler> pExpiryHandlers) {
+    super(pConverterManager, pCache, null, String.class, byte[].class, null, null, null, null, null, null);
     mKeyExtractors = pKeyExtractors;
     mExpiryHandlers = pExpiryHandlers;
-    mValueNameArg = new DefaultArgument<>(ValueName.class, null, AnnotationMetadata.EMPTY_METADATA);
+    init();
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#queryForKey(com.diamondq.cachly.AccessContext,
-   *      com.diamondq.cachly.spi.KeySPI)
+   * @see com.diamondq.cachly.engine.AbstractCommonCacheStorage#writeToCache(com.diamondq.cachly.engine.CommonKeyValuePair)
    */
   @Override
-  public <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey) {
-    Optional<ValueName<?>> opt = mCache.get(pKey.toString(), mValueNameArg);
-    if (opt.isPresent() == false)
-      return CacheResult.notFound();
-    ValueName<?> valueName = opt.get();
-    @SuppressWarnings("unchecked")
-    V result = (V) valueName.value;
-    return new StaticCacheResult<V>(result, true);
-  }
-
-  /**
-   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.AccessContext,
-   *      com.diamondq.cachly.spi.KeySPI, com.diamondq.cachly.CacheResult)
-   */
-  @Override
-  public <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
-    Duration overrideExpiry = pLoadedResult.getOverrideExpiry();
-    String key = pKey.toString();
-    if (overrideExpiry != null)
+  protected void writeToCache(SerializedKeyValuePair<SyncCache<?>, String, byte[]> pEntry) {
+    Duration expiresIn = pEntry.expiresIn;
+    if (expiresIn != null)
       for (ExpiryHandler eh : mExpiryHandlers)
-        eh.markForExpiry(key, overrideExpiry);
-    mCache.put(key, new ValueName<>(pLoadedResult.getValue(), pKey.getLastSerializerName()));
+        eh.markForExpiry(pEntry.serKey, expiresIn);
+    pEntry.cache.put(pEntry.serKey, Objects.requireNonNull(pEntry.serValue));
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.AccessContext,
-   *      com.diamondq.cachly.spi.KeySPI)
+   * @see com.diamondq.cachly.engine.AbstractCommonCacheStorage#readFromPrimaryCache(java.lang.Object)
    */
   @Override
-  public <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey) {
-    String key = pKey.toString();
-    for (ExpiryHandler eh : mExpiryHandlers)
-      eh.invalidate(key);
-    mCache.invalidate(key);
+  protected Optional<byte[]> readFromPrimaryCache(String pKey) {
+    return mPrimaryCache.get(pKey, byte[].class);
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll(com.diamondq.cachly.AccessContext)
+   * @see com.diamondq.cachly.engine.AbstractCommonCacheStorage#streamPrimary()
    */
   @Override
-  public void invalidateAll(AccessContext pAccessContext) {
-    for (ExpiryHandler eh : mExpiryHandlers)
-      eh.invalidateAll();
-    mCache.invalidateAll();
-  }
-
-  /**
-   * @see com.diamondq.cachly.engine.CacheStorage#streamKeys(com.diamondq.cachly.AccessContext)
-   */
-  @Override
-  public Stream<String> streamKeys(AccessContext pAccessContext) {
-    Object nativeCache = mCache.getNativeCache();
+  protected Stream<Entry<String, byte[]>> streamPrimary() {
+    Object nativeCache = mPrimaryCache.getNativeCache();
     for (KeyExtractor ke : mKeyExtractors) {
-      Stream<String> keys = ke.getKeys(nativeCache);
-      if (keys != null)
-        return keys;
+      Stream<Entry<String, Object>> entries = ke.getEntries(nativeCache);
+      if (entries != null)
+        return entries.map((entry) -> {
+          Object value = entry.getValue();
+          if (value instanceof byte[]) {
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            Entry<String, byte[]> b = (Entry) entry;
+            return b;
+          }
+          return new SimpleEntry<String, byte[]>(entry.getKey(), mConverterManager.convert(value, byte[].class));
+        });
     }
     throw new IllegalStateException(
       "The cache " + nativeCache.getClass().getName() + " is not able to be key iterated");
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.AbstractSerializingCacheStorage#streamMetaEntries()
+   */
+  @Override
+  protected Stream<Entry<String, byte[]>> streamMetaEntries() {
+    return streamPrimary();
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.AbstractSerializingCacheStorage#invalidate(java.lang.Object, java.lang.Object)
+   */
+  @Override
+  protected void invalidate(SyncCache<?> pCache, @Nullable String pKey) {
+    if (pKey == null) {
+      for (ExpiryHandler eh : mExpiryHandlers)
+        eh.invalidateAll();
+      pCache.invalidateAll();
+    }
+    else {
+      for (ExpiryHandler eh : mExpiryHandlers)
+        eh.invalidate(pKey);
+      pCache.invalidate(pKey);
+    }
   }
 
 }

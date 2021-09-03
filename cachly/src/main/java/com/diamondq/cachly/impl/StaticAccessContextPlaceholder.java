@@ -5,7 +5,8 @@ import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.spi.AccessContextPlaceholderSPI;
 import com.diamondq.cachly.spi.AccessContextSPI;
 import com.diamondq.cachly.spi.KeySPI;
-import com.diamondq.common.TypeReference;
+
+import java.lang.reflect.Type;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -15,7 +16,7 @@ public class StaticAccessContextPlaceholder<A, O> extends AbstractKey<O> impleme
 
   private volatile @Nullable AccessContextSPI<A> mAccessContextSPI;
 
-  public StaticAccessContextPlaceholder(String pKey, Class<A> pAccessContextValueClass, TypeReference<O> pType) {
+  public StaticAccessContextPlaceholder(String pKey, Class<A> pAccessContextValueClass, Type pType) {
     super("{ac:" + pKey + "}", pType, true);
     mAccessContextValueClass = pAccessContextValueClass;
   }

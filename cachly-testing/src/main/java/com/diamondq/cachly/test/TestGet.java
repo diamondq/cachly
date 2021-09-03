@@ -100,6 +100,9 @@ public class TestGet {
   @Test
   void test() {
     AccessContext ac = cache.createAccessContext(null);
+    // String allKeys =
+    // cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
+    // System.out.println(allKeys);
     String r = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r);
     String r2 = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
@@ -114,14 +117,16 @@ public class TestGet {
   @Test
   void keysTest() {
     AccessContext ac = cache.createAccessContext(null);
-    String emptyKeys = cache.streamKeys(ac).map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    String emptyKeys =
+      cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
     assertEquals("", emptyKeys);
 
     /* Grab some entries which will populate the cache */
 
     cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
 
-    String popKeys = cache.streamKeys(ac).map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    String popKeys =
+      cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
     assertEquals("__CacheEngine__,process-definitions,process-definitions/123", popKeys);
 
   }

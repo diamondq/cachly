@@ -4,11 +4,12 @@ import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
-import com.diamondq.common.TypeReference;
+
+import java.lang.reflect.Type;
 
 public class StaticKeyPlaceholder<O> extends AbstractKey<O> implements KeyPlaceholderSPI<O> {
 
-  public StaticKeyPlaceholder(String pKey, TypeReference<O> pType) {
+  public StaticKeyPlaceholder(String pKey, Type pType) {
     super("{" + pKey + "}", pType, true);
   }
 

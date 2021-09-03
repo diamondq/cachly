@@ -1,6 +1,6 @@
 package com.diamondq.cachly;
 
-import com.diamondq.common.TypeReference;
+import java.lang.reflect.Type;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -29,9 +29,16 @@ public interface Key<O> {
   public String getKey();
 
   /**
-   * Returns the TypeReference of the output type
+   * Returns the base keys of all the parts
    *
-   * @return the output TypeReference
+   * @return the full base key
    */
-  public TypeReference<O> getOutputTypeReference();
+  public String getFullBaseKey();
+
+  /**
+   * Returns the Type of the output type
+   *
+   * @return the output Type
+   */
+  public Type getOutputType();
 }

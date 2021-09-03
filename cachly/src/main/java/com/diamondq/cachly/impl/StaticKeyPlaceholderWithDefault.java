@@ -5,25 +5,32 @@ import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
-import com.diamondq.common.TypeReference;
 
+import java.lang.reflect.Type;
 import java.util.Objects;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> implements KeyPlaceholderSPI<String> {
 
-  private final Key<String> mDefaultKey;
+  private final KeySPI<String> mDefaultKey;
 
-  public StaticKeyPlaceholderWithDefault(String pKey, TypeReference<String> pType, Key<String> pDefaultKey) {
+  public StaticKeyPlaceholderWithDefault(String pKey, Type pType, Key<String> pDefaultKey) {
     super("{" + pKey + "}", pType, true);
-    mDefaultKey = pDefaultKey;
+    if (pDefaultKey instanceof KeySPI)
+      mDefaultKey = (KeySPI<String>) pDefaultKey;
+    else
+      throw new IllegalArgumentException("The default key must be a KeySPI");
   }
 
   @Override
   public KeySPI<String> resolveDefault(Cache pCache, AccessContext pAccessContext) {
     String cacheValue = pCache.get(pAccessContext, mDefaultKey);
     return new ResolvedKeyPlaceholder<>(this, cacheValue);
+  }
+
+  public KeySPI<String> getDefaultKey() {
+    return mDefaultKey;
   }
 
   /**

@@ -1,70 +1,90 @@
 package com.diamondq.cachly.engine;
 
-import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.CacheResult;
+import com.diamondq.cachly.Key;
 import com.diamondq.cachly.impl.StaticCacheResult;
-import com.diamondq.cachly.spi.KeySPI;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
-public class MemoryCacheStorage implements CacheStorage {
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-  private final ConcurrentMap<String, Object> mData;
+public class MemoryCacheStorage extends AbstractNonSerializingCacheStorage<String, MemoryStorageData> {
+
+  private final ConcurrentMap<String, MemoryStorageData> mData;
 
   public MemoryCacheStorage() {
+    super("", null);
     mData = new ConcurrentHashMap<>();
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#queryForKey(com.diamondq.cachly.AccessContext,
-   *      com.diamondq.cachly.spi.KeySPI)
+   * @see com.diamondq.cachly.engine.AbstractNonSerializingCacheStorage#serializeValue(com.diamondq.cachly.Key,
+   *      java.lang.Object)
    */
   @Override
-  public <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey) {
-    Object obj = mData.get(pKey.toString());
-    if (obj == null)
-      return CacheResult.notFound();
-    @SuppressWarnings("unchecked")
-    V v = (V) obj;
-    return new StaticCacheResult<V>(v, true);
+  protected MemoryStorageData serializeValue(Key<?> pKey, @Nullable Object pValue) {
+    return new MemoryStorageData(pKey, pValue);
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.AccessContext,
-   *      com.diamondq.cachly.spi.KeySPI, com.diamondq.cachly.CacheResult)
+   * @see com.diamondq.cachly.engine.AbstractNonSerializingCacheStorage#deserializeValue(java.lang.Object)
    */
   @Override
-  public <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
-    if (pLoadedResult.entryFound() == true)
-      mData.put(pKey.toString(), pLoadedResult.getValue());
+  protected Map.Entry<Key<?>, CacheResult<?>> deserializeValue(MemoryStorageData pValue) {
+    return new SimpleEntry<Key<?>, CacheResult<?>>(pValue.key,
+      new StaticCacheResult<@Nullable Object>(pValue.value, true));
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.AbstractCommonCacheStorage#writeToCache(com.diamondq.cachly.engine.CommonKeyValuePair)
+   */
+  @Override
+  protected void writeToCache(NonSerializedKeyValuePair<String, MemoryStorageData> pEntry) {
+    mData.put(pEntry.serKey, Objects.requireNonNull(pEntry.serValue));
+    if (pEntry.expiresIn != null)
+      throw new UnsupportedOperationException("Expiry is not yet supported for MemoryStorage");
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.AbstractCommonCacheStorage#readFromPrimaryCache(java.lang.Object)
+   */
+  @Override
+  protected Optional<MemoryStorageData> readFromPrimaryCache(String pKey) {
+    return Optional.ofNullable(mData.get(pKey));
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.AbstractCommonCacheStorage#invalidate(java.lang.Object, java.lang.Object)
+   */
+  @Override
+  protected void invalidate(String pCache, @Nullable String pKey) {
+    if (pKey == null)
+      mData.clear();
     else
-      mData.remove(pKey.toString());
+      mData.remove(pKey);
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.AccessContext,
-   *      com.diamondq.cachly.spi.KeySPI)
+   * @see com.diamondq.cachly.engine.AbstractCommonCacheStorage#streamPrimary()
    */
   @Override
-  public <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey) {
-    mData.remove(pKey.toString());
+  protected Stream<Map.Entry<String, MemoryStorageData>> streamPrimary() {
+    return mData.entrySet().stream();
   }
 
   /**
-   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll(com.diamondq.cachly.AccessContext)
+   * @see com.diamondq.cachly.engine.AbstractCommonCacheStorage#streamMetaEntries()
    */
   @Override
-  public void invalidateAll(AccessContext pAccessContext) {
-    mData.clear();
+  protected Stream<Entry<String, MemoryStorageData>> streamMetaEntries() {
+    return streamPrimary();
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.CacheStorage#streamKeys(com.diamondq.cachly.AccessContext)
-   */
-  @Override
-  public Stream<String> streamKeys(AccessContext pAccessContext) {
-    return mData.keySet().stream();
-  }
 }

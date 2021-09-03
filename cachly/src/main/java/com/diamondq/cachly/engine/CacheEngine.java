@@ -14,7 +14,6 @@ import com.diamondq.cachly.impl.KeyDetails;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
 import com.diamondq.cachly.impl.StaticAccessContextPlaceholder;
 import com.diamondq.cachly.impl.StaticCacheResult;
-import com.diamondq.cachly.impl.StaticKey;
 import com.diamondq.cachly.spi.AccessContextPlaceholderSPI;
 import com.diamondq.cachly.spi.AccessContextSPI;
 import com.diamondq.cachly.spi.BeanNameLocator;
@@ -23,7 +22,6 @@ import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.TypeReference;
 import com.diamondq.common.context.Context;
 import com.diamondq.common.context.ContextFactory;
-import com.diamondq.common.types.Types;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -721,29 +719,15 @@ public class CacheEngine implements Cache {
     return result;
   }
 
-  private Key<?> from(String pFullKey) {
-    @NonNull
-    String[] partStrs = pFullKey.split("/");
-    int partsLen = partStrs.length;
-    @SuppressWarnings({"unchecked", "null"})
-    @NonNull
-    KeySPI<Object>[] parts = new KeySPI[partsLen];
-    for (int i = 0; i < partsLen; i++)
-      parts[i] = new StaticKey<Object>(partStrs[i], Types.OBJECT);
-    return new CompositeKey<Object>(parts);
-  }
-
   /**
-   * @see com.diamondq.cachly.Cache#streamKeys(com.diamondq.cachly.AccessContext)
+   * @see com.diamondq.cachly.Cache#streamEntries(com.diamondq.cachly.AccessContext)
    */
   @Override
-  public Stream<Key<?>> streamKeys(AccessContext pAccessContext) {
+  public Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext) {
     return //
     /* Get the distinct list of CacheStorages */
     mCacheStorageByPath.values().stream().distinct() //
       /* Expand each into a stream of string keys */
-      .flatMap((cs) -> cs.streamKeys(pAccessContext))
-      /* Convert the strings to Keys */
-      .map((strKey) -> from(strKey));
+      .flatMap((cs) -> cs.streamEntries(pAccessContext));
   }
 }

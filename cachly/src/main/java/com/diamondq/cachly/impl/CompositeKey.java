@@ -6,7 +6,6 @@ import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
-import com.diamondq.common.TypeReference;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -120,14 +119,6 @@ public class CompositeKey<O> implements KeySPI<O> {
   @Override
   public Type getOutputType() {
     return mLast.getOutputType();
-  }
-
-  /**
-   * @see com.diamondq.cachly.Key#getOutputTypeReference()
-   */
-  @Override
-  public TypeReference<O> getOutputTypeReference() {
-    return mLast.getOutputTypeReference();
   }
 
   /**

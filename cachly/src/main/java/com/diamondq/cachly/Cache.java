@@ -285,11 +285,11 @@ public interface Cache {
   public Map<String, CacheLoaderInfo<?>> getCacheLoadersByPath();
 
   /**
-   * Returns a stream of Keys for everything stored in the cache
+   * Returns a stream of entries for everything stored in the cache
    *
    * @param pAccessContext the access context
    * @return the stream
    */
-  public Stream<Key<?>> streamKeys(AccessContext pAccessContext);
+  public Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext);
 
 }

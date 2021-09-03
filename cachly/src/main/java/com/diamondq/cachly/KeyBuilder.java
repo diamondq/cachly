@@ -10,7 +10,7 @@ import com.diamondq.common.TypeReference;
 public class KeyBuilder {
 
   public static <O> Key<O> of(String pTextKey, TypeReference<O> pOutputType) {
-    return new StaticKey<O>(pTextKey, pOutputType);
+    return new StaticKey<O>(pTextKey, pOutputType.getType());
   }
 
   public static <O> Key<O> from(Key<O> pKey1) {
@@ -27,15 +27,16 @@ public class KeyBuilder {
 
   public static <A, O> AccessContextPlaceholder<O> accessContext(String pAccessContextKey,
     Class<A> pAccessContextValueClass, TypeReference<O> pOutputType) {
-    return new StaticAccessContextPlaceholder<A, O>(pAccessContextKey, pAccessContextValueClass, pOutputType);
+    return new StaticAccessContextPlaceholder<A, O>(pAccessContextKey, pAccessContextValueClass, pOutputType.getType());
   }
 
   public static <O> KeyPlaceholder<O> placeholder(String pPlaceholderKey, TypeReference<O> pOutputType) {
-    return new StaticKeyPlaceholder<O>(pPlaceholderKey, pOutputType);
+    return new StaticKeyPlaceholder<O>(pPlaceholderKey, pOutputType.getType());
   }
 
   public static KeyPlaceholder<String> placeholder(String pPlaceholderKey, TypeReference<String> pOutputType,
     Key<String> pDefaultKey) {
-    return new StaticKeyPlaceholderWithDefault(pPlaceholderKey, pOutputType, pDefaultKey);
+    return new StaticKeyPlaceholderWithDefault(pPlaceholderKey, pOutputType.getType(), pDefaultKey);
   }
+
 }

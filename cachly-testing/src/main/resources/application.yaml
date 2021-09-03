@@ -23,7 +23,6 @@ cachly:
       serializer: kryo
   ehcache:
     my-cache:
-      serializer: true
       disk:
         persist: true
 ehcache:
@@ -31,6 +30,5 @@ ehcache:
   caches:
     my-cache:
       enabled: true
-      value-type: com.diamondq.cachly.micronaut.ValueName
       disk:
         max-size: 10Mb

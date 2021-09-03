@@ -1,5 +1,6 @@
 package com.diamondq.cachly.micronaut;
 
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -12,6 +13,6 @@ public interface KeyExtractor {
    * @param pNativeCache the native cache (type is unknown at this point)
    * @return the list of keys or null if keys cannot be extracted
    */
-  public @Nullable Stream<String> getKeys(Object pNativeCache);
+  public <K, V> @Nullable Stream<Map.Entry<K, V>> getEntries(Object pNativeCache);
 
 }

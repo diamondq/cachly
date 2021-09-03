@@ -113,14 +113,16 @@ public class TestGetIfPresent {
   @Test
   void keysTest() {
     AccessContext ac = cache.createAccessContext(null);
-    String emptyKeys = cache.streamKeys(ac).map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    String emptyKeys =
+      cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
     assertEquals("", emptyKeys);
 
     /* Grab some entries which will populate the cache */
 
     cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
 
-    String popKeys = cache.streamKeys(ac).map((k) -> k.toString()).sorted().collect(Collectors.joining(","));
+    String popKeys =
+      cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
     assertEquals("__CacheEngine__,ifpresent-process-definitions,ifpresent-process-definitions/123", popKeys);
 
   }
