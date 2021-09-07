@@ -1,5 +1,6 @@
 package com.diamondq.cachly.micronaut.ehcache;
 
+import com.diamondq.cachly.engine.MemoryStorageData;
 import com.diamondq.cachly.micronaut.ehcache.CachlyEhcacheConfiguration.CachlyDiskTieredCacheConfiguration;
 import com.diamondq.common.Holder;
 
@@ -97,13 +98,7 @@ public class CachlyEhcacheCacheFactory {
     Optional<CachlyEhcacheConfiguration> cachlyConfigOpt =
       pApplicationContext.findBean(CachlyEhcacheConfiguration.class, Qualifiers.byName(configuration.getName()));
 
-    /* Start the cache configuration builder */
-
-    @SuppressWarnings("unchecked")
-    CacheConfigurationBuilder<Object, Object> builder =
-      (CacheConfigurationBuilder<Object, Object>) configuration.getBuilder();
-
-    /* If there is a Cachly config... */
+    /* Are we going to be performing serialization */
 
     boolean performSerialization = true;
     if (cachlyConfigOpt.isPresent()) {
@@ -112,6 +107,28 @@ public class CachlyEhcacheCacheFactory {
       Boolean configSerializer = cachlyConfig.getSerializer();
       if (configSerializer != null)
         performSerialization = configSerializer;
+    }
+
+    /* If the value type is still the default, then change it to match whether we're serializing */
+
+    Class<?> existingValueType = configuration.getValueType();
+    if (existingValueType == EhcacheConfiguration.DEFAULT_VALUE_TYPE) {
+      if (performSerialization)
+        configuration.setValueType(byte.class);
+      else
+        configuration.setValueType(MemoryStorageData.class);
+    }
+
+    /* Start the cache configuration builder */
+
+    @SuppressWarnings("unchecked")
+    CacheConfigurationBuilder<Object, Object> builder =
+      (CacheConfigurationBuilder<Object, Object>) configuration.getBuilder();
+
+    /* If there is a Cachly config... */
+
+    if (cachlyConfigOpt.isPresent()) {
+      CachlyEhcacheConfiguration cachlyConfig = cachlyConfigOpt.get();
 
       /* Get the list of resource pools */
 
