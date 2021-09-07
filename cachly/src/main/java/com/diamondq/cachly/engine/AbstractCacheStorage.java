@@ -174,189 +174,191 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
    * Query the underlying cache to retrieve the meta data info
    */
   protected void init() {
-    Map<Short, ByteBuffer> temporaryKeys = new HashMap<>();
-    Map<Short, ByteBuffer> temporaryTypes = new HashMap<>();
-    streamMetaEntries().forEach((entry) -> {
-      SER_KEY key = entry.getKey();
-      String keyStr = (mKeyDeserializer != null ? mKeyDeserializer.apply(key) : (String) key);
-      if (keyStr.startsWith(mStringPrefix)) {
-        short id = Short.parseShort(keyStr.substring(mStringPrefixLen));
-        Object value = entry.getValue();
-        ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
+    if (mSerializeValue) {
+      Map<Short, ByteBuffer> temporaryKeys = new HashMap<>();
+      Map<Short, ByteBuffer> temporaryTypes = new HashMap<>();
+      streamMetaEntries().forEach((entry) -> {
+        SER_KEY key = entry.getKey();
+        String keyStr = (mKeyDeserializer != null ? mKeyDeserializer.apply(key) : (String) key);
+        if (keyStr.startsWith(mStringPrefix)) {
+          short id = Short.parseShort(keyStr.substring(mStringPrefixLen));
+          Object value = entry.getValue();
+          ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
 
-        /* The contents of a String is just the UTF-8 bytes */
+          /* The contents of a String is just the UTF-8 bytes */
 
-        String valueStr = new String(valueBuffer.array(), StandardCharsets.UTF_8);
-        mStringToShort.put(valueStr, id);
-        mShortToString.put(id, valueStr);
-        if (id > mStringCounter.get())
-          mStringCounter.set(id);
-      }
-      else if (keyStr.startsWith(mTypePrefix)) {
-        short id = Short.parseShort(keyStr.substring(mTypePrefixLen));
-        Object value = entry.getValue();
-        ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
-
-        /* The type buffer starts with a type identifier */
-
-        int typeType = valueBuffer.get();
-        Type type;
-        if (typeType == TYPE_CLASS) {
-
-          /* If it's a CLASS type, then it's just the full classname */
-
-          String className = StandardCharsets.UTF_8.decode(valueBuffer.slice()).toString();
-          try {
-            type = ClassUtils.getClass(className);
-          }
-          catch (ClassNotFoundException ex) {
-            throw new IllegalArgumentException("Unrecognized class (" + className + ")", ex);
-          }
+          String valueStr = new String(valueBuffer.array(), StandardCharsets.UTF_8);
+          mStringToShort.put(valueStr, id);
+          mShortToString.put(id, valueStr);
+          if (id > mStringCounter.get())
+            mStringCounter.set(id);
         }
-        else {
-          temporaryTypes.put(id, valueBuffer);
+        else if (keyStr.startsWith(mTypePrefix)) {
+          short id = Short.parseShort(keyStr.substring(mTypePrefixLen));
+          Object value = entry.getValue();
+          ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
+
+          /* The type buffer starts with a type identifier */
+
+          int typeType = valueBuffer.get();
+          Type type;
+          if (typeType == TYPE_CLASS) {
+
+            /* If it's a CLASS type, then it's just the full classname */
+
+            String className = StandardCharsets.UTF_8.decode(valueBuffer.slice()).toString();
+            try {
+              type = ClassUtils.getClass(className);
+            }
+            catch (ClassNotFoundException ex) {
+              throw new IllegalArgumentException("Unrecognized class (" + className + ")", ex);
+            }
+          }
+          else {
+            temporaryTypes.put(id, valueBuffer);
+            return;
+          }
+          mShortToType.put(id, type);
+          if (id > mTypeCounter.get())
+            mTypeCounter.set(id);
+        }
+        else if (keyStr.startsWith(mKeyPrefix)) {
+          short id = Short.parseShort(keyStr.substring(mKeyPrefixLen));
+          Object value = entry.getValue();
+          ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
+
+          /*
+           * Because all keys are being read in sequentially, we may not have the type entries needed to resolve the key
+           * yet. Therefore, just remember it, and do it later
+           */
+
+          temporaryKeys.put(id, valueBuffer);
+        }
+        else
           return;
-        }
-        mShortToType.put(id, type);
-        if (id > mTypeCounter.get())
-          mTypeCounter.set(id);
-      }
-      else if (keyStr.startsWith(mKeyPrefix)) {
-        short id = Short.parseShort(keyStr.substring(mKeyPrefixLen));
-        Object value = entry.getValue();
-        ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
+      });
 
-        /*
-         * Because all keys are being read in sequentially, we may not have the type entries needed to resolve the key
-         * yet. Therefore, just remember it, and do it later
-         */
+      /* Handle all the saved types. NOTE: Again, due to ordering, this list may need to be processed multiple times */
 
-        temporaryKeys.put(id, valueBuffer);
-      }
-      else
-        return;
-    });
+      Map<Short, ByteBuffer> currentTypes = temporaryTypes;
+      while (currentTypes.isEmpty() == false) {
+        Map<Short, ByteBuffer> delayed = new HashMap<>();
+        TemporaryTypeLoop: for (Map.Entry<Short, ByteBuffer> entry : currentTypes.entrySet()) {
+          short id = entry.getKey();
+          ByteBuffer valueBuffer = entry.getValue();
+          valueBuffer.rewind();
 
-    /* Handle all the saved types. NOTE: Again, due to ordering, this list may need to be processed multiple times */
+          /* The type buffer starts with a type identifier */
 
-    Map<Short, ByteBuffer> currentTypes = temporaryTypes;
-    while (currentTypes.isEmpty() == false) {
-      Map<Short, ByteBuffer> delayed = new HashMap<>();
-      TemporaryTypeLoop: for (Map.Entry<Short, ByteBuffer> entry : currentTypes.entrySet()) {
-        short id = entry.getKey();
-        ByteBuffer valueBuffer = entry.getValue();
-        valueBuffer.rewind();
+          int typeType = valueBuffer.get();
+          Type type;
+          if (typeType == TYPE_PARAMETERIZED) {
 
-        /* The type buffer starts with a type identifier */
+            /* Check if the owner and raw types are available */
 
-        int typeType = valueBuffer.get();
-        Type type;
-        if (typeType == TYPE_PARAMETERIZED) {
+            short ownerTypeId = valueBuffer.getShort();
+            short rawTypeId = valueBuffer.getShort();
+            if (mShortToType.containsKey(ownerTypeId) == false) {
+              delayed.put(id, valueBuffer);
+              continue;
+            }
+            if (mShortToType.containsKey(rawTypeId) == false) {
+              delayed.put(id, valueBuffer);
+              continue;
+            }
 
-          /* Check if the owner and raw types are available */
-
-          short ownerTypeId = valueBuffer.getShort();
-          short rawTypeId = valueBuffer.getShort();
-          if (mShortToType.containsKey(ownerTypeId) == false) {
-            delayed.put(id, valueBuffer);
-            continue;
+            Type ownerType = decompressType(ownerTypeId);
+            Class<?> rawType = (Class<?>) Objects.requireNonNull(decompressType(rawTypeId));
+            short actualTypeArgumentsLen = valueBuffer.getShort();
+            @SuppressWarnings("null")
+            @NonNull
+            Type @NonNull [] actualTypeArguments = new Type[actualTypeArgumentsLen];
+            for (short i = 0; i < actualTypeArgumentsLen; i++) {
+              short actualTypeId = valueBuffer.getShort();
+              if (mShortToType.containsKey(actualTypeId) == false) {
+                delayed.put(id, valueBuffer);
+                continue TemporaryTypeLoop;
+              }
+              actualTypeArguments[i] = Objects.requireNonNull(decompressType(actualTypeId));
+            }
+            if (ownerType != null)
+              type = TypeUtils.parameterizeWithOwner(ownerType, rawType, actualTypeArguments);
+            else
+              type = TypeUtils.parameterize(rawType, actualTypeArguments);
           }
-          if (mShortToType.containsKey(rawTypeId) == false) {
-            delayed.put(id, valueBuffer);
-            continue;
-          }
-
-          Type ownerType = decompressType(ownerTypeId);
-          Class<?> rawType = (Class<?>) Objects.requireNonNull(decompressType(rawTypeId));
-          short actualTypeArgumentsLen = valueBuffer.getShort();
-          @SuppressWarnings("null")
-          @NonNull
-          Type @NonNull [] actualTypeArguments = new Type[actualTypeArgumentsLen];
-          for (short i = 0; i < actualTypeArgumentsLen; i++) {
-            short actualTypeId = valueBuffer.getShort();
-            if (mShortToType.containsKey(actualTypeId) == false) {
+          else if (typeType == TYPE_GENERIC_ARRAY) {
+            short gaTypeId = valueBuffer.getShort();
+            if (mShortToType.containsKey(gaTypeId) == false) {
               delayed.put(id, valueBuffer);
               continue TemporaryTypeLoop;
             }
-            actualTypeArguments[i] = Objects.requireNonNull(decompressType(actualTypeId));
+            Type gaType = Objects.requireNonNull(decompressType(gaTypeId));
+            type = TypeUtils.genericArrayType(gaType);
           }
-          if (ownerType != null)
-            type = TypeUtils.parameterizeWithOwner(ownerType, rawType, actualTypeArguments);
+          else if (typeType == TYPE_VARIABLE) {
+            throw new UnsupportedOperationException();
+          }
+          else if (typeType == TYPE_WILDCARD) {
+            short lowerBoundsLen = valueBuffer.getShort();
+            @SuppressWarnings("null")
+            @NonNull
+            Type @Nullable [] lowerBounds = lowerBoundsLen == 0 ? null : new Type[lowerBoundsLen];
+            short upperBoundsLen = valueBuffer.getShort();
+            @SuppressWarnings("null")
+            @NonNull
+            Type @Nullable [] upperBounds = upperBoundsLen == 0 ? null : new Type[lowerBoundsLen];
+            if ((lowerBoundsLen > 0) && (lowerBounds != null))
+              for (short i = 0; i < lowerBoundsLen; i++) {
+                short lowerBoundsTypeId = valueBuffer.getShort();
+                if (mShortToType.containsKey(lowerBoundsTypeId) == false) {
+                  delayed.put(id, valueBuffer);
+                  continue TemporaryTypeLoop;
+                }
+                lowerBounds[i] = Objects.requireNonNull(decompressType(lowerBoundsTypeId));
+              }
+            if ((upperBoundsLen > 0) && (upperBounds != null))
+              for (short i = 0; i < upperBoundsLen; i++) {
+                short upperBoundsTypeId = valueBuffer.getShort();
+                if (mShortToType.containsKey(upperBoundsTypeId) == false) {
+                  delayed.put(id, valueBuffer);
+                  continue TemporaryTypeLoop;
+                }
+                upperBounds[i] = Objects.requireNonNull(decompressType(upperBoundsTypeId));
+              }
+            type = TypeUtils.wildcardType().withLowerBounds(lowerBounds).withUpperBounds(upperBounds).build();
+          }
           else
-            type = TypeUtils.parameterize(rawType, actualTypeArguments);
+            throw new IllegalArgumentException("Unrecognized type (" + String.valueOf(typeType) + ")");
+          mTypeToShort.put(type, id);
+          mShortToType.put(id, type);
+          if (id > mTypeCounter.get())
+            mTypeCounter.set(id);
         }
-        else if (typeType == TYPE_GENERIC_ARRAY) {
-          short gaTypeId = valueBuffer.getShort();
-          if (mShortToType.containsKey(gaTypeId) == false) {
-            delayed.put(id, valueBuffer);
-            continue TemporaryTypeLoop;
-          }
-          Type gaType = Objects.requireNonNull(decompressType(gaTypeId));
-          type = TypeUtils.genericArrayType(gaType);
-        }
-        else if (typeType == TYPE_VARIABLE) {
-          throw new UnsupportedOperationException();
-        }
-        else if (typeType == TYPE_WILDCARD) {
-          short lowerBoundsLen = valueBuffer.getShort();
-          @SuppressWarnings("null")
-          @NonNull
-          Type @Nullable [] lowerBounds = lowerBoundsLen == 0 ? null : new Type[lowerBoundsLen];
-          short upperBoundsLen = valueBuffer.getShort();
-          @SuppressWarnings("null")
-          @NonNull
-          Type @Nullable [] upperBounds = upperBoundsLen == 0 ? null : new Type[lowerBoundsLen];
-          if ((lowerBoundsLen > 0) && (lowerBounds != null))
-            for (short i = 0; i < lowerBoundsLen; i++) {
-              short lowerBoundsTypeId = valueBuffer.getShort();
-              if (mShortToType.containsKey(lowerBoundsTypeId) == false) {
-                delayed.put(id, valueBuffer);
-                continue TemporaryTypeLoop;
-              }
-              lowerBounds[i] = Objects.requireNonNull(decompressType(lowerBoundsTypeId));
-            }
-          if ((upperBoundsLen > 0) && (upperBounds != null))
-            for (short i = 0; i < upperBoundsLen; i++) {
-              short upperBoundsTypeId = valueBuffer.getShort();
-              if (mShortToType.containsKey(upperBoundsTypeId) == false) {
-                delayed.put(id, valueBuffer);
-                continue TemporaryTypeLoop;
-              }
-              upperBounds[i] = Objects.requireNonNull(decompressType(upperBoundsTypeId));
-            }
-          type = TypeUtils.wildcardType().withLowerBounds(lowerBounds).withUpperBounds(upperBounds).build();
-        }
-        else
-          throw new IllegalArgumentException("Unrecognized type (" + String.valueOf(typeType) + ")");
-        mTypeToShort.put(type, id);
-        mShortToType.put(id, type);
-        if (id > mTypeCounter.get())
-          mTypeCounter.set(id);
+        if (currentTypes.size() == delayed.size())
+          throw new IllegalStateException("Unable to proceed decoding types");
+        currentTypes = delayed;
       }
-      if (currentTypes.size() == delayed.size())
-        throw new IllegalStateException("Unable to proceed decoding types");
-      currentTypes = delayed;
-    }
 
-    /* Handle all the saved keys */
+      /* Handle all the saved keys */
 
-    for (Map.Entry<Short, ByteBuffer> entry : temporaryKeys.entrySet()) {
-      short id = entry.getKey();
-      ByteBuffer valueBuffer = entry.getValue();
-      valueBuffer.rewind();
-      int partLen = valueBuffer.limit() / 4;
-      @SuppressWarnings("unchecked")
-      KeySPI<Object> parts[] = new KeySPI[partLen];
-      for (int i = 0; i < partLen; i++) {
-        Type keyType = Objects.requireNonNull(decompressType(valueBuffer.getShort()));
-        String keyBase = Objects.requireNonNull(decompressString(valueBuffer.getShort()));
-        parts[i] = new StaticKey<>(keyBase, keyType);
+      for (Map.Entry<Short, ByteBuffer> entry : temporaryKeys.entrySet()) {
+        short id = entry.getKey();
+        ByteBuffer valueBuffer = entry.getValue();
+        valueBuffer.rewind();
+        int partLen = valueBuffer.limit() / 4;
+        @SuppressWarnings("unchecked")
+        KeySPI<Object> parts[] = new KeySPI[partLen];
+        for (int i = 0; i < partLen; i++) {
+          Type keyType = Objects.requireNonNull(decompressType(valueBuffer.getShort()));
+          String keyBase = Objects.requireNonNull(decompressString(valueBuffer.getShort()));
+          parts[i] = new StaticKey<>(keyBase, keyType);
+        }
+        Key<?> shortKey = new CompositeKey<Object>(parts);
+        mKeyToShort.put(shortKey, id);
+        mShortToKey.put(id, shortKey);
+        if (id > mKeyCounter.get())
+          mKeyCounter.set(id);
       }
-      Key<?> shortKey = new CompositeKey<Object>(parts);
-      mKeyToShort.put(shortKey, id);
-      mShortToKey.put(id, shortKey);
-      if (id > mKeyCounter.get())
-        mKeyCounter.set(id);
     }
   }
 
@@ -373,7 +375,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
    * @param pKey the key
    * @return the optional value
    */
-  protected abstract Optional<Object> readFromPrimaryCache(SER_KEY pKey);
+  protected abstract Optional<@NonNull ?> readFromPrimaryCache(SER_KEY pKey);
 
   /**
    * Invalidate entries
@@ -976,7 +978,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
 
     /* Query the underlying primary cache */
 
-    Optional<Object> valueOpt = readFromPrimaryCache(serKey);
+    Optional<@NonNull ?> valueOpt = readFromPrimaryCache(serKey);
 
     /* If it's not found, then we're done */
 
