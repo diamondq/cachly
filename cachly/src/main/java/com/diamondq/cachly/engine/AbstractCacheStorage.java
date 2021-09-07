@@ -165,8 +165,9 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
     mSerializeValue = pSerializeValue;
 
     if (mSerializeValue == false) {
-      if (mSerValueClass.equals(Object.class) == false)
-        throw new IllegalArgumentException("Only a SER_VALUE of Object.class is supported for non-serializing caches");
+      if (mSerValueClass.equals(MemoryStorageData.class) == false)
+        throw new IllegalArgumentException(
+          "Only a SER_VALUE of MemoryStorageData.class is supported for non-serializing caches");
     }
   }
 
