@@ -114,7 +114,7 @@ public class CachlyEhcacheCacheFactory {
     Class<?> existingValueType = configuration.getValueType();
     if (existingValueType == EhcacheConfiguration.DEFAULT_VALUE_TYPE) {
       if (performSerialization)
-        configuration.setValueType(byte.class);
+        configuration.setValueType(byte[].class);
       else
         configuration.setValueType(MemoryStorageData.class);
     }
