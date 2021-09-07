@@ -2,6 +2,7 @@ package com.diamondq.cachly.micronaut;
 
 import com.diamondq.cachly.engine.AbstractCacheStorage;
 import com.diamondq.cachly.engine.CommonKeyValuePair;
+import com.diamondq.cachly.engine.MemoryStorageData;
 import com.diamondq.common.converters.ConverterManager;
 
 import java.time.Duration;
@@ -30,11 +31,37 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
   @Inject
   public MicronautCacheStorage(ConverterManager pConverterManager, SyncCache<?> pCache,
     List<KeyExtractor> pKeyExtractors, List<ExpiryHandler> pExpiryHandlers) {
-    super(pConverterManager, pCache, null, String.class,
+    super(pConverterManager,
+
+      /* The cache object */
+
+      pCache,
+
+      /* There is no meta cache. Metadata is stored in the primary cache */
+
+      null,
+
+      /* The key type */
+
+      String.class,
+
+      /* The value type is either a byte[] if we're serializing or a MemoryStorageData if we're not */
+
       (pCache instanceof CachlySyncCache
-        ? (((CachlySyncCache) pCache).getPerformSerialization() == true ? byte[].class : Object.class) : Object.class),
-      (pCache instanceof CachlySyncCache ? ((CachlySyncCache) pCache).getPerformSerialization() : true), null, null,
-      null, null, null, null);
+        ? (((CachlySyncCache) pCache).getPerformSerialization() == true ? byte[].class : MemoryStorageData.class)
+        : MemoryStorageData.class),
+
+      /* Indicate whether we're serializing */
+
+      (pCache instanceof CachlySyncCache ? ((CachlySyncCache) pCache).getPerformSerialization() : true),
+
+      /* Default string, type, key, value prefixes */
+
+      null, null, null, null,
+
+      /* Default key serializers/deserializers, since the key is a String */
+
+      null, null);
     mKeyExtractors = pKeyExtractors;
     mExpiryHandlers = pExpiryHandlers;
     init();
@@ -56,8 +83,8 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
    * @see com.diamondq.cachly.engine.AbstractCacheStorage#readFromPrimaryCache(java.lang.Object)
    */
   @Override
-  protected Optional<Object> readFromPrimaryCache(String pKey) {
-    return mPrimaryCache.get(pKey, Object.class);
+  protected Optional<@NonNull ?> readFromPrimaryCache(String pKey) {
+    return mPrimaryCache.get(pKey, mSerValueClass);
   }
 
   /**
@@ -71,11 +98,25 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
       if (entries != null)
         return entries.map((entry) -> {
           Object value = entry.getValue();
-          if (value instanceof byte[]) {
+          if (mSerializeValue) {
+
+            /* Short cut if the data is a byte[] */
+
+            if (value instanceof byte[]) {
+              Entry<String, Object> b = entry;
+              return b;
+            }
+            return new SimpleEntry<String, Object>(entry.getKey(), mConverterManager.convert(value, byte[].class));
+          }
+          /* Short cut if the data is a MemoryStorageData */
+
+          if (value instanceof MemoryStorageData) {
             Entry<String, Object> b = entry;
             return b;
           }
-          return new SimpleEntry<String, Object>(entry.getKey(), mConverterManager.convert(value, byte[].class));
+
+          return new SimpleEntry<String, Object>(entry.getKey(),
+            mConverterManager.convert(value, MemoryStorageData.class));
         });
     }
     throw new IllegalStateException(
