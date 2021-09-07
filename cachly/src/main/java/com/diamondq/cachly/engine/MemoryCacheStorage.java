@@ -18,7 +18,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
   private final ConcurrentMap<@NonNull String, @NonNull Object> mData;
 
   public MemoryCacheStorage(ConverterManager pConverterManager) {
-    super(pConverterManager, "", "", String.class, Object.class, false, null, null, null, null, null, null);
+    super(pConverterManager, "", "", String.class, MemoryStorageData.class, false, null, null, null, null, null, null);
     mData = new ConcurrentHashMap<>();
   }
 
@@ -36,7 +36,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
    * @see com.diamondq.cachly.engine.AbstractCacheStorage#readFromPrimaryCache(java.lang.Object)
    */
   @Override
-  protected Optional<Object> readFromPrimaryCache(String pKey) {
+  protected Optional<@NonNull ?> readFromPrimaryCache(String pKey) {
     return Optional.ofNullable(mData.get(pKey));
   }
 
