@@ -22,6 +22,7 @@ import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.TypeReference;
 import com.diamondq.common.context.Context;
 import com.diamondq.common.context.ContextFactory;
+import com.diamondq.common.converters.ConverterManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,9 +67,9 @@ public class CacheEngine implements Cache {
   private final Map<Class<?>, Class<?>>              mAccessContextClassMap;
 
   @Inject
-  public CacheEngine(ContextFactory pContextFactory, List<CachlyPathConfiguration> pPaths,
-    List<BeanNameLocator> pNameLocators, List<CacheStorage> pCacheStorages, List<CacheLoader<?>> pCacheLoaders,
-    List<AccessContextSPI<?>> pAccessContextSPIs) {
+  public CacheEngine(ContextFactory pContextFactory, ConverterManager pConverterManager,
+    List<CachlyPathConfiguration> pPaths, List<BeanNameLocator> pNameLocators, List<CacheStorage> pCacheStorages,
+    List<CacheLoader<?>> pCacheLoaders, List<AccessContextSPI<?>> pAccessContextSPIs) {
 
     mContextFactory = pContextFactory;
 
@@ -111,7 +112,7 @@ public class CacheEngine implements Cache {
     }
 
     if (storagesByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME) == false) {
-      storagesByPath.put(CacheInfoLoader.CACHE_INFO_NAME, new MemoryCacheStorage());
+      storagesByPath.put(CacheInfoLoader.CACHE_INFO_NAME, new MemoryCacheStorage(pConverterManager));
     }
     if (serializerNameByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME) == false) {
       serializerNameByPath.put(CacheInfoLoader.CACHE_INFO_NAME, DEFAULT_SERIALIZER);

@@ -42,7 +42,7 @@ import org.apache.commons.lang3.reflect.TypeUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER_VALUE> implements CacheStorage {
+public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements CacheStorage {
 
   public static final byte  SERIALIZATION_VERSION          = 1;
 
@@ -88,7 +88,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
 
   protected final Class<SER_KEY>                      mSerKeyClass;
 
-  protected final Class<SER_VALUE>                    mSerValueClass;
+  protected final Class<@NonNull ?>                   mSerValueClass;
 
   protected final ConcurrentMap<String, Short>        mStringToShort;
 
@@ -134,15 +134,15 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
   protected boolean                                   mSerializeValue;
 
   public AbstractCacheStorage(ConverterManager pConverterManager, CACHE pPrimaryCache, @Nullable CACHE pMetaCache,
-    Class<SER_KEY> pSerKeyClass, Class<SER_VALUE> pSerValueClass, boolean pSerializeValue,
+    Class<SER_KEY> pSerKeyClass, Class<@NonNull ?> pSerValueClass, boolean pSerializeValue,
     @Nullable String pStringPrefix, @Nullable String pTypePrefix, @Nullable String pKeyPrefix,
     @Nullable String pValuePrefix, @Nullable Function<String, @NonNull SER_KEY> pKeySerializer,
     @Nullable Function<@NonNull SER_KEY, String> pKeyDeserializer) {
+    mConverterManager = pConverterManager;
     mPrimaryCache = pPrimaryCache;
     mMetaCache = pMetaCache;
     mKeySerializer = pKeySerializer;
     mKeyDeserializer = pKeyDeserializer;
-    mConverterManager = pConverterManager;
     mSerKeyClass = pSerKeyClass;
     mSerValueClass = pSerValueClass;
     mStringToShort = new ConcurrentHashMap<>();
@@ -181,7 +181,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
       String keyStr = (mKeyDeserializer != null ? mKeyDeserializer.apply(key) : (String) key);
       if (keyStr.startsWith(mStringPrefix)) {
         short id = Short.parseShort(keyStr.substring(mStringPrefixLen));
-        SER_VALUE value = entry.getValue();
+        Object value = entry.getValue();
         ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
 
         /* The contents of a String is just the UTF-8 bytes */
@@ -194,7 +194,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
       }
       else if (keyStr.startsWith(mTypePrefix)) {
         short id = Short.parseShort(keyStr.substring(mTypePrefixLen));
-        SER_VALUE value = entry.getValue();
+        Object value = entry.getValue();
         ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
 
         /* The type buffer starts with a type identifier */
@@ -223,7 +223,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
       }
       else if (keyStr.startsWith(mKeyPrefix)) {
         short id = Short.parseShort(keyStr.substring(mKeyPrefixLen));
-        SER_VALUE value = entry.getValue();
+        Object value = entry.getValue();
         ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
 
         /*
@@ -365,7 +365,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
    *
    * @param pEntry the entry of data to write
    */
-  protected abstract void writeToCache(CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE> pEntry);
+  protected abstract void writeToCache(CommonKeyValuePair<CACHE, SER_KEY> pEntry);
 
   /**
    * Reads from the primary cache
@@ -373,7 +373,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
    * @param pKey the key
    * @return the optional value
    */
-  protected abstract Optional<SER_VALUE> readFromPrimaryCache(SER_KEY pKey);
+  protected abstract Optional<Object> readFromPrimaryCache(SER_KEY pKey);
 
   /**
    * Invalidate entries
@@ -391,8 +391,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
    * @param pResult the cached value
    * @return the stream
    */
-  protected <V> List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> serializeEntry(KeySPI<V> pKey,
-    CacheResult<V> pResult) {
+  protected <V> List<CommonKeyValuePair<CACHE, SER_KEY>> serializeEntry(KeySPI<V> pKey, CacheResult<V> pResult) {
 
     String fullKey = pKey.toString();
 
@@ -416,7 +415,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
       @SuppressWarnings({"null", "unchecked"})
       Class<V> valueClass = isNull == false ? (Class<V>) value.getClass() : (Class<V>) outputType;
 
-      List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> listOfEntries = new ArrayList<>();
+      List<CommonKeyValuePair<CACHE, SER_KEY>> listOfEntries = new ArrayList<>();
 
       /* Now, we need to compress the metadata into smaller pieces */
 
@@ -514,22 +513,21 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
 
       /* Calculate the final value */
 
-      SER_VALUE finalValue = convertByteBufferToSERVALUE(result);
+      Object finalValue = convertByteBufferToSERVALUE(result);
 
-      listOfEntries.add(
-        new CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>(mPrimaryCache, primaryKey, pKey, finalValue, overrideExpiry));
+      listOfEntries
+        .add(new CommonKeyValuePair<CACHE, SER_KEY>(mPrimaryCache, primaryKey, pKey, finalValue, overrideExpiry));
       return listOfEntries;
     }
 
     /* Since we're not serializing, then we just need to wrap the key and value into an object we can store */
 
-    @SuppressWarnings("unchecked")
-    SER_VALUE finalValue = (SER_VALUE) new MemoryStorageData(pKey, pResult.getValue());
+    Object finalValue = new MemoryStorageData(pKey, pResult.getValue());
 
     Duration overrideExpiry = pResult.getOverrideExpiry();
 
     return Collections.singletonList(
-      new CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>(mPrimaryCache, primaryKey, pKey, finalValue, overrideExpiry));
+      new CommonKeyValuePair<CACHE, SER_KEY>(mPrimaryCache, primaryKey, pKey, finalValue, overrideExpiry));
   }
 
   /**
@@ -538,7 +536,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
    *
    * @return the entries
    */
-  protected abstract Stream<Map.Entry<SER_KEY, SER_VALUE>> streamPrimary();
+  protected abstract Stream<Map.Entry<SER_KEY, @NonNull ?>> streamPrimary();
 
   /**
    * Returns back a stream of entries from the meta. NOTE: If meta is not a separate cache, then it is expected that
@@ -546,7 +544,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
    *
    * @return the entries
    */
-  protected abstract Stream<Map.Entry<SER_KEY, SER_VALUE>> streamMetaEntries();
+  protected abstract Stream<Map.Entry<SER_KEY, @NonNull ?>> streamMetaEntries();
 
   /**
    * Deserializes a SER_KEY and SER_VALUE into a Key<?> and CacheResult<?>
@@ -555,7 +553,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
    * @param pValue the value
    * @return the entry
    */
-  protected Map.Entry<Key<?>, CacheResult<?>> deserializeEntry(SER_KEY pKey, SER_VALUE pValue) {
+  protected Map.Entry<Key<?>, CacheResult<?>> deserializeEntry(SER_KEY pKey, Object pValue) {
 
     String fullKey = (mKeyDeserializer != null ? mKeyDeserializer.apply(pKey) : (String) pKey);
 
@@ -665,8 +663,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
     return new SimpleEntry<Key<?>, CacheResult<?>>(msd.key, new StaticCacheResult<@Nullable Object>(msd.value, true));
   }
 
-  protected short compressString(@Nullable String pValue,
-    List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
+  protected short compressString(@Nullable String pValue, List<CommonKeyValuePair<CACHE, SER_KEY>> pWriteList) {
     String value = pValue == null ? "__NULL__" : pValue;
     Short id = mStringToShort.get(value);
     if (id == null) {
@@ -679,7 +676,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
           String strKey = mStringPrefix + String.valueOf(id);
           @SuppressWarnings("unchecked")
           SER_KEY idKey = (mKeySerializer != null ? mKeySerializer.apply(strKey) : (SER_KEY) strKey);
-          SER_VALUE idValue = convertByteBufferToSERVALUE(ByteBuffer.wrap(value.getBytes(StandardCharsets.UTF_8)));
+          Object idValue = convertByteBufferToSERVALUE(ByteBuffer.wrap(value.getBytes(StandardCharsets.UTF_8)));
           pWriteList
             .add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
         }
@@ -697,7 +694,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
     return str;
   }
 
-  protected short compressType(@Nullable Type pType, List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
+  protected short compressType(@Nullable Type pType, List<CommonKeyValuePair<CACHE, SER_KEY>> pWriteList) {
     Type type = pType == null ? NULL_TYPE : pType;
     Short id = mTypeToShort.get(type);
     if (id == null) {
@@ -799,7 +796,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
             buffer.put(extra);
           }
           buffer.rewind();
-          SER_VALUE idValue = convertByteBufferToSERVALUE(buffer);
+          Object idValue = convertByteBufferToSERVALUE(buffer);
           pWriteList
             .add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
         }
@@ -817,7 +814,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
     return type;
   }
 
-  protected short compressKey(KeySPI<?> pKey, List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
+  protected short compressKey(KeySPI<?> pKey, List<CommonKeyValuePair<CACHE, SER_KEY>> pWriteList) {
     Short id = mKeyToShort.get(pKey);
     if (id == null) {
       synchronized (this) {
@@ -845,7 +842,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
           String keyKey = mKeyPrefix + String.valueOf(id);
           @SuppressWarnings("unchecked")
           SER_KEY idKey = (mKeySerializer != null ? mKeySerializer.apply(keyKey) : (SER_KEY) keyKey);
-          SER_VALUE idValue = convertByteBufferToSERVALUE(buffer);
+          Object idValue = convertByteBufferToSERVALUE(buffer);
           pWriteList
             .add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
         }
@@ -862,24 +859,18 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
     return key;
   }
 
-  protected @NonNull SER_VALUE convertByteBufferToSERVALUE(ByteBuffer pValue) {
+  protected Object convertByteBufferToSERVALUE(ByteBuffer pValue) {
 
     /* Shortcut if they are the same */
 
-    if (ByteBuffer.class.equals(mSerValueClass)) {
-      @SuppressWarnings("unchecked")
-      SER_VALUE serValue = (SER_VALUE) pValue;
-      return serValue;
-    }
-    if (byte[].class.equals(mSerValueClass)) {
-      @SuppressWarnings("unchecked")
-      SER_VALUE serValue = (SER_VALUE) pValue.array();
-      return serValue;
-    }
+    if (ByteBuffer.class.equals(mSerValueClass))
+      return pValue;
+    if (byte[].class.equals(mSerValueClass))
+      return pValue.array();
     return mConverterManager.convert(pValue, mSerValueClass);
   }
 
-  protected ByteBuffer convertSERVALUEtoByteBuffer(SER_VALUE pValue) {
+  protected ByteBuffer convertSERVALUEtoByteBuffer(Object pValue) {
 
     if (mSerializeValue) {
       /* Shortcut if they are the same */
@@ -906,7 +897,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
 
     /* Convert the data into the things to actually write and write them to the cache */
 
-    for (CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE> kvpair : serializeEntry(pKey, pLoadedResult))
+    for (CommonKeyValuePair<CACHE, SER_KEY> kvpair : serializeEntry(pKey, pLoadedResult))
       writeToCache(kvpair);
   }
 
@@ -951,7 +942,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
 
     /* Get the set of data */
 
-    Stream<Map.Entry<SER_KEY, SER_VALUE>> rawStream = streamPrimary();
+    Stream<Map.Entry<SER_KEY, @NonNull ?>> rawStream = streamPrimary();
 
     /* If there is no separate meta cache, then the meta data may be present */
 
@@ -985,7 +976,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER
 
     /* Query the underlying primary cache */
 
-    Optional<SER_VALUE> valueOpt = readFromPrimaryCache(serKey);
+    Optional<Object> valueOpt = readFromPrimaryCache(serKey);
 
     /* If it's not found, then we're done */
 

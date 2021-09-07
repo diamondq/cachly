@@ -14,13 +14,14 @@ import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import io.micronaut.cache.SyncCache;
 import io.micronaut.context.annotation.EachBean;
 
 @EachBean(SyncCache.class)
-public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, String, Object> {
+public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, String> {
 
   private final List<KeyExtractor>  mKeyExtractors;
 
@@ -43,7 +44,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
    * @see com.diamondq.cachly.engine.AbstractCacheStorage#writeToCache(com.diamondq.cachly.engine.CommonKeyValuePair)
    */
   @Override
-  protected void writeToCache(CommonKeyValuePair<SyncCache<?>, String, Object> pEntry) {
+  protected void writeToCache(CommonKeyValuePair<SyncCache<?>, String> pEntry) {
     Duration expiresIn = pEntry.expiresIn;
     if (expiresIn != null)
       for (ExpiryHandler eh : mExpiryHandlers)
@@ -63,7 +64,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
    * @see com.diamondq.cachly.engine.AbstractCacheStorage#streamPrimary()
    */
   @Override
-  protected Stream<Entry<String, Object>> streamPrimary() {
+  protected Stream<Entry<String, @NonNull ?>> streamPrimary() {
     Object nativeCache = mPrimaryCache.getNativeCache();
     for (KeyExtractor ke : mKeyExtractors) {
       Stream<Entry<String, Object>> entries = ke.getEntries(nativeCache);
@@ -85,7 +86,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
    * @see com.diamondq.cachly.engine.AbstractCacheStorage#streamMetaEntries()
    */
   @Override
-  protected Stream<Entry<String, Object>> streamMetaEntries() {
+  protected Stream<Entry<String, @NonNull ?>> streamMetaEntries() {
     return streamPrimary();
   }
 
