@@ -91,17 +91,30 @@ public class CachlyEhcacheCacheFactory {
   EhcacheSyncCache syncCache(@Parameter EhcacheConfiguration configuration, CacheManager cacheManager,
     ConversionService<?> conversionService, @Named(TaskExecutors.IO) ExecutorService executorService,
     StatisticsService statisticsService, ApplicationContext pApplicationContext) {
+
+    /* Look to see if there is a matching Cachly configuration by the same name */
+
     Optional<CachlyEhcacheConfiguration> cachlyConfigOpt =
       pApplicationContext.findBean(CachlyEhcacheConfiguration.class, Qualifiers.byName(configuration.getName()));
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    Optional<ExpiryPolicy<Object, Object>> expiryPolicyOpt =
-      (Optional) pApplicationContext.findBean(ExpiryPolicy.class);
+
+    /* Start the cache configuration builder */
+
     @SuppressWarnings("unchecked")
     CacheConfigurationBuilder<Object, Object> builder =
       (CacheConfigurationBuilder<Object, Object>) configuration.getBuilder();
+
+    /* If there is a Cachly config... */
+
+    boolean performSerialization = true;
     if (cachlyConfigOpt.isPresent()) {
       CachlyEhcacheConfiguration cachlyConfig = cachlyConfigOpt.get();
+
+      Boolean configSerializer = cachlyConfig.getSerializer();
+      if (configSerializer != null)
+        performSerialization = configSerializer;
+
       /* Get the list of resource pools */
+
       Holder<@Nullable ResourcePools> resourcePoolsHolder = new Holder<>(null);
       builder.updateResourcePools((rps) -> {
         resourcePoolsHolder.object = rps;
@@ -109,11 +122,15 @@ public class CachlyEhcacheCacheFactory {
       });
       ResourcePools rps = resourcePoolsHolder.object;
       if (rps != null) {
+
         /* Are there any we want to override */
 
         ResourcePoolsBuilder rpBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder();
         boolean updated = false;
         for (ResourceType<?> rt : rps.getResourceTypeSet()) {
+
+          /* Does the Cachly config have some disk information? */
+
           CachlyDiskTieredCacheConfiguration cachlyDisk = cachlyConfig.getDisk();
           if ((cachlyDisk != null) && (ResourceType.Core.DISK.equals(rt))) {
             ResourcePool rp = rps.getPoolForResource(rt);
@@ -136,11 +153,26 @@ public class CachlyEhcacheCacheFactory {
           builder = builder.withResourcePools(rpBuilder);
       }
     }
+
+    /* Look for an ExpiryPolicy */
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    Optional<ExpiryPolicy<Object, Object>> expiryPolicyOpt =
+      (Optional) pApplicationContext.findBean(ExpiryPolicy.class);
+
+    /* If there is an expiry policy, then add it to the config */
+
     if (expiryPolicyOpt.isPresent()) {
       ExpiryPolicy<Object, Object> expiryPolicy = expiryPolicyOpt.get();
       builder = builder.withExpiry(expiryPolicy);
     }
+
+    /* Build the native ehcache */
+
     Cache<?, ?> nativeCache = cacheManager.createCache(configuration.getName(), builder);
+
+    /* If there is an expiry policy, then register listeners to keep the meta data correct */
+
     if (expiryPolicyOpt.isPresent()) {
       ExpiryPolicy<Object, Object> expiryPolicy = expiryPolicyOpt.get();
       if (expiryPolicy instanceof CacheEventListener) {
@@ -150,6 +182,10 @@ public class CachlyEhcacheCacheFactory {
           EventFiring.SYNCHRONOUS, EnumSet.of(EventType.EVICTED, EventType.REMOVED, EventType.EXPIRED));
       }
     }
-    return new EhcacheSyncCache(conversionService, configuration, nativeCache, executorService, statisticsService);
+
+    /* Build the Cachly version of the SyncCache */
+
+    return new CachlyEhcacheSyncCache(conversionService, configuration, nativeCache, executorService, statisticsService,
+      performSerialization);
   }
 }

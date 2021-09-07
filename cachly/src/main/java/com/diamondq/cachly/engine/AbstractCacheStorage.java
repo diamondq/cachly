@@ -1,9 +1,9 @@
 package com.diamondq.cachly.engine;
 
+import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.engine.AbstractSerializingCacheStorage.SerializedKeyValuePair;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.ResolvedAccessContextPlaceholder;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
@@ -25,29 +25,24 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-/**
- * This base class provides functionality for storing the richer data set that Cachely has
- *
- * @param <CACHE> the underlying cache type
- * @param <SER_KEY> the serialized key type
- * @param <SER_VALUE> the serialized value type
- */
-public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull SER_KEY, @NonNull SER_VALUE>
-  extends AbstractCommonCacheStorage<CACHE, SER_KEY, SER_VALUE, SerializedKeyValuePair<CACHE, SER_KEY, SER_VALUE>> {
+public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY, @NonNull SER_VALUE> implements CacheStorage {
 
   public static final byte  SERIALIZATION_VERSION          = 1;
 
@@ -73,60 +68,80 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
     // empty
   }
 
-  private static final Type NULL_TYPE = NULL_TYPE_CLASS.class;
+  private static final Type                           NULL_TYPE = NULL_TYPE_CLASS.class;
 
-  protected static class SerializedKeyValuePair<PAIR_CACHE, PAIR_SER_KEY, PAIR_SER_VALUE>
-    extends CommonKeyValuePair<PAIR_CACHE, PAIR_SER_KEY, PAIR_SER_VALUE> {
+  /**
+   * The primary cache
+   */
+  protected final CACHE                               mPrimaryCache;
 
-    public SerializedKeyValuePair(PAIR_CACHE pCache, PAIR_SER_KEY pSerKey, @Nullable Key<?> pKey,
-      @Nullable PAIR_SER_VALUE pSerValue, @Nullable Duration pExpiresIn) {
-      super(pCache, pSerKey, pKey, pSerValue, pExpiresIn);
-    }
+  /**
+   * The meta cache or null if there isn't one.
+   */
+  protected final @Nullable CACHE                     mMetaCache;
 
-  }
+  protected final @Nullable Function<String, SER_KEY> mKeySerializer;
 
-  protected final ConverterManager             mConverterManager;
+  protected final @Nullable Function<SER_KEY, String> mKeyDeserializer;
 
-  protected final Class<SER_KEY>               mSerKeyClass;
+  protected final ConverterManager                    mConverterManager;
 
-  protected final Class<SER_VALUE>             mSerValueClass;
+  protected final Class<SER_KEY>                      mSerKeyClass;
 
-  protected final ConcurrentMap<String, Short> mStringToShort;
+  protected final Class<SER_VALUE>                    mSerValueClass;
 
-  protected final ConcurrentMap<Short, String> mShortToString;
+  protected final ConcurrentMap<String, Short>        mStringToShort;
 
-  protected final AtomicInteger                mStringCounter;
+  protected final ConcurrentMap<Short, String>        mShortToString;
 
-  protected final String                       mStringPrefix;
+  protected final AtomicInteger                       mStringCounter;
 
-  protected final int                          mStringPrefixLen;
+  protected final String                              mStringPrefix;
 
-  protected final ConcurrentMap<Type, Short>   mTypeToShort;
+  protected final int                                 mStringPrefixLen;
 
-  protected final ConcurrentMap<Short, Type>   mShortToType;
+  protected final ConcurrentMap<Type, Short>          mTypeToShort;
 
-  protected final AtomicInteger                mTypeCounter;
+  protected final ConcurrentMap<Short, Type>          mShortToType;
 
-  protected final String                       mTypePrefix;
+  protected final AtomicInteger                       mTypeCounter;
 
-  protected final int                          mTypePrefixLen;
+  protected final String                              mTypePrefix;
 
-  protected final ConcurrentMap<Key<?>, Short> mKeyToShort;
+  protected final int                                 mTypePrefixLen;
 
-  protected final ConcurrentMap<Short, Key<?>> mShortToKey;
+  protected final ConcurrentMap<Key<?>, Short>        mKeyToShort;
 
-  protected final AtomicInteger                mKeyCounter;
+  protected final ConcurrentMap<Short, Key<?>>        mShortToKey;
 
-  protected final String                       mKeyPrefix;
+  protected final AtomicInteger                       mKeyCounter;
 
-  protected final int                          mKeyPrefixLen;
+  protected final String                              mKeyPrefix;
 
-  public AbstractSerializingCacheStorage(ConverterManager pConverterManager, CACHE pPrimaryCache,
-    @Nullable CACHE pMetaCache, Class<SER_KEY> pSerKeyClass, Class<SER_VALUE> pSerValueClass,
+  protected final int                                 mKeyPrefixLen;
+
+  /**
+   * The prefix to put on all value keys
+   */
+  protected final @Nullable String                    mValuePrefix;
+
+  protected final int                                 mValuePrefixLen;
+
+  /**
+   * Indicates whether the value should be serialized (because the underlying cache is going to write it, or whether it
+   * can be kept as an object
+   */
+  protected boolean                                   mSerializeValue;
+
+  public AbstractCacheStorage(ConverterManager pConverterManager, CACHE pPrimaryCache, @Nullable CACHE pMetaCache,
+    Class<SER_KEY> pSerKeyClass, Class<SER_VALUE> pSerValueClass, boolean pSerializeValue,
     @Nullable String pStringPrefix, @Nullable String pTypePrefix, @Nullable String pKeyPrefix,
     @Nullable String pValuePrefix, @Nullable Function<String, @NonNull SER_KEY> pKeySerializer,
     @Nullable Function<@NonNull SER_KEY, String> pKeyDeserializer) {
-    super(pPrimaryCache, pMetaCache, pValuePrefix != null ? pValuePrefix : "p/", pKeySerializer, pKeyDeserializer);
+    mPrimaryCache = pPrimaryCache;
+    mMetaCache = pMetaCache;
+    mKeySerializer = pKeySerializer;
+    mKeyDeserializer = pKeyDeserializer;
     mConverterManager = pConverterManager;
     mSerKeyClass = pSerKeyClass;
     mSerValueClass = pSerValueClass;
@@ -145,6 +160,14 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
     mKeyCounter = new AtomicInteger();
     mKeyPrefix = pKeyPrefix != null ? pKeyPrefix : "k/";
     mKeyPrefixLen = mTypePrefix.length();
+    mValuePrefix = pValuePrefix != null ? pValuePrefix : "p/";
+    mValuePrefixLen = mValuePrefix.length();
+    mSerializeValue = pSerializeValue;
+
+    if (mSerializeValue == false) {
+      if (mSerValueClass.equals(Object.class) == false)
+        throw new IllegalArgumentException("Only a SER_VALUE of Object.class is supported for non-serializing caches");
+    }
   }
 
   /**
@@ -159,7 +182,7 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
       if (keyStr.startsWith(mStringPrefix)) {
         short id = Short.parseShort(keyStr.substring(mStringPrefixLen));
         SER_VALUE value = entry.getValue();
-        ByteBuffer valueBuffer = deserializeValue(value);
+        ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
 
         /* The contents of a String is just the UTF-8 bytes */
 
@@ -172,7 +195,7 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
       else if (keyStr.startsWith(mTypePrefix)) {
         short id = Short.parseShort(keyStr.substring(mTypePrefixLen));
         SER_VALUE value = entry.getValue();
-        ByteBuffer valueBuffer = deserializeValue(value);
+        ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
 
         /* The type buffer starts with a type identifier */
 
@@ -201,7 +224,7 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
       else if (keyStr.startsWith(mKeyPrefix)) {
         short id = Short.parseShort(keyStr.substring(mKeyPrefixLen));
         SER_VALUE value = entry.getValue();
-        ByteBuffer valueBuffer = deserializeValue(value);
+        ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
 
         /*
          * Because all keys are being read in sequentially, we may not have the type entries needed to resolve the key
@@ -338,126 +361,40 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
   }
 
   /**
-   * Convert the given key/value into a stream of SerializedKeyValuePairs
+   * Writes to the cache as defined in the entry
+   *
+   * @param pEntry the entry of data to write
+   */
+  protected abstract void writeToCache(CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE> pEntry);
+
+  /**
+   * Reads from the primary cache
+   *
+   * @param pKey the key
+   * @return the optional value
+   */
+  protected abstract Optional<SER_VALUE> readFromPrimaryCache(SER_KEY pKey);
+
+  /**
+   * Invalidate entries
+   *
+   * @param pCache the cache
+   * @param pKey if provided, invalidate just this key, if null, then invalidate all keys
+   */
+  protected abstract void invalidate(CACHE pCache, @Nullable SER_KEY pKey);
+
+  /**
+   * Convert the given key/value into a list of CommonKeyValuePair's
    *
    * @param <V> the value type
    * @param pKey the key
    * @param pResult the cached value
    * @return the stream
    */
-  @Override
-  protected <V> List<SerializedKeyValuePair<CACHE, SER_KEY, SER_VALUE>> serializeEntry(KeySPI<V> pKey,
+  protected <V> List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> serializeEntry(KeySPI<V> pKey,
     CacheResult<V> pResult) {
 
-    /* Get the pieces that need to be serialized */
-
     String fullKey = pKey.toString();
-    String baseKey = pKey.getFullBaseKey();
-    String serializerName = pKey.getLastSerializerName();
-    String serializer = Cache.DEFAULT_SERIALIZER.equals(serializerName) ? null : serializerName;
-    Type outputType = pKey.getOutputType();
-    Duration overrideExpiry = pResult.getOverrideExpiry();
-    boolean isNull = pResult.isNull();
-    @Nullable
-    V value = isNull == true ? null : pResult.getValue();
-    @SuppressWarnings({"null", "unchecked"})
-    Class<V> valueClass = isNull == false ? (Class<V>) value.getClass() : (Class<V>) outputType;
-
-    List<SerializedKeyValuePair<CACHE, SER_KEY, SER_VALUE>> listOfEntries = new ArrayList<>();
-
-    /* Now, we need to compress the metadata into smaller pieces */
-
-    short baseKeyId = compressString(baseKey, listOfEntries);
-    short serializerId = compressString(serializer, listOfEntries);
-    short outputTypeId = compressType(outputType, listOfEntries);
-    short valueClassId = compressType(valueClass, listOfEntries);
-
-    /* Now build the block */
-
-    ByteBuffer valueBuffer;
-    int valueBufferSize;
-
-    if ((isNull == false) && (value != null)) {
-      valueBuffer = mConverterManager.convert(value, ByteBuffer.class, serializer);
-      valueBuffer.rewind();
-      valueBufferSize = valueBuffer.limit();
-    }
-    else {
-      valueBuffer = null;
-      valueBufferSize = 0;
-    }
-
-    int size = 0;
-    for (KeySPI<?> part : pKey.getParts()) {
-      if (part instanceof ResolvedKeyPlaceholder) {
-        ResolvedKeyPlaceholder<?> rkp = (ResolvedKeyPlaceholder<?>) part;
-        KeySPI<?> placeholder = rkp.getPlaceholder();
-        if (placeholder instanceof StaticKeyPlaceholder)
-          size += 1;
-        else if (placeholder instanceof StaticKeyPlaceholderWithDefault)
-          size += 3;
-        else
-          throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
-      }
-      else if (part instanceof ResolvedAccessContextPlaceholder) {
-        ResolvedAccessContextPlaceholder<?> racp = (ResolvedAccessContextPlaceholder<?>) part;
-        KeySPI<?> placeholder = racp.getPlaceholder();
-        if (placeholder instanceof StaticAccessContextPlaceholder)
-          size += 3;
-        else
-          throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
-      }
-    }
-
-    ByteBuffer result = ByteBuffer.allocate(valueBufferSize + 9 + size);
-
-    /* Write the version */
-
-    byte flags = (byte) (isNull ? FLAG_ISNULL : 0);
-    result.put((byte) (SERIALIZATION_VERSION + (flags << 4)));
-
-    /* Write the ids */
-
-    result.putShort(baseKeyId);
-    result.putShort(serializerId);
-    result.putShort(outputTypeId);
-    result.putShort(valueClassId);
-
-    /* Write any of the placeholder part data */
-
-    for (KeySPI<?> part : pKey.getParts()) {
-      if (part instanceof ResolvedKeyPlaceholder) {
-        ResolvedKeyPlaceholder<?> rkp = (ResolvedKeyPlaceholder<?>) part;
-        KeySPI<?> placeholder = rkp.getPlaceholder();
-        if (placeholder instanceof StaticKeyPlaceholder) {
-          result.put(PART_TYPE_PLACEHOLDER);
-        }
-        else if (placeholder instanceof StaticKeyPlaceholderWithDefault) {
-          StaticKeyPlaceholderWithDefault skpwd = (StaticKeyPlaceholderWithDefault) placeholder;
-          result.put(PART_TYPE_PLACEHOLDER_DEFAULTS);
-          result.putShort(compressKey(skpwd.getDefaultKey(), listOfEntries));
-        }
-        else
-          throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
-      }
-      else if (part instanceof ResolvedAccessContextPlaceholder) {
-        ResolvedAccessContextPlaceholder<?> racp = (ResolvedAccessContextPlaceholder<?>) part;
-        KeySPI<?> placeholder = racp.getPlaceholder();
-        if (placeholder instanceof StaticAccessContextPlaceholder) {
-          StaticAccessContextPlaceholder<?, ?> sacp = (StaticAccessContextPlaceholder<?, ?>) placeholder;
-          result.put(PART_TYPE_ACCESS_CONTEXT);
-          result.putShort(compressType(sacp.getAccessContextValueClass(), listOfEntries));
-        }
-        else
-          throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
-      }
-    }
-
-    /* Write the data */
-
-    if (valueBufferSize > 0)
-      result.put(valueBuffer);
-    result.rewind();
 
     /* Calculate the final primary key */
 
@@ -465,132 +402,271 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
     @SuppressWarnings("unchecked")
     SER_KEY primaryKey = (mKeySerializer != null ? mKeySerializer.apply(primaryKeyStr) : (SER_KEY) primaryKeyStr);
 
-    /* Calculate the final value */
+    if (mSerializeValue) {
+      /* Get the pieces that need to be serialized */
 
-    SER_VALUE finalValue;
-    if (mSerValueClass.equals(ByteBuffer.class)) {
-      @SuppressWarnings("unchecked")
-      SER_VALUE sv = (SER_VALUE) result;
-      finalValue = sv;
+      String baseKey = pKey.getFullBaseKey();
+      String serializerName = pKey.getLastSerializerName();
+      String serializer = Cache.DEFAULT_SERIALIZER.equals(serializerName) ? null : serializerName;
+      Type outputType = pKey.getOutputType();
+      Duration overrideExpiry = pResult.getOverrideExpiry();
+      boolean isNull = pResult.isNull();
+      @Nullable
+      V value = isNull == true ? null : pResult.getValue();
+      @SuppressWarnings({"null", "unchecked"})
+      Class<V> valueClass = isNull == false ? (Class<V>) value.getClass() : (Class<V>) outputType;
+
+      List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> listOfEntries = new ArrayList<>();
+
+      /* Now, we need to compress the metadata into smaller pieces */
+
+      short baseKeyId = compressString(baseKey, listOfEntries);
+      short serializerId = compressString(serializer, listOfEntries);
+      short outputTypeId = compressType(outputType, listOfEntries);
+      short valueClassId = compressType(valueClass, listOfEntries);
+
+      /* Now build the block */
+
+      ByteBuffer valueBuffer;
+      int valueBufferSize;
+
+      if ((isNull == false) && (value != null)) {
+        valueBuffer = mConverterManager.convert(value, ByteBuffer.class, serializer);
+        valueBuffer.rewind();
+        valueBufferSize = valueBuffer.limit();
+      }
+      else {
+        valueBuffer = null;
+        valueBufferSize = 0;
+      }
+
+      int size = 0;
+      for (KeySPI<?> part : pKey.getParts()) {
+        if (part instanceof ResolvedKeyPlaceholder) {
+          ResolvedKeyPlaceholder<?> rkp = (ResolvedKeyPlaceholder<?>) part;
+          KeySPI<?> placeholder = rkp.getPlaceholder();
+          if (placeholder instanceof StaticKeyPlaceholder)
+            size += 1;
+          else if (placeholder instanceof StaticKeyPlaceholderWithDefault)
+            size += 3;
+          else
+            throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
+        }
+        else if (part instanceof ResolvedAccessContextPlaceholder) {
+          ResolvedAccessContextPlaceholder<?> racp = (ResolvedAccessContextPlaceholder<?>) part;
+          KeySPI<?> placeholder = racp.getPlaceholder();
+          if (placeholder instanceof StaticAccessContextPlaceholder)
+            size += 3;
+          else
+            throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
+        }
+      }
+
+      ByteBuffer result = ByteBuffer.allocate(valueBufferSize + 9 + size);
+
+      /* Write the version */
+
+      byte flags = (byte) (isNull ? FLAG_ISNULL : 0);
+      result.put((byte) (SERIALIZATION_VERSION + (flags << 4)));
+
+      /* Write the ids */
+
+      result.putShort(baseKeyId);
+      result.putShort(serializerId);
+      result.putShort(outputTypeId);
+      result.putShort(valueClassId);
+
+      /* Write any of the placeholder part data */
+
+      for (KeySPI<?> part : pKey.getParts()) {
+        if (part instanceof ResolvedKeyPlaceholder) {
+          ResolvedKeyPlaceholder<?> rkp = (ResolvedKeyPlaceholder<?>) part;
+          KeySPI<?> placeholder = rkp.getPlaceholder();
+          if (placeholder instanceof StaticKeyPlaceholder) {
+            result.put(PART_TYPE_PLACEHOLDER);
+          }
+          else if (placeholder instanceof StaticKeyPlaceholderWithDefault) {
+            StaticKeyPlaceholderWithDefault skpwd = (StaticKeyPlaceholderWithDefault) placeholder;
+            result.put(PART_TYPE_PLACEHOLDER_DEFAULTS);
+            result.putShort(compressKey(skpwd.getDefaultKey(), listOfEntries));
+          }
+          else
+            throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
+        }
+        else if (part instanceof ResolvedAccessContextPlaceholder) {
+          ResolvedAccessContextPlaceholder<?> racp = (ResolvedAccessContextPlaceholder<?>) part;
+          KeySPI<?> placeholder = racp.getPlaceholder();
+          if (placeholder instanceof StaticAccessContextPlaceholder) {
+            StaticAccessContextPlaceholder<?, ?> sacp = (StaticAccessContextPlaceholder<?, ?>) placeholder;
+            result.put(PART_TYPE_ACCESS_CONTEXT);
+            result.putShort(compressType(sacp.getAccessContextValueClass(), listOfEntries));
+          }
+          else
+            throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
+        }
+      }
+
+      /* Write the data */
+
+      if (valueBufferSize > 0)
+        result.put(valueBuffer);
+      result.rewind();
+
+      /* Calculate the final value */
+
+      SER_VALUE finalValue = convertByteBufferToSERVALUE(result);
+
+      listOfEntries.add(
+        new CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>(mPrimaryCache, primaryKey, pKey, finalValue, overrideExpiry));
+      return listOfEntries;
     }
-    else
-      finalValue = serializeValue(result);
 
-    listOfEntries.add(new SerializedKeyValuePair<CACHE, SER_KEY, SER_VALUE>(mPrimaryCache, primaryKey, pKey, finalValue,
-      overrideExpiry));
-    return listOfEntries;
+    /* Since we're not serializing, then we just need to wrap the key and value into an object we can store */
+
+    @SuppressWarnings("unchecked")
+    SER_VALUE finalValue = (SER_VALUE) new MemoryStorageData(pKey, pResult.getValue());
+
+    Duration overrideExpiry = pResult.getOverrideExpiry();
+
+    return Collections.singletonList(
+      new CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>(mPrimaryCache, primaryKey, pKey, finalValue, overrideExpiry));
   }
 
   /**
-   * Convert serialized back to a Key, CacheResult
+   * Returns back a stream of entries from the primary. NOTE: If meta is not a separate cache, then it is expected that
+   * meta data may be present, so it's OK to return all keys
    *
-   * @param pKey the serialized key
-   * @param pValue the serialized value
-   * @return the Entry
+   * @return the entries
    */
-  @Override
+  protected abstract Stream<Map.Entry<SER_KEY, SER_VALUE>> streamPrimary();
+
+  /**
+   * Returns back a stream of entries from the meta. NOTE: If meta is not a separate cache, then it is expected that
+   * regular data will be present, so it's OK to return all keys.
+   *
+   * @return the entries
+   */
+  protected abstract Stream<Map.Entry<SER_KEY, SER_VALUE>> streamMetaEntries();
+
+  /**
+   * Deserializes a SER_KEY and SER_VALUE into a Key<?> and CacheResult<?>
+   *
+   * @param pKey the key
+   * @param pValue the value
+   * @return the entry
+   */
   protected Map.Entry<Key<?>, CacheResult<?>> deserializeEntry(SER_KEY pKey, SER_VALUE pValue) {
-    ByteBuffer buffer = deserializeValue(pValue);
-    buffer.rewind();
 
     String fullKey = (mKeyDeserializer != null ? mKeyDeserializer.apply(pKey) : (String) pKey);
 
     if (mValuePrefix != null)
       fullKey = fullKey.substring(mValuePrefixLen);
 
-    /* Get and validate the version */
+    if (mSerializeValue) {
 
-    byte versionFlags = buffer.get();
-    byte version = (byte) (versionFlags & 0x0F);
-    if (version != SERIALIZATION_VERSION)
-      throw new IllegalStateException(
-        "The entry " + fullKey + " has an unrecognized serialization version (" + String.valueOf(version) + ")");
+      ByteBuffer buffer = convertSERVALUEtoByteBuffer(pValue);
+      buffer.rewind();
 
-    int flags = (byte) ((versionFlags & 0xF0) >> 4);
+      /* Get and validate the version */
 
-    /* Is null? */
+      byte versionFlags = buffer.get();
+      byte version = (byte) (versionFlags & 0x0F);
+      if (version != SERIALIZATION_VERSION)
+        throw new IllegalStateException(
+          "The entry " + fullKey + " has an unrecognized serialization version (" + String.valueOf(version) + ")");
 
-    boolean isNull = (flags & FLAG_ISNULL) == FLAG_ISNULL;
+      int flags = (byte) ((versionFlags & 0xF0) >> 4);
 
-    /* Get the ids */
+      /* Is null? */
 
-    short baseKeyId = buffer.getShort();
-    short serializerId = buffer.getShort();
-    short outputTypeId = buffer.getShort();
-    short valueClassId = buffer.getShort();
+      boolean isNull = (flags & FLAG_ISNULL) == FLAG_ISNULL;
 
-    /* Decompress the ids */
+      /* Get the ids */
 
-    String baseKey = Objects.requireNonNull(decompressString(baseKeyId));
-    String serializer = decompressString(serializerId);
-    Type outputType = Objects.requireNonNull(decompressType(outputTypeId));
-    Type valueClass = Objects.requireNonNull(decompressType(valueClassId));
+      short baseKeyId = buffer.getShort();
+      short serializerId = buffer.getShort();
+      short outputTypeId = buffer.getShort();
+      short valueClassId = buffer.getShort();
 
-    /* Now generate the Key */
+      /* Decompress the ids */
 
-    @NonNull
-    String[] baseSplit = baseKey.split("/");
-    int keyLen = baseSplit.length;
-    @NonNull
-    String[] fullSplit = fullKey.split("/");
-    if (keyLen != fullSplit.length)
-      throw new IllegalStateException(
-        "The base key (" + baseKey + ") doesn't have the same number of parts as the full key (" + fullKey + ")");
+      String baseKey = Objects.requireNonNull(decompressString(baseKeyId));
+      String serializer = decompressString(serializerId);
+      Type outputType = Objects.requireNonNull(decompressType(outputTypeId));
+      Type valueClass = Objects.requireNonNull(decompressType(valueClassId));
 
-    @SuppressWarnings({"unchecked", "null"})
-    @NonNull
-    KeySPI<Object>[] parts = new KeySPI[keyLen];
+      /* Now generate the Key */
 
-    for (int i = 0; i < keyLen; i++) {
-      String partBaseKey = baseSplit[i];
-      if (partBaseKey.startsWith("{")) {
-        byte placeholderType = buffer.get();
-        if (placeholderType == PART_TYPE_ACCESS_CONTEXT) {
-          short accessContextValueClassId = buffer.getShort();
-          Type accessContextValueClass = Objects.requireNonNull(decompressType(accessContextValueClassId));
-          parts[i] = new ResolvedAccessContextPlaceholder<>(
-            new StaticAccessContextPlaceholder<>(partBaseKey, (Class<?>) accessContextValueClass, outputType),
-            fullSplit[i]);
-        }
-        else if (placeholderType == PART_TYPE_PLACEHOLDER) {
-          parts[i] = new ResolvedKeyPlaceholder<>(new StaticKeyPlaceholder<>(partBaseKey, outputType), fullSplit[i]);
-        }
-        else if (placeholderType == PART_TYPE_PLACEHOLDER_DEFAULTS) {
-          short defaultKeyId = buffer.getShort();
-          @NonNull
-          Key<String> defaultKey = decompressKey(defaultKeyId);
-          @SuppressWarnings({"unchecked", "rawtypes"})
-          KeySPI<Object> r = (KeySPI) new ResolvedKeyPlaceholder<String>(
-            new StaticKeyPlaceholderWithDefault(partBaseKey, outputType, defaultKey), fullSplit[i]);
-          parts[i] = r;
+      @NonNull
+      String[] baseSplit = baseKey.split("/");
+      int keyLen = baseSplit.length;
+      @NonNull
+      String[] fullSplit = fullKey.split("/");
+      if (keyLen != fullSplit.length)
+        throw new IllegalStateException(
+          "The base key (" + baseKey + ") doesn't have the same number of parts as the full key (" + fullKey + ")");
+
+      @SuppressWarnings({"unchecked", "null"})
+      @NonNull
+      KeySPI<Object>[] parts = new KeySPI[keyLen];
+
+      for (int i = 0; i < keyLen; i++) {
+        String partBaseKey = baseSplit[i];
+        if (partBaseKey.startsWith("{")) {
+          byte placeholderType = buffer.get();
+          if (placeholderType == PART_TYPE_ACCESS_CONTEXT) {
+            short accessContextValueClassId = buffer.getShort();
+            Type accessContextValueClass = Objects.requireNonNull(decompressType(accessContextValueClassId));
+            parts[i] = new ResolvedAccessContextPlaceholder<>(
+              new StaticAccessContextPlaceholder<>(partBaseKey, (Class<?>) accessContextValueClass, outputType),
+              fullSplit[i]);
+          }
+          else if (placeholderType == PART_TYPE_PLACEHOLDER) {
+            parts[i] = new ResolvedKeyPlaceholder<>(new StaticKeyPlaceholder<>(partBaseKey, outputType), fullSplit[i]);
+          }
+          else if (placeholderType == PART_TYPE_PLACEHOLDER_DEFAULTS) {
+            short defaultKeyId = buffer.getShort();
+            @NonNull
+            Key<String> defaultKey = decompressKey(defaultKeyId);
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            KeySPI<Object> r = (KeySPI) new ResolvedKeyPlaceholder<String>(
+              new StaticKeyPlaceholderWithDefault(partBaseKey, outputType, defaultKey), fullSplit[i]);
+            parts[i] = r;
+          }
+          else
+            throw new IllegalStateException(
+              "The placeholder part type(" + String.valueOf(placeholderType) + ") is not recognized");
         }
         else
-          throw new IllegalStateException(
-            "The placeholder part type(" + String.valueOf(placeholderType) + ") is not recognized");
+          parts[i] = new StaticKey<>(fullSplit[i], outputType);
       }
-      else
-        parts[i] = new StaticKey<>(fullSplit[i], outputType);
+
+      Key<?> finalKey = new CompositeKey<Object>(parts);
+
+      /* Now generate the value */
+
+      Object value;
+      if (isNull == true)
+        value = null;
+      else {
+        ByteBuffer dataBuffer = buffer.slice();
+        value = mConverterManager.convert(dataBuffer, valueClass, serializer);
+      }
+
+      CacheResult<?> finalValue = new StaticCacheResult<@Nullable Object>(value, true);
+
+      return new SimpleEntry<>(finalKey, finalValue);
     }
 
-    Key<?> finalKey = new CompositeKey<Object>(parts);
+    /* Since we're not deserializing from bytes, it's just a simple return */
 
-    /* Now generate the value */
+    MemoryStorageData msd = (MemoryStorageData) pValue;
 
-    Object value;
-    if (isNull == true)
-      value = null;
-    else {
-      ByteBuffer dataBuffer = buffer.slice();
-      value = mConverterManager.convert(dataBuffer, valueClass, serializer);
-    }
-
-    CacheResult<?> finalValue = new StaticCacheResult<@Nullable Object>(value, true);
-
-    return new SimpleEntry<>(finalKey, finalValue);
+    return new SimpleEntry<Key<?>, CacheResult<?>>(msd.key, new StaticCacheResult<@Nullable Object>(msd.value, true));
   }
 
   protected short compressString(@Nullable String pValue,
-    List<SerializedKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
+    List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
     String value = pValue == null ? "__NULL__" : pValue;
     Short id = mStringToShort.get(value);
     if (id == null) {
@@ -603,9 +679,9 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
           String strKey = mStringPrefix + String.valueOf(id);
           @SuppressWarnings("unchecked")
           SER_KEY idKey = (mKeySerializer != null ? mKeySerializer.apply(strKey) : (SER_KEY) strKey);
-          SER_VALUE idValue = serializeValue(ByteBuffer.wrap(value.getBytes(StandardCharsets.UTF_8)));
-          pWriteList.add(
-            new SerializedKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
+          SER_VALUE idValue = convertByteBufferToSERVALUE(ByteBuffer.wrap(value.getBytes(StandardCharsets.UTF_8)));
+          pWriteList
+            .add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
         }
       }
     }
@@ -621,8 +697,7 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
     return str;
   }
 
-  protected short compressType(@Nullable Type pType,
-    List<SerializedKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
+  protected short compressType(@Nullable Type pType, List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
     Type type = pType == null ? NULL_TYPE : pType;
     Short id = mTypeToShort.get(type);
     if (id == null) {
@@ -724,9 +799,9 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
             buffer.put(extra);
           }
           buffer.rewind();
-          SER_VALUE idValue = serializeValue(buffer);
-          pWriteList.add(
-            new SerializedKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
+          SER_VALUE idValue = convertByteBufferToSERVALUE(buffer);
+          pWriteList
+            .add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
         }
       }
     }
@@ -742,7 +817,7 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
     return type;
   }
 
-  protected short compressKey(KeySPI<?> pKey, List<SerializedKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
+  protected short compressKey(KeySPI<?> pKey, List<CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE>> pWriteList) {
     Short id = mKeyToShort.get(pKey);
     if (id == null) {
       synchronized (this) {
@@ -770,9 +845,9 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
           String keyKey = mKeyPrefix + String.valueOf(id);
           @SuppressWarnings("unchecked")
           SER_KEY idKey = (mKeySerializer != null ? mKeySerializer.apply(keyKey) : (SER_KEY) keyKey);
-          SER_VALUE idValue = serializeValue(buffer);
-          pWriteList.add(
-            new SerializedKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
+          SER_VALUE idValue = convertByteBufferToSERVALUE(buffer);
+          pWriteList
+            .add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache, idKey, null, idValue, null));
         }
       }
     }
@@ -787,7 +862,7 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
     return key;
   }
 
-  protected @NonNull SER_VALUE serializeValue(ByteBuffer pValue) {
+  protected @NonNull SER_VALUE convertByteBufferToSERVALUE(ByteBuffer pValue) {
 
     /* Shortcut if they are the same */
 
@@ -804,18 +879,127 @@ public abstract class AbstractSerializingCacheStorage<@NonNull CACHE, @NonNull S
     return mConverterManager.convert(pValue, mSerValueClass);
   }
 
-  protected ByteBuffer deserializeValue(SER_VALUE pValue) {
+  protected ByteBuffer convertSERVALUEtoByteBuffer(SER_VALUE pValue) {
 
-    /* Shortcut if they are the same */
+    if (mSerializeValue) {
+      /* Shortcut if they are the same */
 
-    if (ByteBuffer.class.equals(mSerValueClass)) {
-      ByteBuffer deserValue = (ByteBuffer) pValue;
-      return deserValue;
+      if (ByteBuffer.class.equals(mSerValueClass)) {
+        ByteBuffer deserValue = (ByteBuffer) pValue;
+        return deserValue;
+      }
+      if (byte[].class.equals(mSerValueClass)) {
+        return ByteBuffer.wrap((byte[]) pValue);
+      }
+      return mConverterManager.convert(pValue, ByteBuffer.class);
     }
-    if (byte[].class.equals(mSerValueClass)) {
-      return ByteBuffer.wrap((byte[]) pValue);
-    }
-    return mConverterManager.convert(pValue, ByteBuffer.class);
+
+    throw new UnsupportedOperationException();
   }
 
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#store(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI, com.diamondq.cachly.CacheResult)
+   */
+  @Override
+  public <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
+
+    /* Convert the data into the things to actually write and write them to the cache */
+
+    for (CommonKeyValuePair<CACHE, SER_KEY, SER_VALUE> kvpair : serializeEntry(pKey, pLoadedResult))
+      writeToCache(kvpair);
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidate(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI)
+   */
+  @Override
+  public <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey) {
+
+    /* Get the key string */
+
+    String keyStr = (mValuePrefix != null ? mValuePrefix + pKey.toString() : pKey.toString());
+
+    /* Get the 'serialized version of the key */
+
+    @SuppressWarnings("unchecked")
+    SER_KEY serKey = (mKeySerializer != null ? mKeySerializer.apply(keyStr) : (SER_KEY) keyStr);
+
+    invalidate(mPrimaryCache, serKey);
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#invalidateAll(com.diamondq.cachly.AccessContext)
+   */
+  @Override
+  public void invalidateAll(AccessContext pAccessContext) {
+    invalidate(mPrimaryCache, null);
+
+    /* Since we have removed everything, we can also remove all the metadata */
+
+    CACHE metaCache = mMetaCache;
+    if (metaCache != null)
+      invalidate(metaCache, null);
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#streamEntries(com.diamondq.cachly.AccessContext)
+   */
+  @Override
+  public Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext) {
+
+    /* Get the set of data */
+
+    Stream<Map.Entry<SER_KEY, SER_VALUE>> rawStream = streamPrimary();
+
+    /* If there is no separate meta cache, then the meta data may be present */
+
+    if ((mMetaCache == null) && (mValuePrefix != null)) {
+      if (mKeyDeserializer != null)
+        rawStream = rawStream.filter((entry) -> mKeyDeserializer.apply(entry.getKey()).startsWith(mValuePrefix));
+      else
+        rawStream = rawStream.filter((entry) -> ((String) entry.getKey()).startsWith(mValuePrefix));
+    }
+
+    /* Convert the result back */
+
+    return rawStream.map((entry) -> deserializeEntry(entry.getKey(), entry.getValue()));
+  }
+
+  /**
+   * @see com.diamondq.cachly.engine.CacheStorage#queryForKey(com.diamondq.cachly.AccessContext,
+   *      com.diamondq.cachly.spi.KeySPI)
+   */
+  @Override
+  public <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey) {
+
+    /* Get the key string */
+
+    String keyStr = (mValuePrefix != null ? mValuePrefix + pKey.toString() : pKey.toString());
+
+    /* Get the 'serialized version of the key */
+
+    @SuppressWarnings("unchecked")
+    SER_KEY serKey = (mKeySerializer != null ? mKeySerializer.apply(keyStr) : (SER_KEY) keyStr);
+
+    /* Query the underlying primary cache */
+
+    Optional<SER_VALUE> valueOpt = readFromPrimaryCache(serKey);
+
+    /* If it's not found, then we're done */
+
+    if (valueOpt.isPresent() == false)
+      return CacheResult.notFound();
+
+    /* Deserialize the entry */
+
+    Map.Entry<Key<?>, CacheResult<?>> result = deserializeEntry(serKey, valueOpt.get());
+
+    /* Return the CacheResult */
+
+    @SuppressWarnings("unchecked")
+    CacheResult<V> cv = (CacheResult<V>) result.getValue();
+    return cv;
+  }
 }
