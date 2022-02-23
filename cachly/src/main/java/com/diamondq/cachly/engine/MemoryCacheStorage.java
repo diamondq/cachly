@@ -2,6 +2,8 @@ package com.diamondq.cachly.engine;
 
 import com.diamondq.common.converters.ConverterManager;
 
+import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -15,7 +17,16 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
 
-  private final ConcurrentMap<@NonNull String, @NonNull Object> mData;
+  private static class DataRecord {
+    public final Object data;
+    public final @Nullable Long expiresAt;
+
+    public DataRecord(Object pData, @Nullable Long pExpiresAt) {
+      this.data = pData;
+      this.expiresAt = pExpiresAt;
+    }
+  }
+  private final ConcurrentMap<@NonNull String, @NonNull DataRecord> mData;
 
   public MemoryCacheStorage(ConverterManager pConverterManager) {
     super(pConverterManager, "", "", String.class, MemoryStorageData.class, false, null, null, null, null, null, null);
@@ -27,9 +38,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
    */
   @Override
   protected void writeToCache(CommonKeyValuePair<String, String> pEntry) {
-    mData.put(pEntry.serKey, Objects.requireNonNull(pEntry.serValue));
-    if (pEntry.expiresIn != null)
-      throw new UnsupportedOperationException("Expiry is not yet supported for MemoryStorage");
+    mData.put(pEntry.serKey, new DataRecord(Objects.requireNonNull(pEntry.serValue), pEntry.expiresIn != null ? Instant.now().plus(pEntry.expiresIn).toEpochMilli() : null));
   }
 
   /**
@@ -37,7 +46,16 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
    */
   @Override
   protected Optional<@NonNull ?> readFromPrimaryCache(String pKey) {
-    return Optional.ofNullable(mData.get(pKey));
+    DataRecord dataRecord = mData.get(pKey);
+    if (dataRecord == null)
+      return Optional.empty();
+    if (dataRecord.expiresAt != null) {
+      if (dataRecord.expiresAt < System.currentTimeMillis()) {
+        mData.remove(pKey);
+        return Optional.empty();
+      }
+    }
+    return Optional.of(dataRecord.data);
   }
 
   /**
@@ -57,7 +75,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
   @Override
   protected Stream<Map.Entry<String, @NonNull ?>> streamPrimary() {
     @SuppressWarnings({"unchecked", "rawtypes"})
-    Stream<Map.Entry<String, @NonNull ?>> r = (Stream) mData.entrySet().stream();
+    Stream<Map.Entry<String, @NonNull ?>> r = (Stream) mData.entrySet().stream().map((entry)-> new AbstractMap.SimpleEntry(entry.getKey(), entry.getValue().data));
     return r;
   }
 
