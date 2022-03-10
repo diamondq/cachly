@@ -1,5 +1,6 @@
 package com.diamondq.cachly;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -292,4 +293,5 @@ public interface Cache {
    */
   public Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext);
 
+   Collection<Key<?>> dependencies(AccessContext pAccessContext, String pKeyStr);
 }

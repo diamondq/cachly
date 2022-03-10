@@ -24,16 +24,7 @@ import com.diamondq.common.context.Context;
 import com.diamondq.common.context.ContextFactory;
 import com.diamondq.common.converters.ConverterManager;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -54,7 +45,7 @@ public class CacheEngine implements Cache {
 
   private final Map<String, String>                  mSerializerNameByPath;
 
-  private final ThreadLocal<Stack<Set<String>>>      mMonitored = ThreadLocal.withInitial(() -> new Stack<>());
+  private final ThreadLocal<Stack<Set<String>>>      mMonitored = ThreadLocal.withInitial(Stack::new);
 
   private final KeySPI<CacheInfo>                    mStorageKey;
 
@@ -80,6 +71,7 @@ public class CacheEngine implements Cache {
 
       /* Query the bean name locators for the name */
 
+      @Nullable
       String name = null;
       for (BeanNameLocator bnl : pNameLocators) {
         name = bnl.getBeanName(storage);
@@ -731,4 +723,9 @@ public class CacheEngine implements Cache {
       /* Expand each into a stream of string keys */
       .flatMap((cs) -> cs.streamEntries(pAccessContext));
   }
+
+  @Override
+  public Collection<Key<?>> dependencies(AccessContext pAccessContext, String pKeyStr) {
+    return (Collection<Key<?>>)(Collection) mCacheInfo.dependencyMap.get(pKeyStr);
+    }
 }
