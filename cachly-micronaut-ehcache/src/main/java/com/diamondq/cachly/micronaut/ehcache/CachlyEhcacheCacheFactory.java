@@ -8,8 +8,8 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.ehcache.Cache;
@@ -63,6 +63,7 @@ public class CachlyEhcacheCacheFactory {
    * @return The {@link CacheManager}
    */
   @Singleton
+  @javax.inject.Singleton
   @Bean(preDestroy = "close")
   CacheManager cacheManager(StatisticsService statisticsService) {
     CacheManagerBuilder<?> builder = mConfiguration.getBuilder();
@@ -73,6 +74,7 @@ public class CachlyEhcacheCacheFactory {
    * @return the Ehcache statistics service
    */
   @Singleton
+  @javax.inject.Singleton
   @Bean(preDestroy = "stop")
   StatisticsService statisticsService() {
     return new DefaultStatisticsService();
@@ -90,7 +92,7 @@ public class CachlyEhcacheCacheFactory {
    */
   @EachBean(EhcacheConfiguration.class)
   EhcacheSyncCache syncCache(@Parameter EhcacheConfiguration configuration, CacheManager cacheManager,
-    ConversionService<?> conversionService, @Named(TaskExecutors.IO) ExecutorService executorService,
+    ConversionService<?> conversionService, @javax.inject.Named(TaskExecutors.IO) @Named(TaskExecutors.IO) ExecutorService executorService,
     StatisticsService statisticsService, ApplicationContext pApplicationContext) {
 
     /* Look to see if there is a matching Cachly configuration by the same name */

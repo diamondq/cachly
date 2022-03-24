@@ -9,7 +9,7 @@ import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.common.types.Types;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.BeforeEach;

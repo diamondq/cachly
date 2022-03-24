@@ -28,13 +28,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 @Singleton
+@javax.inject.Singleton
 public class CacheEngine implements Cache {
 
   private final ContextFactory                       mContextFactory;
@@ -58,6 +59,7 @@ public class CacheEngine implements Cache {
   private final Map<Class<?>, Class<?>>              mAccessContextClassMap;
 
   @Inject
+  @javax.inject.Inject
   public CacheEngine(ContextFactory pContextFactory, ConverterManager pConverterManager,
     List<CachlyPathConfiguration> pPaths, List<BeanNameLocator> pNameLocators, List<CacheStorage> pCacheStorages,
     List<CacheLoader<?>> pCacheLoaders, List<AccessContextSPI<?>> pAccessContextSPIs) {

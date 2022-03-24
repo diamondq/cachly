@@ -9,13 +9,14 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.ehcache.Cache;
 
 @Singleton
+@javax.inject.Singleton
 public class EhcacheKeyExtractor implements KeyExtractor {
 
   @Override

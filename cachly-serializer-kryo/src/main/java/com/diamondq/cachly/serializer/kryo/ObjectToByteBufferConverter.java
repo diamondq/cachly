@@ -6,16 +6,18 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.nio.ByteBuffer;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Singleton
+@javax.inject.Singleton
 public class ObjectToByteBufferConverter extends AbstractConverter<Object, ByteBuffer> {
   private final Kryo mKryo;
 
   @Inject
-  public ObjectToByteBufferConverter(@Named("cachly") Kryo pKryo) {
+  @javax.inject.Inject
+  public ObjectToByteBufferConverter(@javax.inject.Named("cachly") @Named("cachly") Kryo pKryo) {
     super(Object.class, ByteBuffer.class, "kryo");
     mKryo = pKryo;
   }

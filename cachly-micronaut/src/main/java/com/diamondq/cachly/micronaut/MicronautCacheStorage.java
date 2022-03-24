@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -29,6 +29,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
   private final List<ExpiryHandler> mExpiryHandlers;
 
   @Inject
+  @javax.inject.Inject
   public MicronautCacheStorage(ConverterManager pConverterManager, SyncCache<?> pCache,
     List<KeyExtractor> pKeyExtractors, List<ExpiryHandler> pExpiryHandlers) {
     super(pConverterManager,

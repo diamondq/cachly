@@ -2,7 +2,7 @@ package com.diamondq.cachly.serializer.kryo;
 
 import com.esotericsoftware.kryo.Kryo;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import de.javakaffee.kryoserializers.guava.ArrayListMultimapSerializer;
 import de.javakaffee.kryoserializers.guava.ArrayTableSerializer;
@@ -21,6 +21,7 @@ import de.javakaffee.kryoserializers.guava.TreeMultimapSerializer;
 import de.javakaffee.kryoserializers.guava.UnmodifiableNavigableSetSerializer;
 
 @Singleton
+@javax.inject.Singleton
 public class GuavaKryoInitializer implements KryoInitializer {
 
   /**

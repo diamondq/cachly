@@ -22,5 +22,13 @@
       <groupId>de.javakaffee</groupId>
       <artifactId>kryo-serializers</artifactId>
     </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.inject</groupId>
+      <artifactId>jakarta.inject-api</artifactId>
+    </dependency>
   </dependencies>
 </project>

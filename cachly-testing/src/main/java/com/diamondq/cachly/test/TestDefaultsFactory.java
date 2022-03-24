@@ -6,8 +6,8 @@ import com.diamondq.cachly.test.TestDefaults.Keys;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 

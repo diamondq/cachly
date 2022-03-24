@@ -4,8 +4,8 @@ import com.diamondq.cachly.spi.BeanNameLocator;
 
 import java.util.Optional;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -15,11 +15,13 @@ import io.micronaut.context.BeanRegistration;
 import io.micronaut.inject.BeanIdentifier;
 
 @Singleton
+@javax.inject.Singleton
 public class MicronautBeanNameLocator implements BeanNameLocator {
 
   private final ApplicationContext mAppContext;
 
   @Inject
+  @javax.inject.Inject
   public MicronautBeanNameLocator(ApplicationContext pAppContext) {
     mAppContext = pAppContext;
   }

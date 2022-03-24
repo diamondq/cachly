@@ -9,9 +9,10 @@ import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.common.TypeReference;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
+@javax.inject.Singleton
 public class CacheInfoLoader implements CacheLoader<CacheInfo> {
   public static final String                   CACHE_INFO_NAME = "__CacheEngine__";
 

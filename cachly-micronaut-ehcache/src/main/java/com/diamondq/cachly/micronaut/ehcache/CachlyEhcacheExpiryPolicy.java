@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -16,6 +16,7 @@ import org.ehcache.event.CacheEventListener;
 import org.ehcache.expiry.ExpiryPolicy;
 
 @Singleton
+@javax.inject.Singleton
 public class CachlyEhcacheExpiryPolicy<K, V> implements ExpiryPolicy<K, V>, ExpiryHandler, CacheEventListener<K, V> {
 
   private final ConcurrentMap<String, Duration> mExpiries;

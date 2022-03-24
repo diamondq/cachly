@@ -14,8 +14,8 @@ import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.spi.AccessContextSPI;
 import com.diamondq.common.types.Types;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.BeforeEach;
