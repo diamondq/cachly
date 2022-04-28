@@ -6,5 +6,5 @@ public interface AccessContextSPI<A> {
 
   public Class<A> getAccessContextClass();
 
-  public String convertValue(@Nullable A pValue);
+  public String convertValue(@Nullable A pValue, String pAccessKey);
 }

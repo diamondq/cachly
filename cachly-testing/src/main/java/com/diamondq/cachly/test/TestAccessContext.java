@@ -52,7 +52,7 @@ public class TestAccessContext {
     }
 
     @Override
-    public String convertValue(@Nullable Integer pValue) {
+    public String convertValue(@Nullable Integer pValue, String pAccessKey) {
       if (pValue == null)
         return "(NULL)";
       return String.valueOf(pValue);

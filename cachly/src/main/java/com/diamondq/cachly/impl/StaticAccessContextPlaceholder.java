@@ -13,11 +13,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public class StaticAccessContextPlaceholder<A, O> extends AbstractKey<O> implements AccessContextPlaceholderSPI<O> {
 
   private final Class<A>                         mAccessContextValueClass;
+  private final String mAccessKey;
 
   private volatile @Nullable AccessContextSPI<A> mAccessContextSPI;
 
   public StaticAccessContextPlaceholder(String pKey, Class<A> pAccessContextValueClass, Type pType) {
     super("{ac:" + pKey + "}", pType, true);
+    mAccessKey = pKey;
     mAccessContextValueClass = pAccessContextValueClass;
   }
 
@@ -31,7 +33,7 @@ public class StaticAccessContextPlaceholder<A, O> extends AbstractKey<O> impleme
     if (localSPI == null)
       throw new IllegalStateException("There is no Access Context SPI for " + mAccessContextValueClass.getName());
     A value = pAccessContext.get(mAccessContextValueClass);
-    String valueStr = localSPI.convertValue(value);
+    String valueStr = localSPI.convertValue(value, mAccessKey);
     return new ResolvedAccessContextPlaceholder<>(this, valueStr);
   }
 
