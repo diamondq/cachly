@@ -24,8 +24,8 @@
         </processorPath>
         <module name="cachly-micronaut-ehcache" />
         <module name="cachly-serializer-kryo" />
-        <module name="cachly" />
         <module name="cachly-testing" />
+        <module name="cachly" />
         <module name="cachly-micronaut" />
       </profile>
     </annotationProcessing>
