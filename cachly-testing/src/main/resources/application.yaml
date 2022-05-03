@@ -15,6 +15,9 @@ cachly:
     users:
       storage: my-cache
       serializer: kryo
+    root:
+      storage: my-cache
+      serializer: kryo
     this:
       storage: my-cache
       serializer: kryo

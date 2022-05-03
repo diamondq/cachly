@@ -370,6 +370,40 @@ public class CacheEngine implements Cache {
 
   private <O> void invalidateInternal(AccessContext pAccessContext, KeySPI<O> pKey) {
     try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
+
+      /*
+       * If there are still defaults, since they need to be resolved. This is done here since some of the defaults may
+       * require lookups, and we want them included in the dependencies
+       */
+
+      if (pKey.hasPlaceholders() == true) {
+        @NonNull
+        KeySPI<Object>[] parts = pKey.getParts();
+        int partsLen = parts.length;
+        @SuppressWarnings({"null", "unchecked"})
+        @NonNull
+        KeySPI<Object>[] newParts = new KeySPI[partsLen];
+
+        for (int i = 0; i < partsLen; i++) {
+          KeySPI<Object> part = parts[i];
+          if (part instanceof KeyPlaceholderSPI) {
+            @SuppressWarnings("unchecked")
+            KeyPlaceholderSPI<Object> sspi = (KeyPlaceholderSPI<Object>) part;
+            newParts[i] = sspi.resolveDefault(this, pAccessContext);
+          }
+          else if (part instanceof AccessContextPlaceholderSPI) {
+            @SuppressWarnings("unchecked")
+            AccessContextPlaceholderSPI<Object> sspi = (AccessContextPlaceholderSPI<Object>) part;
+            newParts[i] = sspi.resolve(this, pAccessContext);
+          }
+          else
+            newParts[i] = part;
+        }
+
+        pKey = new CompositeKey<O>(newParts);
+        setupKey(pAccessContext, pKey);
+      }
+
       String keyStr = pKey.toString();
 
       /* Find the last storage given the key */
