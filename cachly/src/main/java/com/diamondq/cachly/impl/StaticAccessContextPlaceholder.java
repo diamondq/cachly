@@ -1,54 +1,55 @@
 package com.diamondq.cachly.impl;
 
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.spi.AccessContextPlaceholderSPI;
 import com.diamondq.cachly.spi.AccessContextSPI;
 import com.diamondq.cachly.spi.KeySPI;
 
-import java.lang.reflect.Type;
+public class StaticAccessContextPlaceholder<O> extends AbstractKey<O> implements AccessContextPlaceholderSPI<O>
+{
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+	private final String mAccessKey;
 
-public class StaticAccessContextPlaceholder<A, O> extends AbstractKey<O> implements AccessContextPlaceholderSPI<O> {
+	private volatile @Nullable Map<Class<?>, List<AccessContextSPI<Object>>> mAccessContextSPI;
 
-  private final Class<A>                         mAccessContextValueClass;
-  private final String mAccessKey;
+	public StaticAccessContextPlaceholder(String pKey, Type pType)
+	{
+		super("{ac:" + pKey + "}", pType, true);
+		mAccessKey = pKey;
+	}
 
-  private volatile @Nullable AccessContextSPI<A> mAccessContextSPI;
+	@Override
+	public KeySPI<O> resolve(Cache pCache, AccessContext pAccessContext)
+	{
+		@Nullable Map<Class<?>, List<AccessContextSPI<Object>>> localSPIMap = mAccessContextSPI;
+		if (localSPIMap == null) throw new IllegalStateException("There is no Access Context SPI");
+		final Map<Class<?>, Object> data = pAccessContext.getData();
+		for (Map.Entry<Class<?>, Object> pair : data.entrySet())
+		{
+			final Class<?> key = pair.getKey();
+			@Nullable List<AccessContextSPI<Object>> accessContextSPIS = localSPIMap.get(key);
+			if (accessContextSPIS == null) continue;
+			for (AccessContextSPI<Object> ac : accessContextSPIS)
+			{
+				Optional<String> optValue = ac.convertValue(pair.getValue(), mAccessKey);
+				if (optValue.isPresent()) return new ResolvedAccessContextPlaceholder<>(this, optValue.get());
+			}
+		}
+		throw new IllegalStateException("Unable to find an Access Context entry that supports " + mAccessKey);
+	}
 
-  public StaticAccessContextPlaceholder(String pKey, Class<A> pAccessContextValueClass, Type pType) {
-    super("{ac:" + pKey + "}", pType, true);
-    mAccessKey = pKey;
-    mAccessContextValueClass = pAccessContextValueClass;
-  }
-
-  /**
-   * @see com.diamondq.cachly.spi.AccessContextPlaceholderSPI#resolve(com.diamondq.cachly.Cache,
-   *      com.diamondq.cachly.AccessContext)
-   */
-  @Override
-  public KeySPI<O> resolve(Cache pCache, AccessContext pAccessContext) {
-    AccessContextSPI<A> localSPI = mAccessContextSPI;
-    if (localSPI == null)
-      throw new IllegalStateException("There is no Access Context SPI for " + mAccessContextValueClass.getName());
-    A value = pAccessContext.get(mAccessContextValueClass);
-    String valueStr = localSPI.convertValue(value, mAccessKey);
-    return new ResolvedAccessContextPlaceholder<>(this, valueStr);
-  }
-
-  /**
-   * Returns the access context value class
-   *
-   * @return the class
-   */
-  public Class<A> getAccessContextValueClass() {
-    return mAccessContextValueClass;
-  }
-
-  @SuppressWarnings("unchecked")
-  public void setAccessContextSPI(AccessContextSPI<?> pAcs) {
-    mAccessContextSPI = (AccessContextSPI<A>) pAcs;
-  }
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void setAccessContextSPI(Map<Class<?>, List<AccessContextSPI<?>>> pAcs)
+	{
+		mAccessContextSPI = (Map) pAcs;
+	}
 
 }

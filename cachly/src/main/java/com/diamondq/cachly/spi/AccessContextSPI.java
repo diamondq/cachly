@@ -1,10 +1,30 @@
 package com.diamondq.cachly.spi;
 
+import java.util.Optional;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public interface AccessContextSPI<A> {
+/**
+ * Defines an SPI for code that can convert part of an AccessContext into a key
+ *
+ * @param <A> the AccessContext part class type
+ */
+public interface AccessContextSPI<A>
+{
 
-  public Class<A> getAccessContextClass();
+	/**
+	 * Returns the class of the part of the AccessContext that this SPI supports
+	 *
+	 * @return the class
+	 */
+	Class<A> getAccessContextClass();
 
-  public String convertValue(@Nullable A pValue, String pAccessKey);
+	/**
+	 * Attempts to convert the given part of the AccessContext into the requested key
+	 *
+	 * @param pValue the part
+	 * @param pAccessKey the requested key
+	 * @return the resolved key or empty if this can't resolve
+	 */
+	Optional<String> convertValue(@Nullable A pValue, String pAccessKey);
 }
