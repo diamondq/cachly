@@ -1,0 +1,32 @@
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'corretto'
+        cache: maven
+    - name: Set Outputs
+      id: vars
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    - name: Build Number Generator
+      id: buildnumber
+      uses: einaregilsson/build-number@v3
+      with:
+        token: ${{ secrets.github_token }}
+    - name: Build with Maven
+      run: mvn -Djenkins=true -Drevision=0.2.${{ steps.buildnumber.outputs.build_number }} -Dchangelist= -Dsha1=${{ steps.vars.outputs.sha_short }} --file pom.xml clean install
