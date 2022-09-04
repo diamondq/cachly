@@ -6,7 +6,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -14,11 +13,18 @@ jobs:
       - uses: actions/checkout@v3
       # Make sure that we have a Java 8 environment
       - name: Set up JDK 8
+        id: setupJava
         uses: actions/setup-java@v3
         with:
           java-version: '8'
           distribution: 'corretto'
           cache: maven
+      - uses: cactuslab/maven-toolchains-xml-action@v1
+        with:
+          toolchains: |
+            [
+              {"jdkVersion": "8", "jdkHome": "${{ steps.setupJava.outputs.path }}"}
+            ]
       # Get the short revision number
       - name: Set Outputs
         id: vars
