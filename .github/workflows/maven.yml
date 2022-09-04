@@ -42,4 +42,4 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
       - name: Build with Maven
-        run: mvn -Djenkins=true -Drevision=0.2.${{ steps.buildnumber.outputs.build_number }} -Dchangelist= -Dsha1=${{ steps.vars.outputs.sha_short }} --file pom.xml clean install
+        run: mvn -Djenkins=true -Drevision=0.2.${{ steps.buildnumber.outputs.build_number }} -Dchangelist= -Dsha1=-${{ steps.vars.outputs.sha_short }} --file pom.xml clean deploy
