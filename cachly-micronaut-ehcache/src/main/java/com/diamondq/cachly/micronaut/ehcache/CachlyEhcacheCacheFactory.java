@@ -151,7 +151,7 @@ public class CachlyEhcacheCacheFactory {
           /* Does the Cachly config have some disk information? */
 
           CachlyDiskTieredCacheConfiguration cachlyDisk = cachlyConfig.getDisk();
-          if ((cachlyDisk != null) && (ResourceType.Core.DISK.equals(rt))) {
+          if ((cachlyDisk != null) && (ResourceType.Core.DISK == rt)) {
             ResourcePool rp = rps.getPoolForResource(rt);
             if (rp instanceof SizedResourcePool) {
               SizedResourcePool srp = (SizedResourcePool) rp;
@@ -168,7 +168,7 @@ public class CachlyEhcacheCacheFactory {
             }
           }
         }
-        if (updated == true)
+        if (updated)
           builder = builder.withResourcePools(rpBuilder);
       }
     }

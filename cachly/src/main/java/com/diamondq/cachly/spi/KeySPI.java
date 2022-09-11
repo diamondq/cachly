@@ -10,32 +10,31 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public interface KeySPI<O> extends Key<O> {
 
-  @Nullable
-  public KeySPI<Object> getPreviousKey();
+  @Nullable KeySPI<Object> getPreviousKey();
 
-  public CacheStorage getLastStorage();
+  CacheStorage getLastStorage();
 
-  public String getLastSerializerName();
+  String getLastSerializerName();
 
-  public boolean supportsNull();
+  boolean supportsNull();
 
-  public CacheLoader<O> getLoader();
+  CacheLoader<O> getLoader();
 
-  public void storeKeyDetails(KeyDetails<O> pDetails);
+  void storeKeyDetails(KeyDetails<O> pDetails);
 
-  public boolean hasKeyDetails();
+  boolean hasKeyDetails();
 
-  public @NonNull KeySPI<Object>[] getParts();
+  @NonNull KeySPI<Object>[] getParts();
 
   @Override
-  public String getKey();
+  String getKey();
 
-  public String getBaseKey();
+  String getBaseKey();
 
   /**
    * Returns true if there are any unresolved placeholders in the composite key
    *
    * @return true if there are placeholders or false if there are not
    */
-  public boolean hasPlaceholders();
+  boolean hasPlaceholders();
 }

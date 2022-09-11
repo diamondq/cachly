@@ -4,10 +4,10 @@ import java.time.Duration;
 
 public interface ExpiryHandler {
 
-  public void markForExpiry(String pKey, Duration pOverrideExpiry);
+  void markForExpiry(String pKey, Duration pOverrideExpiry);
 
-  public void invalidate(String pKey);
+  void invalidate(String pKey);
 
-  public void invalidateAll();
+  void invalidateAll();
 
 }

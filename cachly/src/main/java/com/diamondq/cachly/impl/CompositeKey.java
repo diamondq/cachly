@@ -24,12 +24,12 @@ public class CompositeKey<O> implements KeySPI<O> {
   private final boolean                   mHasPlaceholders;
 
   public CompositeKey(Key<?> pKey1, Key<O> pKey2) {
-    if (pKey1 instanceof KeySPI == false)
+    if (!(pKey1 instanceof KeySPI))
       throw new IllegalStateException();
     KeySPI<?> ki1 = (KeySPI<?>) pKey1;
     @NonNull
     KeySPI<Object>[] ki1Parts = ki1.getParts();
-    if (pKey2 instanceof KeySPI == false)
+    if (!(pKey2 instanceof KeySPI))
       throw new IllegalStateException();
     KeySPI<O> ki2 = (KeySPI<O>) pKey2;
     @NonNull
@@ -54,17 +54,17 @@ public class CompositeKey<O> implements KeySPI<O> {
   }
 
   public CompositeKey(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
-    if (pKey1 instanceof KeySPI == false)
+    if (!(pKey1 instanceof KeySPI))
       throw new IllegalStateException();
     KeySPI<?> ki1 = (KeySPI<?>) pKey1;
     @NonNull
     KeySPI<Object>[] ki1Parts = ki1.getParts();
-    if (pKey2 instanceof KeySPI == false)
+    if (!(pKey2 instanceof KeySPI))
       throw new IllegalStateException();
     KeySPI<?> ki2 = (KeySPI<?>) pKey2;
     @NonNull
     KeySPI<Object>[] ki2Parts = ki2.getParts();
-    if (pKey3 instanceof KeySPI == false)
+    if (!(pKey3 instanceof KeySPI))
       throw new IllegalStateException();
     KeySPI<O> ki3 = (KeySPI<O>) pKey3;
     @NonNull
@@ -105,9 +105,6 @@ public class CompositeKey<O> implements KeySPI<O> {
     mHasPlaceholders = hasPlaceHolders;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#hasPlaceholders()
-   */
   @Override
   public boolean hasPlaceholders() {
     return mHasPlaceholders;
@@ -121,25 +118,16 @@ public class CompositeKey<O> implements KeySPI<O> {
     return mLast.getOutputType();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getParts()
-   */
   @Override
   public @NonNull KeySPI<Object>[] getParts() {
     return mParts;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getKey()
-   */
   @Override
   public String getKey() {
     return mLast.getKey();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getBaseKey()
-   */
   @Override
   public String getBaseKey() {
     throw new IllegalStateException();
@@ -156,33 +144,21 @@ public class CompositeKey<O> implements KeySPI<O> {
     return sb.toString();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLastStorage()
-   */
   @Override
   public CacheStorage getLastStorage() {
     return mLast.getLastStorage();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLastSerializerName()
-   */
   @Override
   public String getLastSerializerName() {
     return mLast.getLastSerializerName();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLoader()
-   */
   @Override
   public CacheLoader<O> getLoader() {
     return mLast.getLoader();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getPreviousKey()
-   */
   @Override
   public @Nullable KeySPI<Object> getPreviousKey() {
     if (mPartsLen == 1)
@@ -213,36 +189,24 @@ public class CompositeKey<O> implements KeySPI<O> {
     return null;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#hasKeyDetails()
-   */
   @Override
   public boolean hasKeyDetails() {
     for (KeySPI<?> part : mParts)
-      if (part.hasKeyDetails() == false)
+      if (!part.hasKeyDetails())
         return false;
     return true;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#storeKeyDetails(com.diamondq.cachly.impl.KeyDetails)
-   */
   @Override
   public void storeKeyDetails(KeyDetails<O> pDetails) {
     throw new IllegalStateException();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#supportsNull()
-   */
   @Override
   public boolean supportsNull() {
     return mLast.supportsNull();
   }
 
-  /**
-   * @see java.lang.Object#toString()
-   */
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
@@ -254,29 +218,21 @@ public class CompositeKey<O> implements KeySPI<O> {
     return sb.toString();
   }
 
-  /**
-   * @see java.lang.Object#hashCode()
-   */
   @Override
   public int hashCode() {
     return Objects.hash(mParts, mHasPlaceholders);
   }
 
-  /**
-   * @see java.lang.Object#equals(java.lang.Object)
-   */
   @Override
   public boolean equals(@Nullable Object pObj) {
     if (pObj == null)
       return false;
     if (pObj == this)
       return true;
-    if (pObj.getClass().equals(CompositeKey.class) == false)
+    if (!pObj.getClass().equals(CompositeKey.class))
       return false;
     @SuppressWarnings("unchecked")
     CompositeKey<O> other = (CompositeKey<O>) pObj;
-    if (Objects.equals(mParts, other.mParts) && Objects.equals(mHasPlaceholders, other.mHasPlaceholders))
-      return true;
-    return false;
+    return Objects.equals(mParts, other.mParts) && Objects.equals(mHasPlaceholders, other.mHasPlaceholders);
   }
 }

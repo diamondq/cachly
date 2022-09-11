@@ -22,9 +22,6 @@ public class CachlyEhcacheSyncCache extends EhcacheSyncCache implements CachlySy
     mPerformSerialization = pPerformSerialization;
   }
 
-  /**
-   * @see com.diamondq.cachly.micronaut.CachlySyncCache#getPerformSerialization()
-   */
   @Override
   public boolean getPerformSerialization() {
     return mPerformSerialization;

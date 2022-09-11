@@ -28,34 +28,22 @@ public class StaticCacheResult<V> implements CacheResult<V> {
     mFound = pFound;
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheResult#getOverrideExpiry()
-   */
   @Override
   public @Nullable Duration getOverrideExpiry() {
     return mDuration;
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheResult#setOverrideExpiry(java.time.Duration)
-   */
   @Override
   public CacheResult<V> setOverrideExpiry(@Nullable Duration pDuration) {
     mDuration = pDuration;
     return this;
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheResult#getValue()
-   */
   @Override
   public @NonNull V getValue() {
     return Objects.requireNonNull(mValue);
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheResult#setValue(java.lang.Object)
-   */
   @Override
   public CacheResult<V> setValue(@Nullable V pValue) {
     mValue = pValue;
@@ -63,9 +51,6 @@ public class StaticCacheResult<V> implements CacheResult<V> {
     return this;
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheResult#setNullableVaue(java.lang.Object)
-   */
   @Override
   public CacheResult<V> setNullableVaue(@Nullable V pValue) {
     mValue = pValue;
@@ -73,17 +58,11 @@ public class StaticCacheResult<V> implements CacheResult<V> {
     return this;
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheResult#entryFound()
-   */
   @Override
   public boolean entryFound() {
     return mFound;
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheResult#setNotFound()
-   */
   @Override
   public CacheResult<V> setNotFound() {
     mFound = false;
@@ -91,9 +70,6 @@ public class StaticCacheResult<V> implements CacheResult<V> {
     return this;
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheResult#isNull()
-   */
   @Override
   public boolean isNull() {
     return mValue == null;

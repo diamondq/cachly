@@ -6,6 +6,6 @@ import com.diamondq.cachly.Cache;
 
 public interface AccessContextPlaceholderSPI<O> extends AccessContextPlaceholder<O> {
 
-  public KeySPI<O> resolve(Cache pCache, AccessContext pAccessContext);
+  KeySPI<O> resolve(Cache pCache, AccessContext pAccessContext);
 
 }

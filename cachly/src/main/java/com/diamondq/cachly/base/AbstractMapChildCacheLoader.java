@@ -50,7 +50,7 @@ public class AbstractMapChildCacheLoader<VALUE> extends AbstractCacheLoader<VALU
 
       /* Since the value can be null, we need to differentiate from a NULL value and a non-existing value */
 
-      if (map.containsKey(pKey.getKey()) == true)
+      if (map.containsKey(pKey.getKey()))
         pResult.setNullableVaue(null);
       else
         pResult.setNotFound();

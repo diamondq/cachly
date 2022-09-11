@@ -22,8 +22,8 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
     public final @Nullable Long expiresAt;
 
     public DataRecord(Object pData, @Nullable Long pExpiresAt) {
-      this.data = pData;
-      this.expiresAt = pExpiresAt;
+      data = pData;
+      expiresAt = pExpiresAt;
     }
   }
   private final ConcurrentMap<@NonNull String, @NonNull DataRecord> mData;
@@ -33,17 +33,11 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
     mData = new ConcurrentHashMap<>();
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#writeToCache(com.diamondq.cachly.engine.CommonKeyValuePair)
-   */
   @Override
   protected void writeToCache(CommonKeyValuePair<String, String> pEntry) {
     mData.put(pEntry.serKey, new DataRecord(Objects.requireNonNull(pEntry.serValue), pEntry.expiresIn != null ? Instant.now().plus(pEntry.expiresIn).toEpochMilli() : null));
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#readFromPrimaryCache(java.lang.Object)
-   */
   @Override
   protected Optional<@NonNull ?> readFromPrimaryCache(String pKey) {
     DataRecord dataRecord = mData.get(pKey);
@@ -58,9 +52,6 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
     return Optional.of(dataRecord.data);
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#invalidate(java.lang.Object, java.lang.Object)
-   */
   @Override
   protected void invalidate(String pCache, @Nullable String pKey) {
     if (pKey == null)
@@ -69,9 +60,6 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
       mData.remove(pKey);
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#streamPrimary()
-   */
   @Override
   protected Stream<Map.Entry<String, @NonNull ?>> streamPrimary() {
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -79,9 +67,6 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
     return r;
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#streamMetaEntries()
-   */
   @Override
   protected Stream<Entry<String, @NonNull ?>> streamMetaEntries() {
     return streamPrimary();

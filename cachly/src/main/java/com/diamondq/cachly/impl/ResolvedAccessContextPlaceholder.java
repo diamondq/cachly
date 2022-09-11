@@ -33,9 +33,6 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
     return false;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getKey()
-   */
   @Override
   public String getKey() {
     return mKey;
@@ -49,9 +46,6 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
     return mPlaceholder.getOutputType();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getBaseKey()
-   */
   @Override
   public String getBaseKey() {
     return mPlaceholder.getKey();
@@ -65,41 +59,26 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
     return mKey;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLastStorage()
-   */
   @Override
   public CacheStorage getLastStorage() {
     return mPlaceholder.getLastStorage();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLastSerializerName()
-   */
   @Override
   public String getLastSerializerName() {
     return mPlaceholder.getLastSerializerName();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLoader()
-   */
   @Override
   public CacheLoader<O> getLoader() {
     return mPlaceholder.getLoader();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getParts()
-   */
   @Override
   public @NonNull KeySPI<Object>[] getParts() {
     return mParts;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getPreviousKey()
-   */
   @Override
   public @Nullable KeySPI<Object> getPreviousKey() {
     return null;
@@ -113,25 +92,16 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
     return null;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#supportsNull()
-   */
   @Override
   public boolean supportsNull() {
     return mPlaceholder.supportsNull();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#hasKeyDetails()
-   */
   @Override
   public boolean hasKeyDetails() {
     return mPlaceholder.hasKeyDetails();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#storeKeyDetails(com.diamondq.cachly.impl.KeyDetails)
-   */
   @Override
   public void storeKeyDetails(KeyDetails<O> pDetails) {
     mPlaceholder.storeKeyDetails(pDetails);
@@ -141,37 +111,26 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
     return mPlaceholder;
   }
 
-  /**
-   * @see java.lang.Object#toString()
-   */
   @Override
   public String toString() {
     return mKey;
   }
 
-  /**
-   * @see java.lang.Object#hashCode()
-   */
   @Override
   public int hashCode() {
     return Objects.hash(mKey, mPlaceholder);
   }
 
-  /**
-   * @see java.lang.Object#equals(java.lang.Object)
-   */
   @Override
   public boolean equals(@Nullable Object pObj) {
     if (pObj == null)
       return false;
     if (pObj == this)
       return true;
-    if (pObj.getClass().equals(CompositeKey.class) == false)
+    if (!pObj.getClass().equals(CompositeKey.class))
       return false;
     @SuppressWarnings("unchecked")
     ResolvedAccessContextPlaceholder<O> other = (ResolvedAccessContextPlaceholder<O>) pObj;
-    if (Objects.equals(mKey, other.mKey) && Objects.equals(mPlaceholder, other.mPlaceholder))
-      return true;
-    return false;
+    return Objects.equals(mKey, other.mKey) && Objects.equals(mPlaceholder, other.mPlaceholder);
   }
 }

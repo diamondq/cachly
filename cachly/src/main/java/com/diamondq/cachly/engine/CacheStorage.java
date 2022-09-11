@@ -10,14 +10,14 @@ import java.util.stream.Stream;
 
 public interface CacheStorage {
 
-  public <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey);
+  <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey);
 
-  public <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult);
+  <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult);
 
-  public <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey);
+  <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey);
 
-  public Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext);
+  Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext);
 
-  public void invalidateAll(AccessContext pAccessContext);
+  void invalidateAll(AccessContext pAccessContext);
 
 }

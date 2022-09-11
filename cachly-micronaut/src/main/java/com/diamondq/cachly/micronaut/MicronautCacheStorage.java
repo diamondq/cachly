@@ -49,12 +49,12 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
       /* The value type is either a byte[] if we're serializing or a MemoryStorageData if we're not */
 
       (pCache instanceof CachlySyncCache
-        ? (((CachlySyncCache) pCache).getPerformSerialization() == true ? byte[].class : MemoryStorageData.class)
+        ? (((CachlySyncCache) pCache).getPerformSerialization() ? byte[].class : MemoryStorageData.class)
         : MemoryStorageData.class),
 
       /* Indicate whether we're serializing */
 
-      (pCache instanceof CachlySyncCache ? ((CachlySyncCache) pCache).getPerformSerialization() : true),
+      (!(pCache instanceof CachlySyncCache) || ((CachlySyncCache) pCache).getPerformSerialization()),
 
       /* Default string, type, key, value prefixes */
 
@@ -68,9 +68,6 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
     init();
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#writeToCache(com.diamondq.cachly.engine.CommonKeyValuePair)
-   */
   @Override
   protected void writeToCache(CommonKeyValuePair<SyncCache<?>, String> pEntry) {
     Duration expiresIn = pEntry.expiresIn;
@@ -80,17 +77,11 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
     pEntry.cache.put(pEntry.serKey, Objects.requireNonNull(pEntry.serValue));
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#readFromPrimaryCache(java.lang.Object)
-   */
   @Override
   protected Optional<@NonNull ?> readFromPrimaryCache(String pKey) {
     return mPrimaryCache.get(pKey, mSerValueClass);
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#streamPrimary()
-   */
   @Override
   protected Stream<Entry<String, @NonNull ?>> streamPrimary() {
     Object nativeCache = mPrimaryCache.getNativeCache();
@@ -124,17 +115,11 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
       "The cache " + nativeCache.getClass().getName() + " is not able to be key iterated");
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#streamMetaEntries()
-   */
   @Override
   protected Stream<Entry<String, @NonNull ?>> streamMetaEntries() {
     return streamPrimary();
   }
 
-  /**
-   * @see com.diamondq.cachly.engine.AbstractCacheStorage#invalidate(java.lang.Object, java.lang.Object)
-   */
   @Override
   protected void invalidate(SyncCache<?> pCache, @Nullable String pKey) {
     if (pKey == null) {

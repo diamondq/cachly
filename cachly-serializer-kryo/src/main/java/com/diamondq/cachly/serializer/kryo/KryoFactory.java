@@ -13,7 +13,9 @@ import io.micronaut.context.annotation.Factory;
 public class KryoFactory {
   @Singleton
   @javax.inject.Singleton
-  public @Named("cachly") @javax.inject.Named("cachly") Kryo createKryo(List<KryoInitializer> pInitializers) {
+  @Named("cachly")
+  @javax.inject.Named("cachly")
+  public Kryo createKryo(List<KryoInitializer> pInitializers) {
     Kryo kryo = new Kryo();
     kryo.setRegistrationRequired(false);
     kryo.setReferences(true);

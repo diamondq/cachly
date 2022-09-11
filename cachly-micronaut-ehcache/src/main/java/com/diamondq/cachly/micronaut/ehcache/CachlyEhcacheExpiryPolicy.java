@@ -25,33 +25,21 @@ public class CachlyEhcacheExpiryPolicy<K, V> implements ExpiryPolicy<K, V>, Expi
     mExpiries = new ConcurrentHashMap<>();
   }
 
-  /**
-   * @see com.diamondq.cachly.micronaut.ExpiryHandler#invalidate(java.lang.String)
-   */
   @Override
   public void invalidate(String pKey) {
     mExpiries.remove(pKey);
   }
 
-  /**
-   * @see com.diamondq.cachly.micronaut.ExpiryHandler#invalidateAll()
-   */
   @Override
   public void invalidateAll() {
     mExpiries.clear();
   }
 
-  /**
-   * @see com.diamondq.cachly.micronaut.ExpiryHandler#markForExpiry(java.lang.String, java.time.Duration)
-   */
   @Override
   public void markForExpiry(String pKey, Duration pOverrideExpiry) {
     mExpiries.put(pKey, pOverrideExpiry);
   }
 
-  /**
-   * @see org.ehcache.expiry.ExpiryPolicy#getExpiryForCreation(java.lang.Object, java.lang.Object)
-   */
   @Override
   public Duration getExpiryForCreation(@NonNull K pKey, V pValue) {
     Duration duration = mExpiries.get(pKey.toString());
@@ -60,26 +48,16 @@ public class CachlyEhcacheExpiryPolicy<K, V> implements ExpiryPolicy<K, V>, Expi
     return duration;
   }
 
-  /**
-   * @see org.ehcache.expiry.ExpiryPolicy#getExpiryForAccess(java.lang.Object, java.util.function.Supplier)
-   */
   @Override
   public @Nullable Duration getExpiryForAccess(@NonNull K pKey, Supplier<? extends V> pValue) {
     return null;
   }
 
-  /**
-   * @see org.ehcache.expiry.ExpiryPolicy#getExpiryForUpdate(java.lang.Object, java.util.function.Supplier,
-   *      java.lang.Object)
-   */
   @Override
   public @Nullable Duration getExpiryForUpdate(@NonNull K pKey, Supplier<? extends V> pOldValue, V pNewValue) {
     return null;
   }
 
-  /**
-   * @see org.ehcache.event.CacheEventListener#onEvent(org.ehcache.event.CacheEvent)
-   */
   @Override
   public void onEvent(CacheEvent<? extends K, ? extends V> pEvent) {
     K keyObj = pEvent.getKey();

@@ -53,7 +53,7 @@ public class AbstractCollectionChildCacheLoader<VALUE, COLL extends Collection<V
 
     String key = pKey.getKey();
     for (VALUE entry : coll) {
-      if (mMatcher.test(key, entry) == true) {
+      if (mMatcher.test(key, entry)) {
         pResult.setNullableVaue(entry);
         return;
       }

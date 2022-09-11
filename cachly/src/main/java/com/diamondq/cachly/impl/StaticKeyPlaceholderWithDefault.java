@@ -50,12 +50,10 @@ public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> impleme
       return false;
     if (pObj == this)
       return true;
-    if (pObj.getClass().equals(StaticKeyPlaceholderWithDefault.class) == false)
+    if (!pObj.getClass().equals(StaticKeyPlaceholderWithDefault.class))
       return false;
     StaticKeyPlaceholderWithDefault other = (StaticKeyPlaceholderWithDefault) pObj;
-    if (Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType)
-      && Objects.equals(mHasPlaceholders, other.mHasPlaceholders) && Objects.equals(mDefaultKey, other.mDefaultKey))
-      return true;
-    return false;
+    return Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType)
+            && Objects.equals(mHasPlaceholders, other.mHasPlaceholders) && Objects.equals(mDefaultKey, other.mDefaultKey);
   }
 }

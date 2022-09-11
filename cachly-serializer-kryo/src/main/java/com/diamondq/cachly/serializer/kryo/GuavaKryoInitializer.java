@@ -24,9 +24,6 @@ import de.javakaffee.kryoserializers.guava.UnmodifiableNavigableSetSerializer;
 @javax.inject.Singleton
 public class GuavaKryoInitializer implements KryoInitializer {
 
-  /**
-   * @see com.diamondq.cachly.serializer.kryo.KryoInitializer#initialize(com.esotericsoftware.kryo.Kryo)
-   */
   @Override
   public void initialize(Kryo pKryo) {
     boolean hasGuava;

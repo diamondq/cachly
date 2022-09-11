@@ -9,9 +9,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public interface CacheResult<V> {
 
-  public @Nullable Duration getOverrideExpiry();
+  @Nullable Duration getOverrideExpiry();
 
-  public CacheResult<V> setOverrideExpiry(@Nullable Duration pDuration);
+  CacheResult<V> setOverrideExpiry(@Nullable Duration pDuration);
 
   /**
    * Sets the value. If the value is null, then it's actually equivalent to setNotFound()
@@ -19,7 +19,7 @@ public interface CacheResult<V> {
    * @param pValue the optional value
    * @return the cache result
    */
-  public CacheResult<V> setValue(@Nullable V pValue);
+  CacheResult<V> setValue(@Nullable V pValue);
 
   /**
    * Sets the value. If the value is null, it's still marked as found
@@ -27,17 +27,17 @@ public interface CacheResult<V> {
    * @param pValue the nullable value
    * @return the cache result
    */
-  public CacheResult<V> setNullableVaue(@Nullable V pValue);
+  CacheResult<V> setNullableVaue(@Nullable V pValue);
 
-  public CacheResult<V> setNotFound();
+  CacheResult<V> setNotFound();
 
-  public boolean entryFound();
+  boolean entryFound();
 
-  public boolean isNull();
+  boolean isNull();
 
-  public @NonNull V getValue();
+  @NonNull V getValue();
 
-  public static <A> CacheResult<A> notFound() {
+  static <A> CacheResult<A> notFound() {
     @SuppressWarnings("unchecked")
     CacheResult<A> r = (CacheResult<A>) StaticCacheResult.sNOT_FOUND;
     return r;

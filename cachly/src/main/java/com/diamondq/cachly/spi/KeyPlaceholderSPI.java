@@ -6,5 +6,5 @@ import com.diamondq.cachly.KeyPlaceholder;
 
 public interface KeyPlaceholderSPI<O> extends KeyPlaceholder<O> {
 
-  public KeySPI<O> resolveDefault(Cache pCache, AccessContext pAccessContext);
+  KeySPI<O> resolveDefault(Cache pCache, AccessContext pAccessContext);
 }

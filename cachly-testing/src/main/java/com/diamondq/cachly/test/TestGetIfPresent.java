@@ -1,8 +1,5 @@
 package com.diamondq.cachly.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
@@ -25,6 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @MicronautTest
 public class TestGetIfPresent {
@@ -131,6 +130,6 @@ public class TestGetIfPresent {
   void missingTest() {
     AccessContext ac = cache.createAccessContext(null);
     Optional<String> opt = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "abc");
-    assertEquals(false, opt.isPresent());
+    assertFalse(opt.isPresent());
   }
 }

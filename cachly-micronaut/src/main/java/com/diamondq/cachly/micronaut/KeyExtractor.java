@@ -13,6 +13,6 @@ public interface KeyExtractor {
    * @param pNativeCache the native cache (type is unknown at this point)
    * @return the list of keys or null if keys cannot be extracted
    */
-  public <K, V> @Nullable Stream<Map.Entry<K, V>> getEntries(Object pNativeCache);
+  <K, V> @Nullable Stream<Map.Entry<K, V>> getEntries(Object pNativeCache);
 
 }

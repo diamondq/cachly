@@ -26,13 +26,10 @@ public class MicronautBeanNameLocator implements BeanNameLocator {
     mAppContext = pAppContext;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.BeanNameLocator#getBeanName(java.lang.Object)
-   */
   @Override
   public <T> @Nullable String getBeanName(@NonNull T pBean) {
     Optional<BeanRegistration<T>> regOpt = mAppContext.findBeanRegistration(pBean);
-    if (regOpt.isPresent() == false)
+    if (!regOpt.isPresent())
       return null;
     BeanRegistration<T> beanReg = regOpt.get();
     BeanIdentifier identifier = beanReg.getIdentifier();

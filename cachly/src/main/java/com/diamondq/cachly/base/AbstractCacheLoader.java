@@ -20,13 +20,10 @@ public abstract class AbstractCacheLoader<VALUE> implements CacheLoader<VALUE> {
    * @param pSupportsNull whether null is a valid value
    * @param pHelp help describing this loader
    */
-  public AbstractCacheLoader(Key<VALUE> pKey, boolean pSupportsNull, String pHelp) {
+  protected AbstractCacheLoader(Key<VALUE> pKey, boolean pSupportsNull, String pHelp) {
     mCacheLoaderInfo = new CacheLoaderInfo<>(pKey, pSupportsNull, pHelp, this);
   }
 
-  /**
-   * @see com.diamondq.cachly.CacheLoader#getInfo()
-   */
   @Override
   public CacheLoaderInfo<VALUE> getInfo() {
     return mCacheLoaderInfo;

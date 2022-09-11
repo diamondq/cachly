@@ -12,7 +12,7 @@ public interface CacheLoader<O> {
    *
    * @return the info
    */
-  public CacheLoaderInfo<O> getInfo();
+  CacheLoaderInfo<O> getInfo();
 
   /**
    * Called to load a specific key
@@ -22,6 +22,6 @@ public interface CacheLoader<O> {
    * @param pKey the key to load
    * @param pResult the place to store the result
    */
-  public void load(Cache pCache, AccessContext pAccessContext, Key<O> pKey, CacheResult<O> pResult);
+  void load(Cache pCache, AccessContext pAccessContext, Key<O> pKey, CacheResult<O> pResult);
 
 }

@@ -18,7 +18,7 @@ public interface Key<O> {
    * @param pTemplate the template key
    * @return the Key or null if the template key is not present
    */
-  public <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate);
+  <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate);
 
   /**
    * Returns the string partial of the last piece of the key. This is usually the piece of data that CacheLoader's need
@@ -26,19 +26,19 @@ public interface Key<O> {
    *
    * @return the key data
    */
-  public String getKey();
+  String getKey();
 
   /**
    * Returns the base keys of all the parts
    *
    * @return the full base key
    */
-  public String getFullBaseKey();
+  String getFullBaseKey();
 
   /**
    * Returns the Type of the output type
    *
    * @return the output Type
    */
-  public Type getOutputType();
+  Type getOutputType();
 }

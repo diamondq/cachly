@@ -33,17 +33,11 @@ public class AbstractKey<O> implements KeySPI<O> {
     mHasPlaceholders = pHasPlaceholders;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#hasPlaceholders()
-   */
   @Override
   public boolean hasPlaceholders() {
     return mHasPlaceholders;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getKey()
-   */
   @Override
   public String getKey() {
     return mKey;
@@ -57,9 +51,6 @@ public class AbstractKey<O> implements KeySPI<O> {
     return mOutputType;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getParts()
-   */
   @Override
   public @NonNull KeySPI<Object>[] getParts() {
     return mParts;
@@ -76,9 +67,6 @@ public class AbstractKey<O> implements KeySPI<O> {
     return null;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getPreviousKey()
-   */
   @Override
   public @Nullable KeySPI<Object> getPreviousKey() {
 
@@ -87,25 +75,16 @@ public class AbstractKey<O> implements KeySPI<O> {
     return null;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#storeKeyDetails(com.diamondq.cachly.impl.KeyDetails)
-   */
   @Override
   public void storeKeyDetails(KeyDetails<O> pDetails) {
     mKeyDetails = pDetails;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#hasKeyDetails()
-   */
   @Override
   public boolean hasKeyDetails() {
     return mKeyDetails != null;
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLastStorage()
-   */
   @Override
   public CacheStorage getLastStorage() {
     KeyDetails<O> keyDetails = mKeyDetails;
@@ -114,9 +93,6 @@ public class AbstractKey<O> implements KeySPI<O> {
     return keyDetails.getLastStorage();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLastSerializerName()
-   */
   @Override
   public String getLastSerializerName() {
     KeyDetails<O> keyDetails = mKeyDetails;
@@ -125,9 +101,6 @@ public class AbstractKey<O> implements KeySPI<O> {
     return keyDetails.getLastSerializerName();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#supportsNull()
-   */
   @Override
   public boolean supportsNull() {
     KeyDetails<O> keyDetails = mKeyDetails;
@@ -136,9 +109,6 @@ public class AbstractKey<O> implements KeySPI<O> {
     return keyDetails.supportsNull();
   }
 
-  /**
-   * @see com.diamondq.cachly.spi.KeySPI#getLoader()
-   */
   @Override
   public CacheLoader<O> getLoader() {
     KeyDetails<O> keyDetails = mKeyDetails;
@@ -160,38 +130,27 @@ public class AbstractKey<O> implements KeySPI<O> {
     return mKey;
   }
 
-  /**
-   * @see java.lang.Object#toString()
-   */
   @Override
   public String toString() {
     return mKey;
   }
 
-  /**
-   * @see java.lang.Object#hashCode()
-   */
   @Override
   public int hashCode() {
     return Objects.hash(mKey, mOutputType, mHasPlaceholders);
   }
 
-  /**
-   * @see java.lang.Object#equals(java.lang.Object)
-   */
   @Override
   public boolean equals(@Nullable Object pObj) {
     if (pObj == null)
       return false;
     if (pObj == this)
       return true;
-    if (pObj.getClass().equals(this.getClass()) == false)
+    if (!pObj.getClass().equals(getClass()))
       return false;
     @SuppressWarnings("unchecked")
     AbstractKey<O> other = (AbstractKey<O>) pObj;
-    if (Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType)
-      && Objects.equals(mHasPlaceholders, other.mHasPlaceholders))
-      return true;
-    return false;
+    return Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType)
+            && Objects.equals(mHasPlaceholders, other.mHasPlaceholders);
   }
 }

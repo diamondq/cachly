@@ -8,5 +8,5 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public interface BeanNameLocator {
 
-  public <T> @Nullable String getBeanName(@NonNull T pBean);
+  <T> @Nullable String getBeanName(@NonNull T pBean);
 }

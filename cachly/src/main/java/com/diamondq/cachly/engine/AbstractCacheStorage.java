@@ -135,10 +135,10 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
 	 */
 	protected boolean mSerializeValue;
 
-	public AbstractCacheStorage(ConverterManager pConverterManager, CACHE pPrimaryCache, @Nullable CACHE pMetaCache,
-			Class<SER_KEY> pSerKeyClass, Class<@NonNull ?> pSerValueClass, boolean pSerializeValue, @Nullable String pStringPrefix,
-			@Nullable String pTypePrefix, @Nullable String pKeyPrefix, @Nullable String pValuePrefix,
-			@Nullable Function<String, @NonNull SER_KEY> pKeySerializer, @Nullable Function<@NonNull SER_KEY, String> pKeyDeserializer)
+	protected AbstractCacheStorage(ConverterManager pConverterManager, CACHE pPrimaryCache, @Nullable CACHE pMetaCache,
+								   Class<SER_KEY> pSerKeyClass, Class<@NonNull ?> pSerValueClass, boolean pSerializeValue, @Nullable String pStringPrefix,
+								   @Nullable String pTypePrefix, @Nullable String pKeyPrefix, @Nullable String pValuePrefix,
+								   @Nullable Function<String, @NonNull SER_KEY> pKeySerializer, @Nullable Function<@NonNull SER_KEY, String> pKeyDeserializer)
 	{
 		mConverterManager = pConverterManager;
 		mPrimaryCache = pPrimaryCache;
