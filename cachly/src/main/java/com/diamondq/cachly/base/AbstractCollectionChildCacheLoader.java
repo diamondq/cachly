@@ -10,7 +10,7 @@ import java.util.Collection;
 
 /**
  * This base class is used to implement a CacheLoader that returns a VALUE from a KEY when there is a CacheLoader that
- * returns a Collection<VALUE>
+ * returns a Collection&lt;VALUE>
  *
  * @param <VALUE> the VALUE type
  * @param <COLL> the collection type
@@ -18,7 +18,7 @@ import java.util.Collection;
 public class AbstractCollectionChildCacheLoader<VALUE, COLL extends Collection<VALUE>>
   extends AbstractCacheLoader<VALUE> {
 
-  protected final Key<COLL>                 mListKey;
+  protected final Key<COLL> mListKey;
 
   protected final Predicate2<String, VALUE> mMatcher;
 
@@ -28,7 +28,7 @@ public class AbstractCollectionChildCacheLoader<VALUE, COLL extends Collection<V
    * @param pKey the key that is returned
    * @param pSupportsNull whether null is a valid value
    * @param pHelp help describing this loader
-   * @param pListKey the Key to load the Collection<VALUE> data
+   * @param pListKey the Key to load the Collection&lt;VALUE> data
    * @param pMatcher the matcher to find the requested entry
    */
   public AbstractCollectionChildCacheLoader(Key<VALUE> pKey, boolean pSupportsNull, String pHelp, Key<COLL> pListKey,
@@ -40,7 +40,7 @@ public class AbstractCollectionChildCacheLoader<VALUE, COLL extends Collection<V
 
   /**
    * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.AccessContext,
-   *      com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
+   *   com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
    */
   @Override
   public void load(Cache pCache, AccessContext pAccessContext, Key<VALUE> pKey, CacheResult<VALUE> pResult) {

@@ -1,9 +1,6 @@
 package com.diamondq.cachly.serializer.kryo;
 
 import com.esotericsoftware.kryo.Kryo;
-
-import jakarta.inject.Singleton;
-
 import de.javakaffee.kryoserializers.guava.ArrayListMultimapSerializer;
 import de.javakaffee.kryoserializers.guava.ArrayTableSerializer;
 import de.javakaffee.kryoserializers.guava.HashBasedTableSerializer;
@@ -19,6 +16,7 @@ import de.javakaffee.kryoserializers.guava.ReverseListSerializer;
 import de.javakaffee.kryoserializers.guava.TreeBasedTableSerializer;
 import de.javakaffee.kryoserializers.guava.TreeMultimapSerializer;
 import de.javakaffee.kryoserializers.guava.UnmodifiableNavigableSetSerializer;
+import jakarta.inject.Singleton;
 
 @Singleton
 @javax.inject.Singleton

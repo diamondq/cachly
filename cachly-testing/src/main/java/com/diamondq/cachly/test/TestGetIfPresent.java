@@ -9,22 +9,21 @@ import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.common.types.Types;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-
 import static org.junit.jupiter.api.Assertions.*;
 
+@SuppressWarnings("ClassNamePrefixedWithPackageName")
 @MicronautTest
 public class TestGetIfPresent {
 
@@ -33,17 +32,18 @@ public class TestGetIfPresent {
     private static class Strings {
       public static final String PARTIAL_PROCESS_DEFINITIONS = "ifpresent-process-definitions";
 
-      public static final String PARTIAL_ID                  = "id";
+      public static final String PARTIAL_ID = "id";
     }
 
-    public static final Key<Map<String, String>> PROCESS_DEFINITIONS =
-      KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS, Types.MAP_OF_STRING_TO_STRING);
+    public static final Key<Map<String, String>> PROCESS_DEFINITIONS = KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS,
+      Types.MAP_OF_STRING_TO_STRING
+    );
 
-    public static final KeyPlaceholder<String>   PD_BY_ID_PLACE      =
-      KeyBuilder.placeholder(Strings.PARTIAL_ID, Types.STRING);
+    public static final KeyPlaceholder<String> PD_BY_ID_PLACE = KeyBuilder.placeholder(Strings.PARTIAL_ID,
+      Types.STRING
+    );
 
-    public static final Key<String>              PD_BY_ID            =
-      KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
+    public static final Key<String> PD_BY_ID = KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
 
   }
 
@@ -87,8 +87,7 @@ public class TestGetIfPresent {
 
   }
 
-  @Inject
-  Cache cache;
+  @Inject Cache cache;
 
   @BeforeEach
   public void before() {
@@ -98,13 +97,13 @@ public class TestGetIfPresent {
   @Test
   void test() {
     AccessContext ac = cache.createAccessContext(null);
-    String r = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
+    @Nullable String r = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
     assertNotNull(r);
-    String r2 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
+    @Nullable String r2 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
     assertNotNull(r2);
     assertEquals(r, r2);
     cache.invalidate(ac, Keys.PROCESS_DEFINITIONS);
-    String r3 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
+    @Nullable String r3 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
     assertNotNull(r3);
     assertEquals(r, r3);
   }
@@ -112,16 +111,20 @@ public class TestGetIfPresent {
   @Test
   void keysTest() {
     AccessContext ac = cache.createAccessContext(null);
-    String emptyKeys =
-      cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
+    String emptyKeys = cache.streamEntries(ac)
+      .map((entry) -> entry.getKey().toString())
+      .sorted()
+      .collect(Collectors.joining(","));
     assertEquals("", emptyKeys);
 
     /* Grab some entries which will populate the cache */
 
-    cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").get();
+    cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElseThrow(IllegalArgumentException::new);
 
-    String popKeys =
-      cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
+    String popKeys = cache.streamEntries(ac)
+      .map((entry) -> entry.getKey().toString())
+      .sorted()
+      .collect(Collectors.joining(","));
     assertEquals("__CacheEngine__,ifpresent-process-definitions,ifpresent-process-definitions/123", popKeys);
 
   }

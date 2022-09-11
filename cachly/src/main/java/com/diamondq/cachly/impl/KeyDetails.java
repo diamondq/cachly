@@ -5,15 +5,16 @@ import com.diamondq.cachly.engine.CacheStorage;
 
 public class KeyDetails<O> {
 
-  private final CacheStorage   mLastStorage;
+  private final CacheStorage mLastStorage;
 
-  private final String         mLastSerializerName;
+  private final String mLastSerializerName;
 
-  private final boolean        mSupportsNull;
+  private final boolean mSupportsNull;
 
   private final CacheLoader<O> mLoader;
 
-  public KeyDetails(CacheStorage pLastStorage, String pLastSerializerName, boolean pSupportsNull, CacheLoader<O> pLoader) {
+  public KeyDetails(CacheStorage pLastStorage, String pLastSerializerName, boolean pSupportsNull,
+    CacheLoader<O> pLoader) {
     mLastStorage = pLastStorage;
     mLastSerializerName = pLastSerializerName;
     mSupportsNull = pSupportsNull;

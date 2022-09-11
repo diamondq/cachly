@@ -33,7 +33,7 @@ public class AbstractMapChildCacheLoader<VALUE> extends AbstractCacheLoader<VALU
 
   /**
    * @see com.diamondq.cachly.CacheLoader#load(com.diamondq.cachly.Cache, com.diamondq.cachly.AccessContext,
-   *      com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
+   *   com.diamondq.cachly.Key, com.diamondq.cachly.CacheResult)
    */
   @Override
   public void load(Cache pCache, AccessContext pAccessContext, Key<VALUE> pKey, CacheResult<VALUE> pResult) {
@@ -50,12 +50,8 @@ public class AbstractMapChildCacheLoader<VALUE> extends AbstractCacheLoader<VALU
 
       /* Since the value can be null, we need to differentiate from a NULL value and a non-existing value */
 
-      if (map.containsKey(pKey.getKey()))
-        pResult.setNullableVaue(null);
-      else
-        pResult.setNotFound();
-    }
-    else
-      pResult.setValue(bo);
+      if (map.containsKey(pKey.getKey())) pResult.setNullableVaue(null);
+      else pResult.setNotFound();
+    } else pResult.setValue(bo);
   }
 }

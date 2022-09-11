@@ -5,11 +5,10 @@ import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
-
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> implements KeyPlaceholderSPI<String> {
 
@@ -17,10 +16,8 @@ public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> impleme
 
   public StaticKeyPlaceholderWithDefault(String pKey, Type pType, Key<String> pDefaultKey) {
     super("{" + pKey + "}", pType, true);
-    if (pDefaultKey instanceof KeySPI)
-      mDefaultKey = (KeySPI<String>) pDefaultKey;
-    else
-      throw new IllegalArgumentException("The default key must be a KeySPI");
+    if (pDefaultKey instanceof KeySPI) mDefaultKey = (KeySPI<String>) pDefaultKey;
+    else throw new IllegalArgumentException("The default key must be a KeySPI");
   }
 
   @Override
@@ -46,14 +43,13 @@ public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> impleme
    */
   @Override
   public boolean equals(@Nullable Object pObj) {
-    if (pObj == null)
-      return false;
-    if (pObj == this)
-      return true;
-    if (!pObj.getClass().equals(StaticKeyPlaceholderWithDefault.class))
-      return false;
+    if (pObj == null) return false;
+    if (pObj == this) return true;
+    if (!pObj.getClass().equals(StaticKeyPlaceholderWithDefault.class)) return false;
     StaticKeyPlaceholderWithDefault other = (StaticKeyPlaceholderWithDefault) pObj;
-    return Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType)
-            && Objects.equals(mHasPlaceholders, other.mHasPlaceholders) && Objects.equals(mDefaultKey, other.mDefaultKey);
+    return Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType) && Objects.equals(
+      mHasPlaceholders,
+      other.mHasPlaceholders
+    ) && Objects.equals(mDefaultKey, other.mDefaultKey);
   }
 }

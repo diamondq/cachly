@@ -1,19 +1,17 @@
 package com.diamondq.cachly.micronaut.ehcache;
 
 import com.diamondq.cachly.micronaut.ExpiryHandler;
-
-import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Supplier;
-
 import jakarta.inject.Singleton;
-
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.ehcache.event.CacheEvent;
 import org.ehcache.event.CacheEventListener;
 import org.ehcache.expiry.ExpiryPolicy;
+
+import java.time.Duration;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 @Singleton
 @javax.inject.Singleton
@@ -43,8 +41,7 @@ public class CachlyEhcacheExpiryPolicy<K, V> implements ExpiryPolicy<K, V>, Expi
   @Override
   public Duration getExpiryForCreation(@NonNull K pKey, V pValue) {
     Duration duration = mExpiries.get(pKey.toString());
-    if (duration == null)
-      return ExpiryPolicy.INFINITE;
+    if (duration == null) return ExpiryPolicy.INFINITE;
     return duration;
   }
 

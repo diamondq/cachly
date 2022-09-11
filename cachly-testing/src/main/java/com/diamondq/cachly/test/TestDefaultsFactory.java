@@ -3,16 +3,14 @@ package com.diamondq.cachly.test;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderFactoryHelper;
 import com.diamondq.cachly.test.TestDefaults.Keys;
+import io.micronaut.context.annotation.Factory;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
-
-import org.checkerframework.checker.nullness.qual.Nullable;
-
-import io.micronaut.context.annotation.Factory;
-
+@SuppressWarnings({ "MethodMayBeStatic", "ClassNamePrefixedWithPackageName" })
 @Factory
 public class TestDefaultsFactory {
 
@@ -31,14 +29,17 @@ public class TestDefaultsFactory {
   @Singleton
   @Named("thisOrg")
   public CacheLoader<String> thisOrgFactory() {
-    return CacheLoaderFactoryHelper.of(Keys.THIS_ORG, false, "", (c, k, r) -> r.setValue(k.getKey()));
+    return CacheLoaderFactoryHelper.of(Keys.THIS_ORG, false, "", (cache, key, result) -> result.setValue(key.getKey()));
   }
 
   @Singleton
   @Named("actualOrg")
   public CacheLoader<String> actualOrgFactory() {
     AtomicInteger counter = new AtomicInteger(0);
-    return CacheLoaderFactoryHelper.of(Keys.ACTUAL_ORG, false, "",
-      (c, k, r) -> r.setValue("actual_" + counter.incrementAndGet()));
+    return CacheLoaderFactoryHelper.of(Keys.ACTUAL_ORG,
+      false,
+      "",
+      (cache, key, result) -> result.setValue("actual_" + counter.incrementAndGet())
+    );
   }
 }

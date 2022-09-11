@@ -1,16 +1,5 @@
 package com.diamondq.cachly.test;
 
-import java.util.Date;
-import java.util.Optional;
-
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import static com.tc.util.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.AccessContextPlaceholder;
 import com.diamondq.cachly.Cache;
@@ -25,160 +14,159 @@ import com.diamondq.common.types.Types;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.Date;
+import java.util.Optional;
+
+import static com.tc.util.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @MicronautTest
-public class TestAccessContext
-{
+@SuppressWarnings({ "UseOfObsoleteDateTimeApi", "ClassNamePrefixedWithPackageName" })
+public class TestAccessContext {
 
-	public static class Keys
-	{
+  public static class Keys {
 
-		private static class Strings
-		{
-			public static final String PARTIAL_USERS_NAME = "username";
-			public static final String PARTIAL_USERS_DATE = "userdate";
+    private static class Strings {
+      public static final String PARTIAL_USERS_NAME = "username";
+      public static final String PARTIAL_USERS_DATE = "userdate";
 
-			public static final String PARTIAL_ROOT = "root";
-		}
+      public static final String PARTIAL_ROOT = "root";
+    }
 
-		private static class LocalTypes
-		{
-			public static final TypeReference<Date> DATE = new TypeReference<Date>()
-			{
-			};
-		}
+    private static class LocalTypes {
+      public static final TypeReference<Date> DATE = new TypeReference<Date>() {
+      };
+    }
 
-		/*
-		 * /root
-		 */
-		public static final Key<@Nullable Void> ROOT = KeyBuilder.of(Strings.PARTIAL_ROOT, Types.VOID);
+    /*
+     * /root
+     */
+    public static final Key<@Nullable Void> ROOT = KeyBuilder.of(Strings.PARTIAL_ROOT, Types.VOID);
 
-		public static final AccessContextPlaceholder<@Nullable Void> USERS_BY_ID_AC = KeyBuilder.accessContext(Strings.PARTIAL_USERS_NAME,
-				Types.VOID);
+    public static final AccessContextPlaceholder<@Nullable Void> USERS_BY_ID_AC = KeyBuilder.accessContext(Strings.PARTIAL_USERS_NAME,
+      Types.VOID
+    );
 
-		/*
-		 * /root/{ac:username}
-		 */
-		public static final Key<@Nullable Void> USERS = KeyBuilder.from(ROOT, USERS_BY_ID_AC);
+    /*
+     * /root/{ac:username}
+     */
+    public static final Key<@Nullable Void> USERS = KeyBuilder.from(ROOT, USERS_BY_ID_AC);
 
-		/*
-		 * /root/{ac:username}/username
-		 */
-		public static final Key<String> USER_BY_NAME = KeyBuilder.from(USERS, KeyBuilder.of(Strings.PARTIAL_USERS_NAME, Types.STRING));
+    /*
+     * /root/{ac:username}/username
+     */
+    public static final Key<String> USER_BY_NAME = KeyBuilder.from(USERS,
+      KeyBuilder.of(Strings.PARTIAL_USERS_NAME, Types.STRING)
+    );
 
-		/*
-		 * /root/{ac:username}/userdate
-		 */
-		public static final Key<Date> USER_BY_DATE = KeyBuilder.from(USERS, KeyBuilder.of(Strings.PARTIAL_USERS_DATE, LocalTypes.DATE));
+    /*
+     * /root/{ac:username}/userdate
+     */
+    @SuppressWarnings("SpellCheckingInspection") public static final Key<Date> USER_BY_DATE = KeyBuilder.from(USERS,
+      KeyBuilder.of(Strings.PARTIAL_USERS_DATE, LocalTypes.DATE)
+    );
 
-	}
+  }
 
-	@Singleton
-	public static class IntegerAccessContext implements AccessContextSPI<Integer>
-	{
-		@Override
-		public Class<Integer> getAccessContextClass()
-		{
-			return Integer.class;
-		}
+  @Singleton
+  public static class IntegerAccessContext implements AccessContextSPI<Integer> {
+    @Override
+    public Class<Integer> getAccessContextClass() {
+      return Integer.class;
+    }
 
-		@Override
-		public Optional<String> convertValue(@Nullable Integer pValue, String pAccessKey)
-		{
-			if (pValue == null) return Optional.of("(NULL)");
-			return Optional.of(String.valueOf(pValue));
-		}
-	}
+    @Override
+    public Optional<String> convertValue(@Nullable Integer pValue, String pAccessKey) {
+      if (pValue == null) return Optional.of("(NULL)");
+      return Optional.of(String.valueOf(pValue));
+    }
+  }
 
-	@Singleton
-	public static class UserIDLoader implements CacheLoader<String>
-	{
+  @Singleton
+  public static class UserIDLoader implements CacheLoader<String> {
 
-		@Override
-		public CacheLoaderInfo<String> getInfo()
-		{
-			return new CacheLoaderInfo<>(Keys.USER_BY_NAME, false, "", this);
-		}
+    @Override
+    public CacheLoaderInfo<String> getInfo() {
+      return new CacheLoaderInfo<>(Keys.USER_BY_NAME, false, "", this);
+    }
 
-		@Override
-		public void load(Cache pCache, AccessContext pAccessContext, Key<String> pKey, CacheResult<String> pResult)
-		{
-			@Nullable Key<@Nullable Void> prevKey = pKey.getPreviousKey(Keys.USERS);
-			if (prevKey == null) throw new IllegalStateException();
-			pResult.setValue(prevKey.getKey());
-		}
+    @Override
+    public void load(Cache pCache, AccessContext pAccessContext, Key<String> pKey, CacheResult<String> pResult) {
+      @Nullable Key<@Nullable Void> prevKey = pKey.getPreviousKey(Keys.USERS);
+      if (prevKey == null) throw new IllegalStateException();
+      pResult.setValue(prevKey.getKey());
+    }
 
-	}
+  }
 
-	@Singleton
-	public static class UserDateLoader implements CacheLoader<Date>
-	{
+  @Singleton
+  public static class UserDateLoader implements CacheLoader<Date> {
 
-		@Override
-		public CacheLoaderInfo<Date> getInfo()
-		{
-			return new CacheLoaderInfo<>(Keys.USER_BY_DATE, false, "", this);
-		}
+    @Override
+    public CacheLoaderInfo<Date> getInfo() {
+      return new CacheLoaderInfo<>(Keys.USER_BY_DATE, false, "", this);
+    }
 
-		@Override
-		public void load(Cache pCache, AccessContext pAccessContext, Key<Date> pKey, CacheResult<Date> pResult)
-		{
-			pResult.setValue(new Date());
-		}
-	}
+    @Override
+    public void load(Cache pCache, AccessContext pAccessContext, Key<Date> pKey, CacheResult<Date> pResult) {
+      pResult.setValue(new Date());
+    }
+  }
 
-	@Inject Cache cache;
+  @Inject Cache cache;
 
-	@BeforeEach
-	public void before()
-	{
-		cache.invalidateAll(cache.createAccessContext(null));
-	}
+  @BeforeEach
+  public void before() {
+    cache.invalidateAll(cache.createAccessContext(null));
+  }
 
-	@Test
-	void test()
-	{
-		Integer i7 = 7;
-		AccessContext ac7 = cache.createAccessContext(null, i7);
-		String r = cache.get(ac7, Keys.USER_BY_NAME);
-		assertNotNull(r);
-		assertEquals(String.valueOf(i7), r);
-		Integer i8 = 8;
-		AccessContext ac8 = cache.createAccessContext(null, i8);
-		String r2 = cache.get(ac8, Keys.USER_BY_NAME);
-		assertNotNull(r2);
-		assertNotEquals(r, r2);
-		assertEquals(String.valueOf(i8), r2);
-	}
+  @Test
+  void test() {
+    Integer i7 = 7;
+    AccessContext ac7 = cache.createAccessContext(null, i7);
+    String r = cache.get(ac7, Keys.USER_BY_NAME);
+    assertNotNull(r);
+    assertEquals(String.valueOf(i7), r);
+    Integer i8 = 8;
+    AccessContext ac8 = cache.createAccessContext(null, i8);
+    String r2 = cache.get(ac8, Keys.USER_BY_NAME);
+    assertNotNull(r2);
+    assertNotEquals(r, r2);
+    assertEquals(String.valueOf(i8), r2);
+  }
 
-	@Test
-	void testInvalidation()
-	{
-		Integer i7 = 7;
-		Integer i8 = 8;
-		AccessContext ac7 = cache.createAccessContext(null, i7);
-		AccessContext ac8 = cache.createAccessContext(null, i8);
-		Date d71 = cache.get(ac7, Keys.USER_BY_DATE);
-		assertNotNull(d71);
-		Date d81 = cache.get(ac8, Keys.USER_BY_DATE);
-		assertNotNull(d81);
-		assertNotEquals(d71, d81);
+  @Test
+  void testInvalidation() {
+    Integer i7 = 7;
+    Integer i8 = 8;
+    AccessContext ac7 = cache.createAccessContext(null, i7);
+    AccessContext ac8 = cache.createAccessContext(null, i8);
+    Date d71 = cache.get(ac7, Keys.USER_BY_DATE);
+    assertNotNull(d71);
+    Date d81 = cache.get(ac8, Keys.USER_BY_DATE);
+    assertNotNull(d81);
+    assertNotEquals(d71, d81);
 
-		/* Now get them again, and verify they are same/different */
+    /* Now get them again, and verify they are same/different */
 
-		Date d72 = cache.get(ac7, Keys.USER_BY_DATE);
-		assertNotNull(d72);
-		Date d82 = cache.get(ac8, Keys.USER_BY_DATE);
-		assertNotNull(d82);
-		assertNotEquals(d72, d82);
-		assertEquals(d71, d72);
-		assertEquals(d81, d82);
+    Date d72 = cache.get(ac7, Keys.USER_BY_DATE);
+    assertNotNull(d72);
+    Date d82 = cache.get(ac8, Keys.USER_BY_DATE);
+    assertNotNull(d82);
+    assertNotEquals(d72, d82);
+    assertEquals(d71, d72);
+    assertEquals(d81, d82);
 
-		/* Now invalidate and check again */
+    /* Now invalidate and check again */
 
-		cache.invalidate(ac7, Keys.USER_BY_DATE);
-		Date d73 = cache.get(ac7, Keys.USER_BY_DATE);
-		assertNotNull(d72);
-		assertNotEquals(d73, d72);
-	}
+    cache.invalidate(ac7, Keys.USER_BY_DATE);
+    Date d73 = cache.get(ac7, Keys.USER_BY_DATE);
+    assertNotNull(d72);
+    assertNotEquals(d73, d72);
+  }
 }

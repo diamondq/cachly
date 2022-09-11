@@ -1,9 +1,5 @@
 package com.diamondq.cachly.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
@@ -13,19 +9,19 @@ import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.common.types.Types;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-
+@SuppressWarnings("ClassNamePrefixedWithPackageName")
 @MicronautTest
 public class TestGet {
 
@@ -34,17 +30,18 @@ public class TestGet {
     private static class Strings {
       public static final String PARTIAL_PROCESS_DEFINITIONS = "process-definitions";
 
-      public static final String PARTIAL_ID                  = "id";
+      public static final String PARTIAL_ID = "id";
     }
 
-    public static final Key<Map<String, String>> PROCESS_DEFINITIONS =
-      KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS, Types.MAP_OF_STRING_TO_STRING);
+    public static final Key<Map<String, String>> PROCESS_DEFINITIONS = KeyBuilder.of(Strings.PARTIAL_PROCESS_DEFINITIONS,
+      Types.MAP_OF_STRING_TO_STRING
+    );
 
-    public static final KeyPlaceholder<String>   PD_BY_ID_PLACE      =
-      KeyBuilder.placeholder(Strings.PARTIAL_ID, Types.STRING);
+    public static final KeyPlaceholder<String> PD_BY_ID_PLACE = KeyBuilder.placeholder(Strings.PARTIAL_ID,
+      Types.STRING
+    );
 
-    public static final Key<String>              PD_BY_ID            =
-      KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
+    public static final Key<String> PD_BY_ID = KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
 
   }
 
@@ -81,16 +78,14 @@ public class TestGet {
 
     @Override
     public void load(Cache pCache, AccessContext pAccessContext, Key<String> pKey, CacheResult<String> pResult) {
-      @SuppressWarnings("unused")
-      Map<String, String> map = pCache.get(pAccessContext, Keys.PROCESS_DEFINITIONS);
+      @SuppressWarnings("unused") Map<String, String> map = pCache.get(pAccessContext, Keys.PROCESS_DEFINITIONS);
       // String r = map.get(pKey.getKey());
       pResult.setValue(String.valueOf(System.currentTimeMillis()));
     }
 
   }
 
-  @Inject
-  Cache cache;
+  @Inject Cache cache;
 
   @BeforeEach
   public void before() {
@@ -100,9 +95,6 @@ public class TestGet {
   @Test
   void test() {
     AccessContext ac = cache.createAccessContext(null);
-    // String allKeys =
-    // cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
-    // System.out.println(allKeys);
     String r = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r);
     String r2 = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
@@ -117,16 +109,20 @@ public class TestGet {
   @Test
   void keysTest() {
     AccessContext ac = cache.createAccessContext(null);
-    String emptyKeys =
-      cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
+    String emptyKeys = cache.streamEntries(ac)
+      .map((entry) -> entry.getKey().toString())
+      .sorted()
+      .collect(Collectors.joining(","));
     assertEquals("", emptyKeys);
 
     /* Grab some entries which will populate the cache */
 
     cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
 
-    String popKeys =
-      cache.streamEntries(ac).map((entry) -> entry.getKey().toString()).sorted().collect(Collectors.joining(","));
+    String popKeys = cache.streamEntries(ac)
+      .map((entry) -> entry.getKey().toString())
+      .sorted()
+      .collect(Collectors.joining(","));
     assertEquals("__CacheEngine__,process-definitions,process-definitions/123", popKeys);
 
   }

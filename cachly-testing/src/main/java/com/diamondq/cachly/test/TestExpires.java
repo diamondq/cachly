@@ -1,8 +1,5 @@
 package com.diamondq.cachly.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
@@ -11,17 +8,18 @@ import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.common.types.Types;
-
-import java.time.Duration;
-
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import java.time.Duration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
+@SuppressWarnings("ClassNamePrefixedWithPackageName")
 @MicronautTest
 public class TestExpires {
 
@@ -50,8 +48,7 @@ public class TestExpires {
 
   }
 
-  @Inject
-  Cache cache;
+  @Inject Cache cache;
 
   @BeforeEach
   public void before() {

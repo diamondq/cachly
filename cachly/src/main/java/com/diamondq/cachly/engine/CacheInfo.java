@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class CacheInfo {
 
-  public Map<String, Set<KeySPI<?>>> dependencyMap;
+  public final Map<String, Set<KeySPI<?>>> dependencyMap;
 
   public CacheInfo() {
     dependencyMap = new HashMap<>();

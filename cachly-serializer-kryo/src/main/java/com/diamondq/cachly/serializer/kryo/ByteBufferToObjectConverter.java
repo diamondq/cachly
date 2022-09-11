@@ -3,12 +3,11 @@ package com.diamondq.cachly.serializer.kryo;
 import com.diamondq.common.converters.AbstractConverter;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferInput;
-
-import java.nio.ByteBuffer;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
+import java.nio.ByteBuffer;
 
 @Singleton
 @javax.inject.Singleton
@@ -30,8 +29,7 @@ public class ByteBufferToObjectConverter extends AbstractConverter<ByteBuffer, O
   @Override
   public Object convert(ByteBuffer pInput) {
     try (ByteBufferInput input = new ByteBufferInput(pInput)) {
-      Object obj = mKryo.readClassAndObject(input);
-      return obj;
+      return mKryo.readClassAndObject(input);
     }
   }
 }

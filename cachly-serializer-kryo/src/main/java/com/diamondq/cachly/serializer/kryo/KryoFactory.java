@@ -1,16 +1,16 @@
 package com.diamondq.cachly.serializer.kryo;
 
 import com.esotericsoftware.kryo.Kryo;
-
-import java.util.List;
-
+import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
-import io.micronaut.context.annotation.Factory;
+import java.util.List;
 
+@SuppressWarnings("ClassNamePrefixedWithPackageName")
 @Factory
 public class KryoFactory {
+  @SuppressWarnings("MethodMayBeStatic")
   @Singleton
   @javax.inject.Singleton
   @Named("cachly")

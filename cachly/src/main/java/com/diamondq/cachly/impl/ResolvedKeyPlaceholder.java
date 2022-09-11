@@ -4,27 +4,24 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 public class ResolvedKeyPlaceholder<O> implements KeySPI<O> {
 
-  private final KeySPI<O>                 mPlaceholder;
+  private final KeySPI<O> mPlaceholder;
 
-  private final String                    mKey;
+  private final String mKey;
 
   private final @NonNull KeySPI<Object>[] mParts;
 
   public ResolvedKeyPlaceholder(KeySPI<O> pPlaceholder, String pKey) {
     mPlaceholder = pPlaceholder;
     mKey = pKey;
-    @SuppressWarnings({"null", "unchecked"})
-    @NonNull
-    KeySPI<Object>[] tempParts = new KeySPI[] {this};
+    @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] tempParts = new KeySPI[] { this };
     mParts = tempParts;
   }
 
@@ -54,6 +51,7 @@ public class ResolvedKeyPlaceholder<O> implements KeySPI<O> {
   /**
    * @see com.diamondq.cachly.spi.KeySPI#getFullBaseKey()
    */
+  @SuppressWarnings("SuspiciousGetterSetter")
   @Override
   public String getFullBaseKey() {
     return mKey;
@@ -123,14 +121,10 @@ public class ResolvedKeyPlaceholder<O> implements KeySPI<O> {
 
   @Override
   public boolean equals(@Nullable Object pObj) {
-    if (pObj == null)
-      return false;
-    if (pObj == this)
-      return true;
-    if (!pObj.getClass().equals(CompositeKey.class))
-      return false;
-    @SuppressWarnings("unchecked")
-    ResolvedKeyPlaceholder<O> other = (ResolvedKeyPlaceholder<O>) pObj;
+    if (pObj == null) return false;
+    if (pObj == this) return true;
+    if (!pObj.getClass().equals(ResolvedKeyPlaceholder.class)) return false;
+    @SuppressWarnings("unchecked") ResolvedKeyPlaceholder<O> other = (ResolvedKeyPlaceholder<O>) pObj;
     return Objects.equals(mKey, other.mKey) && Objects.equals(mPlaceholder, other.mPlaceholder);
   }
 }

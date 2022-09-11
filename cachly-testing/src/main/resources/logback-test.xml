@@ -1,26 +1,26 @@
 <configuration>
-	<conversionRule conversionWord="DQLogger" converterClass="com.diamondq.common.utils.logback.DQLogger" />
-	<conversionRule conversionWord="DQMDC" converterClass="com.diamondq.common.utils.logback.DQMDC" />
-	<conversionRule conversionWord="DQIfMDC" converterClass="com.diamondq.common.utils.logback.DQIfMDC" />
-	<conversionRule conversionWord="DQContext" converterClass="com.diamondq.common.utils.logback.DQContext" />
-	<contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator" />
-	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-		<if condition='property("env.eclipse").equals("true") == false'>
-			<then>
-				<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-					<level>TRACE</level>
-				</filter>
-			</then>
-		</if>
-		<encoder>
-			<!-- %-9.9marker replaced with %-9.9DQMDC(slf4j.marker) as pax-logging-logback currently loses the marker -->
-			<pattern>
-				<![CDATA[%d{yyyy-MM-DD HH:mm:ss.SSS} [%-16.16thread] %-5level %-36.36logger{36} - %-30.30DQContext{30,true} - %DQMDC{!bundle.id,!bundle.name,!bundle.version,!slf4j.marker}%DQIfMDC{!bundle.id,!bundle.name,!bundle.version,!slf4j.marker,\s}%DQContext{}%msg%n]]>
-			</pattern>
-		</encoder>
-	</appender>
+  <conversionRule conversionWord="DQLogger" converterClass="com.diamondq.common.utils.logback.DQLogger" />
+  <conversionRule conversionWord="DQMDC" converterClass="com.diamondq.common.utils.logback.DQMDC" />
+  <conversionRule conversionWord="DQIfMDC" converterClass="com.diamondq.common.utils.logback.DQIfMDC" />
+  <conversionRule conversionWord="DQContext" converterClass="com.diamondq.common.utils.logback.DQContext" />
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator" />
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <if condition='property("env.eclipse").equals("true") == false'>
+      <then>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+          <level>TRACE</level>
+        </filter>
+      </then>
+    </if>
+    <encoder>
+      <!-- %-9.9marker replaced with %-9.9DQMDC(slf4j.marker) as pax-logging-logback currently loses the marker -->
+      <pattern>
+        <![CDATA[%d{yyyy-MM-DD HH:mm:ss.SSS} [%-16.16thread] %-5level %-36.36logger{36} - %-30.30DQContext{30,true} - %DQMDC{!bundle.id,!bundle.name,!bundle.version,!slf4j.marker}%DQIfMDC{!bundle.id,!bundle.name,!bundle.version,!slf4j.marker,\s}%DQContext{}%msg%n]]>
+      </pattern>
+    </encoder>
+  </appender>
 
-	<root level="TRACE">
-		<appender-ref ref="STDOUT" />
-	</root>
+  <root level="TRACE">
+    <appender-ref ref="STDOUT" />
+  </root>
 </configuration>

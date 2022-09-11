@@ -1,15 +1,13 @@
 package com.diamondq.cachly.micronaut.ehcache;
 
 import com.diamondq.cachly.micronaut.CachlySyncCache;
-
-import java.util.concurrent.ExecutorService;
-
-import org.ehcache.Cache;
-import org.ehcache.core.spi.service.StatisticsService;
-
 import io.micronaut.cache.ehcache.EhcacheSyncCache;
 import io.micronaut.cache.ehcache.configuration.EhcacheConfiguration;
 import io.micronaut.core.convert.ConversionService;
+import org.ehcache.Cache;
+import org.ehcache.core.spi.service.StatisticsService;
+
+import java.util.concurrent.ExecutorService;
 
 public class CachlyEhcacheSyncCache extends EhcacheSyncCache implements CachlySyncCache {
 

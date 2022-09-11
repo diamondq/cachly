@@ -3,14 +3,21 @@ package com.diamondq.cachly.micronaut.ehcache;
 import com.diamondq.cachly.engine.MemoryStorageData;
 import com.diamondq.cachly.micronaut.ehcache.CachlyEhcacheConfiguration.CachlyDiskTieredCacheConfiguration;
 import com.diamondq.common.Holder;
-
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-
+import io.micronaut.cache.ehcache.EhcacheCacheFactory;
+import io.micronaut.cache.ehcache.EhcacheSyncCache;
+import io.micronaut.cache.ehcache.configuration.EhcacheCacheManagerConfiguration;
+import io.micronaut.cache.ehcache.configuration.EhcacheConfiguration;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.Replaces;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.scheduling.TaskExecutors;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
@@ -31,19 +38,9 @@ import org.ehcache.event.EventOrdering;
 import org.ehcache.event.EventType;
 import org.ehcache.expiry.ExpiryPolicy;
 
-import io.micronaut.cache.ehcache.EhcacheCacheFactory;
-import io.micronaut.cache.ehcache.EhcacheSyncCache;
-import io.micronaut.cache.ehcache.configuration.EhcacheCacheManagerConfiguration;
-import io.micronaut.cache.ehcache.configuration.EhcacheConfiguration;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Bean;
-import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.context.annotation.Replaces;
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.scheduling.TaskExecutors;
+import java.util.EnumSet;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 @Factory
 @Replaces(factory = EhcacheCacheFactory.class)
@@ -73,6 +70,7 @@ public class CachlyEhcacheCacheFactory {
   /**
    * @return the Ehcache statistics service
    */
+  @SuppressWarnings("MethodMayBeStatic")
   @Singleton
   @javax.inject.Singleton
   @Bean(preDestroy = "stop")
@@ -83,22 +81,25 @@ public class CachlyEhcacheCacheFactory {
   /**
    * Creates a cache instance based on configuration.
    *
-   * @param pConfiguration The configuration
+   * @param configuration The configuration
    * @param cacheManager The cache manager
    * @param conversionService The conversion service
    * @param executorService The executor
    * @param statisticsService The statistics service
    * @return The sync cache
    */
+  @SuppressWarnings("MethodMayBeStatic")
   @EachBean(EhcacheConfiguration.class)
   EhcacheSyncCache syncCache(@Parameter EhcacheConfiguration configuration, CacheManager cacheManager,
-    ConversionService<?> conversionService, @javax.inject.Named(TaskExecutors.IO) @Named(TaskExecutors.IO) ExecutorService executorService,
+    ConversionService<?> conversionService,
+    @javax.inject.Named(TaskExecutors.IO) @Named(TaskExecutors.IO) ExecutorService executorService,
     StatisticsService statisticsService, ApplicationContext pApplicationContext) {
 
     /* Look to see if there is a matching Cachly configuration by the same name */
 
-    Optional<CachlyEhcacheConfiguration> cachlyConfigOpt =
-      pApplicationContext.findBean(CachlyEhcacheConfiguration.class, Qualifiers.byName(configuration.getName()));
+    Optional<CachlyEhcacheConfiguration> cachlyConfigOpt = pApplicationContext.findBean(CachlyEhcacheConfiguration.class,
+      Qualifiers.byName(configuration.getName())
+    );
 
     /* Are we going to be performing serialization */
 
@@ -106,26 +107,22 @@ public class CachlyEhcacheCacheFactory {
     if (cachlyConfigOpt.isPresent()) {
       CachlyEhcacheConfiguration cachlyConfig = cachlyConfigOpt.get();
 
-      Boolean configSerializer = cachlyConfig.getSerializer();
-      if (configSerializer != null)
-        performSerialization = configSerializer;
+      @Nullable Boolean configSerializer = cachlyConfig.getSerializer();
+      if (configSerializer != null) performSerialization = configSerializer;
     }
 
     /* If the value type is still the default, then change it to match whether we're serializing */
 
     Class<?> existingValueType = configuration.getValueType();
     if (existingValueType == EhcacheConfiguration.DEFAULT_VALUE_TYPE) {
-      if (performSerialization)
-        configuration.setValueType(byte[].class);
-      else
-        configuration.setValueType(MemoryStorageData.class);
+      if (performSerialization) configuration.setValueType(byte[].class);
+      else configuration.setValueType(MemoryStorageData.class);
     }
 
     /* Start the cache configuration builder */
 
-    @SuppressWarnings("unchecked")
-    CacheConfigurationBuilder<Object, Object> builder =
-      (CacheConfigurationBuilder<Object, Object>) configuration.getBuilder();
+    @SuppressWarnings(
+      "unchecked") CacheConfigurationBuilder<Object, Object> builder = (CacheConfigurationBuilder<Object, Object>) configuration.getBuilder();
 
     /* If there is a Cachly config... */
 
@@ -150,8 +147,8 @@ public class CachlyEhcacheCacheFactory {
 
           /* Does the Cachly config have some disk information? */
 
-          CachlyDiskTieredCacheConfiguration cachlyDisk = cachlyConfig.getDisk();
-          if ((cachlyDisk != null) && (ResourceType.Core.DISK == rt)) {
+          @Nullable CachlyDiskTieredCacheConfiguration cachlyDisk = cachlyConfig.getDisk();
+          if ((cachlyDisk != null) && (rt == ResourceType.Core.DISK)) {
             ResourcePool rp = rps.getPoolForResource(rt);
             if (rp instanceof SizedResourcePool) {
               SizedResourcePool srp = (SizedResourcePool) rp;
@@ -159,25 +156,23 @@ public class CachlyEhcacheCacheFactory {
               ResourceUnit unit = srp.getUnit();
               if (unit instanceof MemoryUnit) {
                 MemoryUnit memoryUnit = (MemoryUnit) unit;
-                Boolean persist = cachlyDisk.getPersist();
-                if (persist == null)
-                  persist = false;
+                @Nullable Boolean persist = cachlyDisk.getPersist();
+                if (persist == null) persist = false;
                 rpBuilder = rpBuilder.disk(size, memoryUnit, persist);
                 updated = true;
               }
             }
           }
         }
-        if (updated)
-          builder = builder.withResourcePools(rpBuilder);
+        if (updated) builder = builder.withResourcePools(rpBuilder);
       }
     }
 
     /* Look for an ExpiryPolicy */
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    Optional<ExpiryPolicy<Object, Object>> expiryPolicyOpt =
-      (Optional) pApplicationContext.findBean(ExpiryPolicy.class);
+    @SuppressWarnings(
+      { "unchecked", "rawtypes" }) Optional<ExpiryPolicy<Object, Object>> expiryPolicyOpt = (Optional) pApplicationContext.findBean(
+      ExpiryPolicy.class);
 
     /* If there is an expiry policy, then add it to the config */
 
@@ -190,21 +185,30 @@ public class CachlyEhcacheCacheFactory {
 
     Cache<?, ?> nativeCache = cacheManager.createCache(configuration.getName(), builder);
 
-    /* If there is an expiry policy, then register listeners to keep the meta data correct */
+    /* If there is an expiry policy, then register listeners to keep the metadata correct */
 
     if (expiryPolicyOpt.isPresent()) {
       ExpiryPolicy<Object, Object> expiryPolicy = expiryPolicyOpt.get();
       if (expiryPolicy instanceof CacheEventListener) {
-        @SuppressWarnings("unchecked")
-        CacheEventListener<Object, Object> listener = (CacheEventListener<Object, Object>) expiryPolicy;
-        nativeCache.getRuntimeConfiguration().registerCacheEventListener(listener, EventOrdering.ORDERED,
-          EventFiring.SYNCHRONOUS, EnumSet.of(EventType.EVICTED, EventType.REMOVED, EventType.EXPIRED));
+        @SuppressWarnings(
+          "unchecked") CacheEventListener<Object, Object> listener = (CacheEventListener<Object, Object>) expiryPolicy;
+        nativeCache.getRuntimeConfiguration()
+          .registerCacheEventListener(listener,
+            EventOrdering.ORDERED,
+            EventFiring.SYNCHRONOUS,
+            EnumSet.of(EventType.EVICTED, EventType.REMOVED, EventType.EXPIRED)
+          );
       }
     }
 
     /* Build the Cachly version of the SyncCache */
 
-    return new CachlyEhcacheSyncCache(conversionService, configuration, nativeCache, executorService, statisticsService,
-      performSerialization);
+    return new CachlyEhcacheSyncCache(conversionService,
+      configuration,
+      nativeCache,
+      executorService,
+      statisticsService,
+      performSerialization
+    );
   }
 }

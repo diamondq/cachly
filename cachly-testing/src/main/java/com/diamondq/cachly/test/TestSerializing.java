@@ -1,7 +1,5 @@
 package com.diamondq.cachly.test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
@@ -11,26 +9,26 @@ import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.common.TypeReference;
-
-import java.util.HashMap;
-import java.util.Map;
-
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import java.util.HashMap;
+import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+@SuppressWarnings("ClassNamePrefixedWithPackageName")
 @MicronautTest
 public class TestSerializing {
 
   public static class SerializeTest {
     public final String string;
 
-    public final int    integer;
+    public final int integer;
 
     public SerializeTest(String pString, int pInteger) {
       string = pString;
@@ -43,35 +41,36 @@ public class TestSerializing {
     private static class LocalStrings {
       public static final String PARTIAL_MAP = "map";
 
-      public static final String PARTIAL_ID  = "id";
+      public static final String PARTIAL_ID = "id";
     }
 
     private static class LocalTypes {
-      public static final TypeReference<@Nullable SerializeTest>    NULLABLE_SERIALIZE_TEST         =
-        new TypeReference<@Nullable SerializeTest>() {                                                                                                                                                                                                              // type
-                                                                                                                                                                                                                                                                    // reference
-                                                                                                      };
+      public static final TypeReference<@Nullable SerializeTest> NULLABLE_SERIALIZE_TEST = new TypeReference<@Nullable SerializeTest>() {                                                                                                                                                                                                              // type
+        // reference
+      };
 
-      public static final TypeReference<Map<String, SerializeTest>> MAP_OF_STRING_TO_SERIALIZE_TEST =
-        new TypeReference<Map<String, SerializeTest>>() {                                                                                                                                                                                                           // type
-                                                                                                                                                                                                                                                                    // reference
-                                                                                                      };
+      public static final TypeReference<Map<String, SerializeTest>> MAP_OF_STRING_TO_SERIALIZE_TEST = new TypeReference<Map<String, SerializeTest>>() {                                                                                                                                                                                                           // type
+        // reference
+      };
     }
 
-    public static final Key<Map<String, SerializeTest>>         MAP                   =
-      KeyBuilder.of(LocalStrings.PARTIAL_MAP, LocalTypes.MAP_OF_STRING_TO_SERIALIZE_TEST);
+    public static final Key<Map<String, SerializeTest>> MAP = KeyBuilder.of(LocalStrings.PARTIAL_MAP,
+      LocalTypes.MAP_OF_STRING_TO_SERIALIZE_TEST
+    );
 
-    public static final KeyPlaceholder<@Nullable SerializeTest> MAP_BY_ID_PLACEHOLDER =
-      KeyBuilder.placeholder(LocalStrings.PARTIAL_ID, LocalTypes.NULLABLE_SERIALIZE_TEST);
+    public static final KeyPlaceholder<@Nullable SerializeTest> MAP_BY_ID_PLACEHOLDER = KeyBuilder.placeholder(
+      LocalStrings.PARTIAL_ID,
+      LocalTypes.NULLABLE_SERIALIZE_TEST
+    );
 
-    public static final Key<@Nullable SerializeTest>            MAP_BY_ID             =
-      KeyBuilder.from(MAP, MAP_BY_ID_PLACEHOLDER);
+    public static final Key<@Nullable SerializeTest> MAP_BY_ID = KeyBuilder.from(MAP, MAP_BY_ID_PLACEHOLDER);
   }
 
   @Singleton
   public static class MapLoader implements CacheLoader<Map<String, SerializeTest>> {
 
     private static final Map<String, SerializeTest> sMap;
+
     static {
       sMap = new HashMap<>();
       sMap.put("abc", new SerializeTest("abc", 123));
@@ -105,8 +104,7 @@ public class TestSerializing {
     }
   }
 
-  @Inject
-  Cache cache;
+  @Inject Cache cache;
 
   @BeforeEach
   public void before() {

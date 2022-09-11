@@ -1,22 +1,21 @@
 package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheResult;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Duration;
 import java.util.Objects;
-
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class StaticCacheResult<V> implements CacheResult<V> {
 
   public static final CacheResult<Object> sNOT_FOUND = new StaticCacheResult<>();
 
-  private @Nullable Duration              mDuration;
+  private @Nullable Duration mDuration;
 
-  private V                               mValue;
+  private V mValue;
 
-  private boolean                         mFound     = false;
+  private boolean mFound;
 
   public StaticCacheResult() {
     mValue = null;
@@ -28,6 +27,7 @@ public class StaticCacheResult<V> implements CacheResult<V> {
     mFound = pFound;
   }
 
+  @SuppressWarnings("SuspiciousGetterSetter")
   @Override
   public @Nullable Duration getOverrideExpiry() {
     return mDuration;

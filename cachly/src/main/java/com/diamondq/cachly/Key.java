@@ -1,8 +1,8 @@
 package com.diamondq.cachly;
 
-import java.lang.reflect.Type;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import java.lang.reflect.Type;
 
 /**
  * This interface represents a key within the cache. It may also be a portion of a composite key

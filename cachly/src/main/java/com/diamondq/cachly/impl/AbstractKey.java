@@ -4,31 +4,28 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 public class AbstractKey<O> implements KeySPI<O> {
 
-  protected final String                    mKey;
+  protected final String mKey;
 
-  protected @Nullable KeyDetails<O>         mKeyDetails;
+  protected @Nullable KeyDetails<O> mKeyDetails;
 
   protected final @NonNull KeySPI<Object>[] mParts;
 
-  protected final Type                      mOutputType;
+  protected final Type mOutputType;
 
-  protected final boolean                   mHasPlaceholders;
+  protected final boolean mHasPlaceholders;
 
   public AbstractKey(String pKey, Type pOutputType, boolean pHasPlaceholders) {
     mKey = pKey;
     mOutputType = pOutputType;
-    @SuppressWarnings({"null", "unchecked"})
-    @NonNull
-    KeySPI<Object>[] tempParts = new KeySPI[] {this};
+    @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] tempParts = new KeySPI[] { this };
     mParts = tempParts;
     mHasPlaceholders = pHasPlaceholders;
   }
@@ -87,7 +84,7 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public CacheStorage getLastStorage() {
-    KeyDetails<O> keyDetails = mKeyDetails;
+    @Nullable KeyDetails<O> keyDetails = mKeyDetails;
     if (keyDetails == null)
       throw new IllegalStateException("Unable to find a cache storage that will cover " + getFullBaseKey());
     return keyDetails.getLastStorage();
@@ -95,7 +92,7 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public String getLastSerializerName() {
-    KeyDetails<O> keyDetails = mKeyDetails;
+    @Nullable KeyDetails<O> keyDetails = mKeyDetails;
     if (keyDetails == null)
       throw new IllegalStateException("Unable to find a serializer that will cover " + getFullBaseKey());
     return keyDetails.getLastSerializerName();
@@ -103,7 +100,7 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public boolean supportsNull() {
-    KeyDetails<O> keyDetails = mKeyDetails;
+    @Nullable KeyDetails<O> keyDetails = mKeyDetails;
     if (keyDetails == null)
       throw new IllegalStateException("Unable to find a cache loader that will cover " + getFullBaseKey());
     return keyDetails.supportsNull();
@@ -111,12 +108,13 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public CacheLoader<O> getLoader() {
-    KeyDetails<O> keyDetails = mKeyDetails;
+    @Nullable KeyDetails<O> keyDetails = mKeyDetails;
     if (keyDetails == null)
       throw new IllegalStateException("Unable to find a cache loader that will cover " + getFullBaseKey());
     return keyDetails.getLoader();
   }
 
+  @SuppressWarnings("SuspiciousGetterSetter")
   @Override
   public String getBaseKey() {
     return mKey;
@@ -125,6 +123,7 @@ public class AbstractKey<O> implements KeySPI<O> {
   /**
    * @see com.diamondq.cachly.spi.KeySPI#getFullBaseKey()
    */
+  @SuppressWarnings("SuspiciousGetterSetter")
   @Override
   public String getFullBaseKey() {
     return mKey;
@@ -142,15 +141,13 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public boolean equals(@Nullable Object pObj) {
-    if (pObj == null)
-      return false;
-    if (pObj == this)
-      return true;
-    if (!pObj.getClass().equals(getClass()))
-      return false;
-    @SuppressWarnings("unchecked")
-    AbstractKey<O> other = (AbstractKey<O>) pObj;
-    return Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType)
-            && Objects.equals(mHasPlaceholders, other.mHasPlaceholders);
+    if (pObj == null) return false;
+    if (pObj == this) return true;
+    if (!pObj.getClass().equals(getClass())) return false;
+    @SuppressWarnings("unchecked") AbstractKey<O> other = (AbstractKey<O>) pObj;
+    return Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType) && Objects.equals(
+      mHasPlaceholders,
+      other.mHasPlaceholders
+    );
   }
 }

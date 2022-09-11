@@ -1,19 +1,19 @@
 package com.diamondq.cachly;
 
 import com.diamondq.common.lambda.interfaces.Consumer3;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class CacheLoaderFactoryHelper {
 
-  private static class NullCacheLoader implements CacheLoader<@Nullable Void> {
+  private static final class NullCacheLoader implements CacheLoader<@Nullable Void> {
 
     private final CacheLoaderInfo<@Nullable Void> mCacheLoaderInfo;
 
-    public NullCacheLoader(Key<@Nullable Void> pKey, String pHelp) {
+    private NullCacheLoader(Key<@Nullable Void> pKey, String pHelp) {
       mCacheLoaderInfo = new CacheLoaderInfo<>(pKey, true, pHelp, this);
     }
 
+    @SuppressWarnings("SuspiciousGetterSetter")
     @Override
     public CacheLoaderInfo<@Nullable Void> getInfo() {
       return mCacheLoaderInfo;

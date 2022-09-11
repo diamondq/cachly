@@ -1,17 +1,17 @@
 package com.diamondq.cachly.micronaut.ehcache;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.naming.Named;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @EachProperty("cachly.ehcache")
 public class CachlyEhcacheConfiguration implements Named {
-  private final String                                 mName;
+  private final String mName;
 
-  private @Nullable Boolean                            mSerializer;
+  private @Nullable Boolean mSerializer;
 
   private @Nullable CachlyDiskTieredCacheConfiguration mDisk;
 
@@ -23,7 +23,7 @@ public class CachlyEhcacheConfiguration implements Named {
   }
 
   @Override
-  public String getName() {
+  public @NonNull String getName() {
     return mName;
   }
 

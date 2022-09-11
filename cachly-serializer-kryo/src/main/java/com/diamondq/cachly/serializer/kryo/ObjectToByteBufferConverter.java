@@ -3,12 +3,11 @@ package com.diamondq.cachly.serializer.kryo;
 import com.diamondq.common.converters.AbstractConverter;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
-
-import java.nio.ByteBuffer;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
+import java.nio.ByteBuffer;
 
 @Singleton
 @javax.inject.Singleton
