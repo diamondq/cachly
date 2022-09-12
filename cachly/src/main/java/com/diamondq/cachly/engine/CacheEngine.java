@@ -8,6 +8,7 @@ import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
+import com.diamondq.cachly.WriteBackCacheLoader;
 import com.diamondq.cachly.impl.AccessContextImpl;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.KeyDetails;
@@ -28,6 +29,7 @@ import jakarta.inject.Singleton;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +44,9 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+/**
+ * Implementation of the Cache
+ */
 @Singleton
 @javax.inject.Singleton
 public class CacheEngine implements Cache {
@@ -66,6 +71,17 @@ public class CacheEngine implements Cache {
 
   private final Map<Class<?>, Class<?>> mAccessContextClassMap;
 
+  /**
+   * Injection Constructor
+   *
+   * @param pContextFactory the Context Factory
+   * @param pConverterManager the Converter Manager
+   * @param pPaths the list of Paths for storage
+   * @param pNameLocators the name locator
+   * @param pCacheStorages the cache storages
+   * @param pCacheLoaders the cache loaders
+   * @param pAccessContextSPIs the context SPIs
+   */
   @Inject
   @javax.inject.Inject
   public CacheEngine(ContextFactory pContextFactory, ConverterManager pConverterManager,
@@ -365,6 +381,61 @@ public class CacheEngine implements Cache {
 
   }
 
+  /**
+   * This is the main set routine
+   *
+   * @param <O> the result type
+   * @param pKey the key
+   * @param pCacheResult the cache result to store
+   */
+  private <O> void setInternal(AccessContext pAccessContext, KeySPI<O> pKey, CacheResult<O> pCacheResult) {
+    try (Context ignored = mContextFactory.newContext(CacheEngine.class, this, pKey, pCacheResult)) {
+
+      /*
+       * If there are still defaults, since they need to be resolved. This is done here since some defaults may
+       * require lookups, and we want them included in the dependencies
+       */
+
+      if (pKey.hasPlaceholders()) {
+        @NonNull KeySPI<Object>[] parts = pKey.getParts();
+        int partsLen = parts.length;
+        @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
+
+        for (int i = 0; i < partsLen; i++) {
+          KeySPI<Object> part = parts[i];
+          if (part instanceof KeyPlaceholderSPI) {
+            @SuppressWarnings("unchecked") KeyPlaceholderSPI<Object> sspi = (KeyPlaceholderSPI<Object>) part;
+            newParts[i] = sspi.resolveDefault(this, pAccessContext);
+          } else if (part instanceof AccessContextPlaceholderSPI) {
+            @SuppressWarnings(
+              "unchecked") AccessContextPlaceholderSPI<Object> sspi = (AccessContextPlaceholderSPI<Object>) part;
+            newParts[i] = sspi.resolve(this, pAccessContext);
+          } else {
+            newParts[i] = part;
+          }
+        }
+
+        pKey = new CompositeKey<>(newParts);
+        setupKey(pAccessContext, pKey);
+      }
+
+      /* Find the last storage given the key */
+
+      CacheStorage storage = pKey.getLastStorage();
+
+      storage.store(pAccessContext, pKey, pCacheResult);
+
+      /* Now attempt to look up the data */
+
+      CacheLoader<O> cacheLoader = pKey.getLoader();
+      if (cacheLoader instanceof WriteBackCacheLoader) {
+        WriteBackCacheLoader<O> writeBackCacheLoader = (WriteBackCacheLoader<O>) cacheLoader;
+        writeBackCacheLoader.store(this, pAccessContext, pKey, pCacheResult);
+      }
+
+    }
+  }
+
   @Override
   public void invalidateAll(AccessContext pAccessContext) {
     mCacheStorageByPath.values().stream().distinct().forEach((cs) -> cs.invalidateAll(pAccessContext));
@@ -633,6 +704,257 @@ public class CacheEngine implements Cache {
     KeySPI<V> ki = (KeySPI<V>) pKey;
     return getIfPresent(pAccessContext,
       resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4, pValue4)
+    );
+  }
+
+  @Override
+  public <V> void set(AccessContext pAccessContext, Key<V> pKey, V pValue) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setInternal(pAccessContext, ki, new StaticCacheResult<>(pValue, true));
+  }
+
+  @Override
+  public <V> void set(AccessContext pAccessContext, Key<V> pKey, V pValue, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setInternal(pAccessContext, ki, new StaticCacheResult<>(pValue, true).setOverrideExpiry(pExpiry));
+  }
+
+  @Override
+  public <V> void setNotFound(AccessContext pAccessContext, Key<V> pKey) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setInternal(pAccessContext, ki, new StaticCacheResult<>());
+  }
+
+  @Override
+  public <V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setInternal(pAccessContext, ki, new StaticCacheResult<V>().setOverrideExpiry(pExpiry));
+  }
+
+  @Override
+  public <K1, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    V pValue) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    set(pAccessContext, resolve(ki, pHolder1, pValue1), pValue);
+  }
+
+  @Override
+  public <K1, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    V pValue, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    set(pAccessContext, resolve(ki, pHolder1, pValue1), pValue, pExpiry);
+  }
+
+  @Override
+  public <K1, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setNotFound(pAccessContext, resolve(ki, pHolder1, pValue1));
+  }
+
+  @Override
+  public <K1, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setNotFound(pAccessContext, resolve(ki, pHolder1, pValue1), pExpiry);
+  }
+
+  @Override
+  public <K1, K2, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, V pValue) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    set(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pValue);
+  }
+
+  @Override
+  public <K1, K2, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+    KeyPlaceholder<K2> pHolder2, String pValue2, V pValue, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    set(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pValue, pExpiry);
+  }
+
+  @Override
+  public <K1, K2, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setNotFound(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
+  }
+
+  @Override
+  public <K1, K2, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setNotFound(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pExpiry);
+  }
+
+  @Override
+  public <K1, K2, K3, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    V pValue) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    set(pAccessContext, resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pValue);
+  }
+
+  @Override
+  public <K1, K2, K3, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue,
+    Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    set(pAccessContext,
+      resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3),
+      pValue,
+      pExpiry
+    );
+  }
+
+  @Override
+  public <K1, K2, K3, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setNotFound(pAccessContext, resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3));
+  }
+
+  @Override
+  public <K1, K2, K3, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setNotFound(pAccessContext,
+      resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3),
+      pExpiry
+    );
+  }
+
+  @Override
+  public <K1, K2, K3, K4, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4, V pValue) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    set(pAccessContext,
+      resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3),
+        pHolder4,
+        pValue4
+      ),
+      pValue
+    );
+  }
+
+  @Override
+  public <K1, K2, K3, K4, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4, V pValue, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    set(pAccessContext,
+      resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3),
+        pHolder4,
+        pValue4
+      ),
+      pValue,
+      pExpiry
+    );
+  }
+
+  @Override
+  public <K1, K2, K3, K4, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setNotFound(pAccessContext,
+      resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4, pValue4)
+    );
+  }
+
+  @Override
+  public <K1, K2, K3, K4, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
+    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
+    KeyPlaceholder<K4> pHolder4, String pValue4, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
+    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+    setNotFound(pAccessContext,
+      resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3),
+        pHolder4,
+        pValue4
+      ),
+      pExpiry
     );
   }
 
