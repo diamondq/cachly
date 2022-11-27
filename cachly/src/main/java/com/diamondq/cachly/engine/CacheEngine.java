@@ -30,6 +30,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,7 +41,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -59,7 +59,7 @@ public class CacheEngine implements Cache {
 
   private final Map<String, String> mSerializerNameByPath;
 
-  private static final ThreadLocal<Stack<Set<String>>> sMonitored = ThreadLocal.withInitial(Stack::new);
+  private static final ThreadLocal<ArrayDeque<Set<String>>> sMonitored = ThreadLocal.withInitial(ArrayDeque::new);
 
   private final KeySPI<CacheInfo> mStorageKey;
 
@@ -271,7 +271,7 @@ public class CacheEngine implements Cache {
    */
   private <O> CacheResult<O> lookup(AccessContext pAccessContext, KeySPI<O> pKey, boolean pLoadIfMissing) {
 
-    Stack<Set<String>> dependencyStack = sMonitored.get();
+    ArrayDeque<Set<String>> dependencyStack = sMonitored.get();
 
     /*
      * If there are still defaults, since they need to be resolved. This is done here since some defaults may
@@ -284,7 +284,7 @@ public class CacheEngine implements Cache {
       int partsLen = parts.length;
       @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
 
-      dependencyStack.add(new HashSet<>());
+      dependencyStack.push(new HashSet<>());
       try {
         for (int i = 0; i < partsLen; i++) {
           KeySPI<Object> part = parts[i];
@@ -342,7 +342,7 @@ public class CacheEngine implements Cache {
 
     /* In order to track dependencies, create a new set to add to the current stack */
 
-    dependencyStack.add(new HashSet<>());
+    dependencyStack.push(new HashSet<>());
 
     CacheResult<O> loadedResult = new StaticCacheResult<>();
     Set<String> dependencies;
@@ -372,6 +372,8 @@ public class CacheEngine implements Cache {
         Set<KeySPI<?>> set = mCacheInfo.dependencyMap.computeIfAbsent(dep, key -> new HashSet<>());
         set.add(pKey);
       }
+      Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(pKey.toString(), key -> new HashSet<>());
+      set.addAll(dependencies);
       mStorageKey.getLastStorage().store(pAccessContext, mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
     }
 
@@ -480,6 +482,8 @@ public class CacheEngine implements Cache {
 
       storage.invalidate(pAccessContext, pKey);
 
+      mCacheInfo.reverseDependencyMap.remove(keyStr);
+
       /* Were there dependencies? */
 
       Set<KeySPI<?>> depSet = mCacheInfo.dependencyMap.remove(keyStr);
@@ -539,6 +543,7 @@ public class CacheEngine implements Cache {
         StaticAccessContextPlaceholder<?> sacp = (StaticAccessContextPlaceholder<?>) part;
         sacp.setAccessContextSPI(mAccessContextSPIMap);
       }
+      //noinspection HardcodedFileSeparator
       sb.append("/");
     }
   }
@@ -1028,9 +1033,20 @@ public class CacheEngine implements Cache {
         /* Expand each into a stream of string keys */.flatMap((cs) -> cs.streamEntries(pAccessContext));
   }
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   @Override
-  public Collection<Key<?>> dependencies(AccessContext pAccessContext, String pKeyStr) {
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public Collection<Key<?>> getDependentKeys(AccessContext pAccessContext, String pKeyStr) {
     return (Collection<Key<?>>) (Collection) mCacheInfo.dependencyMap.get(pKeyStr);
+  }
+
+  @Override
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public Collection<Key<?>> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr) {
+    return (Collection<Key<?>>) (Collection) mCacheInfo.reverseDependencyMap.get(pKeyStr);
+  }
+
+  @Override
+  public <K1, V> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder, String pValue) {
+    return resolve((KeySPI<V>) pKey, pHolder, pValue);
   }
 }

@@ -9,8 +9,10 @@ import java.util.Set;
 public class CacheInfo {
 
   public final Map<String, Set<KeySPI<?>>> dependencyMap;
+  public final Map<String, Set<String>>    reverseDependencyMap;
 
   public CacheInfo() {
     dependencyMap = new HashMap<>();
+    reverseDependencyMap = new HashMap<>();
   }
 }

@@ -28,7 +28,7 @@
     </dependency>
     <dependency>
       <groupId>com.diamondq.common</groupId>
-      <artifactId>common-utils.logback</artifactId>
+      <artifactId>common-utils.log4j2</artifactId>
     </dependency>
     <dependency>
       <groupId>com.diamondq.common</groupId>

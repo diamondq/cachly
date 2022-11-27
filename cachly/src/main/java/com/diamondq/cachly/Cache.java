@@ -639,11 +639,32 @@ public interface Cache {
   Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext);
 
   /**
-   * Get the list of dependencies for a given key
+   * Get the list of keys that are dependent on the given key
    *
    * @param pAccessContext the access context
    * @param pKeyStr the key
    * @return the collection of keys that are dependent
    */
-  Collection<Key<?>> dependencies(AccessContext pAccessContext, String pKeyStr);
+  Collection<Key<?>> getDependentKeys(AccessContext pAccessContext, String pKeyStr);
+
+  /**
+   * Get the list of keys that the given key depends on
+   *
+   * @param pAccessContext the access context
+   * @param pKeyStr the key
+   * @return the collection of keys that are dependent
+   */
+  Collection<Key<?>> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr);
+
+  /**
+   * Resolve a key and placeholder to a more resolved key
+   *
+   * @param pKey the key
+   * @param pHolder the key placeholder
+   * @param pValue the placeholder value
+   * @param <K1> the placeholder type
+   * @param <V> the key type
+   * @return an updated key
+   */
+  <K1, V> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder, String pValue);
 }

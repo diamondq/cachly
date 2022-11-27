@@ -15,6 +15,7 @@ import jakarta.inject.Singleton;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -97,10 +98,21 @@ public class TestGet {
     AccessContext ac = cache.createAccessContext(null);
     String r = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r);
+    final Collection<Key<?>> deps = cache.getDependentOnKeys(ac,
+      cache.resolve(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").toString()
+    );
+    assertNotNull(deps);
     String r2 = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r2);
     assertEquals(r, r2);
-    cache.invalidate(ac, Keys.PROCESS_DEFINITIONS);
+    cache.invalidate(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
+    synchronized (this) {
+      try {
+        wait(3000L);
+      }
+      catch (InterruptedException pE) {
+      }
+    }
     String r3 = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r3);
     assertNotEquals(r, r3);
