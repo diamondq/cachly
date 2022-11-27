@@ -98,7 +98,7 @@ public class TestGet {
     AccessContext ac = cache.createAccessContext(null);
     String r = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     assertNotNull(r);
-    final Collection<Key<?>> deps = cache.getDependentOnKeys(ac,
+    final Collection<String> deps = cache.getDependentOnKeys(ac,
       cache.resolve(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").toString()
     );
     assertNotNull(deps);

@@ -654,7 +654,7 @@ public interface Cache {
    * @param pKeyStr the key
    * @return the collection of keys that are dependent
    */
-  Collection<Key<?>> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr);
+  Collection<String> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr);
 
   /**
    * Resolve a key and placeholder to a more resolved key

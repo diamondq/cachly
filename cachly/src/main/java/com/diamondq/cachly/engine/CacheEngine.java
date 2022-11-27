@@ -1043,8 +1043,8 @@ public class CacheEngine implements Cache {
 
   @Override
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public Collection<Key<?>> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr) {
-    final Collection<Key<?>> result = (Collection) mCacheInfo.reverseDependencyMap.get(pKeyStr);
+  public Collection<String> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr) {
+    final Collection<String> result = mCacheInfo.reverseDependencyMap.get(pKeyStr);
     if (result == null) return Collections.emptyList();
     return result;
   }
