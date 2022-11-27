@@ -1036,13 +1036,17 @@ public class CacheEngine implements Cache {
   @Override
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Collection<Key<?>> getDependentKeys(AccessContext pAccessContext, String pKeyStr) {
-    return (Collection<Key<?>>) (Collection) mCacheInfo.dependencyMap.get(pKeyStr);
+    final Collection<Key<?>> result = (Collection) mCacheInfo.dependencyMap.get(pKeyStr);
+    if (result == null) return Collections.emptyList();
+    return result;
   }
 
   @Override
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Collection<Key<?>> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr) {
-    return (Collection<Key<?>>) (Collection) mCacheInfo.reverseDependencyMap.get(pKeyStr);
+    final Collection<Key<?>> result = (Collection) mCacheInfo.reverseDependencyMap.get(pKeyStr);
+    if (result == null) return Collections.emptyList();
+    return result;
   }
 
   @Override
