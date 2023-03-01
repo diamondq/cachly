@@ -594,14 +594,14 @@ public class CacheEngine implements Cache {
           if (ki.supportsNull()) {
             return ctx.exit(null);
           }
-          throw ctx.reportThrowable(new NullPointerException());
+          throw ctx.reportThrowable(new NullPointerException(ki.toString()));
         }
         return ctx.exit(result.getValue());
       }
       if (ki.supportsNull()) {
         return ctx.exit(null);
       }
-      throw ctx.reportThrowable(new NoSuchElementException());
+      throw ctx.reportThrowable(new NoSuchElementException(ki.toString()));
     }
   }
 
