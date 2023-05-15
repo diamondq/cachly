@@ -43,12 +43,13 @@ public class TestExpires {
 
     @Override
     public void load(Cache pCache, AccessContext pAccessContext, Key<Long> pKey, CacheResult<Long> pResult) {
+      //noinspection MagicNumber
       pResult.setValue(System.currentTimeMillis()).setOverrideExpiry(Duration.ofMillis(500));
     }
 
   }
 
-  @Inject Cache cache;
+  @Inject public Cache cache;
 
   @BeforeEach
   public void before() {
@@ -61,6 +62,7 @@ public class TestExpires {
     Long firstResult = cache.get(ac, Keys.LOAD_TIMESTAMP);
     Long secondResult = cache.get(ac, Keys.LOAD_TIMESTAMP);
     assertEquals(firstResult, secondResult);
+    //noinspection MagicNumber
     Thread.sleep(2000L);
     Long thirdResult = cache.get(ac, Keys.LOAD_TIMESTAMP);
     assertNotEquals(firstResult, thirdResult);

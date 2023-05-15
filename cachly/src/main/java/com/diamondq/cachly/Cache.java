@@ -1,6 +1,6 @@
 package com.diamondq.cachly;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Collection;

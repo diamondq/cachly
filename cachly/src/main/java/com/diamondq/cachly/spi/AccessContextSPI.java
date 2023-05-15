@@ -1,6 +1,6 @@
 package com.diamondq.cachly.spi;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 

@@ -6,8 +6,8 @@ import io.micronaut.context.BeanRegistration;
 import io.micronaut.inject.BeanIdentifier;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public class MicronautBeanNameLocator implements BeanNameLocator {
   }
 
   @Override
-  public <T> @Nullable String getBeanName(@NonNull T pBean) {
+  public <T> @Nullable String getBeanName(@NotNull T pBean) {
     Optional<BeanRegistration<T>> regOpt = mAppContext.findBeanRegistration(pBean);
     if (!regOpt.isPresent()) return null;
     BeanRegistration<T> beanReg = regOpt.get();

@@ -4,8 +4,8 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -16,7 +16,7 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   protected @Nullable KeyDetails<O> mKeyDetails;
 
-  protected final @NonNull KeySPI<Object>[] mParts;
+  protected final @NotNull KeySPI<Object>[] mParts;
 
   protected final Type mOutputType;
 
@@ -25,7 +25,7 @@ public class AbstractKey<O> implements KeySPI<O> {
   public AbstractKey(String pKey, Type pOutputType, boolean pHasPlaceholders) {
     mKey = pKey;
     mOutputType = pOutputType;
-    @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] tempParts = new KeySPI[] { this };
+    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[] { this };
     mParts = tempParts;
     mHasPlaceholders = pHasPlaceholders;
   }
@@ -49,7 +49,7 @@ public class AbstractKey<O> implements KeySPI<O> {
   }
 
   @Override
-  public @NonNull KeySPI<Object>[] getParts() {
+  public @NotNull KeySPI<Object>[] getParts() {
     return mParts;
   }
 

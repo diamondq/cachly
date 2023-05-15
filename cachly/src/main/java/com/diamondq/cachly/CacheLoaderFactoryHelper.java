@@ -1,7 +1,7 @@
 package com.diamondq.cachly;
 
 import com.diamondq.common.lambda.interfaces.Consumer3;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class CacheLoaderFactoryHelper {
 

@@ -1,7 +1,7 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.Key;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 

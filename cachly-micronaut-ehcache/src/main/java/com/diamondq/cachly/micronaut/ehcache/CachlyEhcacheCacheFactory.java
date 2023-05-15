@@ -18,7 +18,6 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.scheduling.TaskExecutors;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 import org.ehcache.config.ResourcePool;
@@ -37,6 +36,7 @@ import org.ehcache.event.EventFiring;
 import org.ehcache.event.EventOrdering;
 import org.ehcache.event.EventType;
 import org.ehcache.expiry.ExpiryPolicy;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Optional;

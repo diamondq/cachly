@@ -1,8 +1,8 @@
 package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheResult;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -40,7 +40,7 @@ public class StaticCacheResult<V> implements CacheResult<V> {
   }
 
   @Override
-  public @NonNull V getValue() {
+  public @NotNull V getValue() {
     return Objects.requireNonNull(mValue);
   }
 

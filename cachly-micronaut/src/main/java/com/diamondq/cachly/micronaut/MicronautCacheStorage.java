@@ -7,8 +7,8 @@ import com.diamondq.common.converters.ConverterManager;
 import io.micronaut.cache.SyncCache;
 import io.micronaut.context.annotation.EachBean;
 import jakarta.inject.Inject;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
@@ -74,12 +74,12 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
   }
 
   @Override
-  protected Optional<@NonNull ?> readFromPrimaryCache(String pKey) {
+  protected Optional<@NotNull ?> readFromPrimaryCache(String pKey) {
     return mPrimaryCache.get(pKey, mSerValueClass);
   }
 
   @Override
-  protected Stream<Entry<String, @NonNull ?>> streamPrimary() {
+  protected Stream<Entry<String, @NotNull ?>> streamPrimary() {
     Object nativeCache = mPrimaryCache.getNativeCache();
     for (KeyExtractor ke : mKeyExtractors) {
       @Nullable Stream<Entry<String, Object>> entries = ke.getEntries(nativeCache);
@@ -110,7 +110,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
   }
 
   @Override
-  protected Stream<Entry<String, @NonNull ?>> streamMetaEntries() {
+  protected Stream<Entry<String, @NotNull ?>> streamMetaEntries() {
     return streamPrimary();
   }
 

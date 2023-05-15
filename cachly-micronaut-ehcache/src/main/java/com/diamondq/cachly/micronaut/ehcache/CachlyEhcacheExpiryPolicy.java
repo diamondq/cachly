@@ -2,11 +2,11 @@ package com.diamondq.cachly.micronaut.ehcache;
 
 import com.diamondq.cachly.micronaut.ExpiryHandler;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.ehcache.event.CacheEvent;
 import org.ehcache.event.CacheEventListener;
 import org.ehcache.expiry.ExpiryPolicy;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,19 +39,19 @@ public class CachlyEhcacheExpiryPolicy<K, V> implements ExpiryPolicy<K, V>, Expi
   }
 
   @Override
-  public Duration getExpiryForCreation(@NonNull K pKey, V pValue) {
+  public Duration getExpiryForCreation(@NotNull K pKey, V pValue) {
     Duration duration = mExpiries.get(pKey.toString());
     if (duration == null) return ExpiryPolicy.INFINITE;
     return duration;
   }
 
   @Override
-  public @Nullable Duration getExpiryForAccess(@NonNull K pKey, Supplier<? extends V> pValue) {
+  public @Nullable Duration getExpiryForAccess(@NotNull K pKey, Supplier<? extends V> pValue) {
     return null;
   }
 
   @Override
-  public @Nullable Duration getExpiryForUpdate(@NonNull K pKey, Supplier<? extends V> pOldValue, V pNewValue) {
+  public @Nullable Duration getExpiryForUpdate(@NotNull K pKey, Supplier<? extends V> pOldValue, V pNewValue) {
     return null;
   }
 

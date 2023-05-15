@@ -4,13 +4,12 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.impl.KeyDetails;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface KeySPI<O> extends Key<O> {
 
-  @Nullable
-  KeySPI<Object> getPreviousKey();
+  @Nullable KeySPI<Object> getPreviousKey();
 
   CacheStorage getLastStorage();
 
@@ -24,8 +23,7 @@ public interface KeySPI<O> extends Key<O> {
 
   boolean hasKeyDetails();
 
-  @NonNull
-  KeySPI<Object>[] getParts();
+  @NotNull KeySPI<Object>[] getParts();
 
   @Override
   String getKey();

@@ -1,8 +1,8 @@
 package com.diamondq.cachly;
 
 import com.diamondq.cachly.impl.StaticCacheResult;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -73,7 +73,7 @@ public interface CacheResult<V> {
    *
    * @return the value
    */
-  @NonNull V getValue();
+  @NotNull V getValue();
 
   /**
    * Returns not found result

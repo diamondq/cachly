@@ -3,7 +3,7 @@ package com.diamondq.cachly.engine;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Introspected;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 @Introspected

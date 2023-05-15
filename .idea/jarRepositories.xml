@@ -32,14 +32,14 @@
       <option name="url" value="https://nexus.diamondq.com/repository/maven-public-releases/" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="central" />
-      <option name="name" value="Maven Central repository" />
-      <option name="url" value="https://repo1.maven.org/maven2" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="dq-release" />
       <option name="name" value="dq-release" />
       <option name="url" value="https://nexus.diamondq.com/repository/maven-public-releases/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="central" />
+      <option name="name" value="Maven Central repository" />
+      <option name="url" value="https://repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="jboss.community" />

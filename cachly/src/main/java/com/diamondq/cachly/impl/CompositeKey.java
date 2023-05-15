@@ -6,8 +6,8 @@ import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -15,7 +15,7 @@ import java.util.Objects;
 
 public class CompositeKey<O> implements KeySPI<O> {
 
-  private final @NonNull KeySPI<Object>[] mParts;
+  private final @NotNull KeySPI<Object>[] mParts;
 
   private final KeySPI<O> mLast;
 
@@ -26,12 +26,12 @@ public class CompositeKey<O> implements KeySPI<O> {
   public CompositeKey(Key<?> pKey1, Key<O> pKey2) {
     if (!(pKey1 instanceof KeySPI)) throw new IllegalStateException();
     KeySPI<?> ki1 = (KeySPI<?>) pKey1;
-    @NonNull KeySPI<Object>[] ki1Parts = ki1.getParts();
+    @NotNull KeySPI<Object>[] ki1Parts = ki1.getParts();
     if (!(pKey2 instanceof KeySPI)) throw new IllegalStateException();
     KeySPI<O> ki2 = (KeySPI<O>) pKey2;
-    @NonNull KeySPI<Object>[] ki2Parts = ki2.getParts();
+    @NotNull KeySPI<Object>[] ki2Parts = ki2.getParts();
     int partsLen = ki1Parts.length + ki2Parts.length;
-    @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] tempParts = new KeySPI[partsLen];
+    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[partsLen];
     System.arraycopy(ki1Parts, 0, tempParts, 0, ki1Parts.length);
     System.arraycopy(ki2Parts, 0, tempParts, ki1Parts.length, ki2Parts.length);
     mParts = tempParts;
@@ -48,15 +48,15 @@ public class CompositeKey<O> implements KeySPI<O> {
   public CompositeKey(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
     if (!(pKey1 instanceof KeySPI)) throw new IllegalStateException();
     KeySPI<?> ki1 = (KeySPI<?>) pKey1;
-    @NonNull KeySPI<Object>[] ki1Parts = ki1.getParts();
+    @NotNull KeySPI<Object>[] ki1Parts = ki1.getParts();
     if (!(pKey2 instanceof KeySPI)) throw new IllegalStateException();
     KeySPI<?> ki2 = (KeySPI<?>) pKey2;
-    @NonNull KeySPI<Object>[] ki2Parts = ki2.getParts();
+    @NotNull KeySPI<Object>[] ki2Parts = ki2.getParts();
     if (!(pKey3 instanceof KeySPI)) throw new IllegalStateException();
     KeySPI<O> ki3 = (KeySPI<O>) pKey3;
-    @NonNull KeySPI<Object>[] ki3Parts = ki3.getParts();
+    @NotNull KeySPI<Object>[] ki3Parts = ki3.getParts();
     int partsLen = ki1Parts.length + ki2Parts.length + ki3Parts.length;
-    @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] tempParts = new KeySPI[partsLen];
+    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[partsLen];
     System.arraycopy(ki1Parts, 0, tempParts, 0, ki1Parts.length);
     System.arraycopy(ki2Parts, 0, tempParts, ki1Parts.length, ki2Parts.length);
     System.arraycopy(ki3Parts, 0, tempParts, ki1Parts.length + ki2Parts.length, ki3Parts.length);
@@ -71,7 +71,7 @@ public class CompositeKey<O> implements KeySPI<O> {
     mHasPlaceholders = hasPlaceHolders;
   }
 
-  public CompositeKey(@NonNull KeySPI<Object>[] pNewParts) {
+  public CompositeKey(@NotNull KeySPI<Object>[] pNewParts) {
     mParts = pNewParts;
     mPartsLen = mParts.length;
     @SuppressWarnings("unchecked") KeySPI<O> temp = (KeySPI<O>) mParts[mPartsLen - 1];
@@ -98,7 +98,7 @@ public class CompositeKey<O> implements KeySPI<O> {
   }
 
   @Override
-  public @NonNull KeySPI<Object>[] getParts() {
+  public @NotNull KeySPI<Object>[] getParts() {
     return mParts;
   }
 
@@ -117,6 +117,7 @@ public class CompositeKey<O> implements KeySPI<O> {
     StringBuilder sb = new StringBuilder();
     for (KeySPI<?> part : mParts) {
       sb.append(part.getBaseKey());
+      //noinspection HardcodedFileSeparator
       sb.append("/");
     }
     sb.setLength(sb.length() - 1);
@@ -141,7 +142,7 @@ public class CompositeKey<O> implements KeySPI<O> {
   @Override
   public @Nullable KeySPI<Object> getPreviousKey() {
     if (mPartsLen == 1) return null;
-    @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] parentParts = new KeySPI[mPartsLen - 1];
+    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] parentParts = new KeySPI[mPartsLen - 1];
     System.arraycopy(mParts, 0, parentParts, 0, mPartsLen - 1);
     return new CompositeKey<>(parentParts);
   }
@@ -185,6 +186,7 @@ public class CompositeKey<O> implements KeySPI<O> {
     StringBuilder sb = new StringBuilder();
     for (KeySPI<?> part : mParts) {
       sb.append(part.getKey());
+      //noinspection HardcodedFileSeparator
       sb.append("/");
     }
     sb.setLength(sb.length() - 1);

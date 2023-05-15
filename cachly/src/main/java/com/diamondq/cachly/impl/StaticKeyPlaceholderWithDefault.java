@@ -5,7 +5,7 @@ import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;

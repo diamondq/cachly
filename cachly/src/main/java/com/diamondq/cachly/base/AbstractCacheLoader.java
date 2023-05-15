@@ -24,6 +24,7 @@ public abstract class AbstractCacheLoader<VALUE> implements CacheLoader<VALUE> {
     mCacheLoaderInfo = new CacheLoaderInfo<>(pKey, pSupportsNull, pHelp, this);
   }
 
+  @SuppressWarnings("SuspiciousGetterSetter")
   @Override
   public CacheLoaderInfo<VALUE> getInfo() {
     return mCacheLoaderInfo;

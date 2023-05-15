@@ -1,8 +1,8 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.common.converters.ConverterManager;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.AbstractMap;
@@ -26,7 +26,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
     }
   }
 
-  private final ConcurrentMap<@NonNull String, @NonNull DataRecord> mData;
+  private final ConcurrentMap<@NotNull String, @NotNull DataRecord> mData;
 
   public MemoryCacheStorage(ConverterManager pConverterManager) {
     super(pConverterManager, "", "", String.class, MemoryStorageData.class, false, null, null, null, null, null, null);
@@ -43,7 +43,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
   }
 
   @Override
-  protected Optional<@NonNull ?> readFromPrimaryCache(String pKey) {
+  protected Optional<?> readFromPrimaryCache(String pKey) {
     DataRecord dataRecord = mData.get(pKey);
     if (dataRecord == null) return Optional.empty();
     if (dataRecord.expiresAt != null) {
@@ -62,15 +62,15 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
   }
 
   @Override
-  protected Stream<Map.Entry<String, @NonNull ?>> streamPrimary() {
-    @SuppressWarnings({ "unchecked", "rawtypes" }) Stream<Map.Entry<String, @NonNull ?>> r = (Stream) mData.entrySet()
+  protected Stream<Map.Entry<String, ?>> streamPrimary() {
+    @SuppressWarnings({ "unchecked", "rawtypes" }) Stream<Map.Entry<String, ?>> r = (Stream) mData.entrySet()
       .stream()
       .map((entry) -> new AbstractMap.SimpleEntry(entry.getKey(), entry.getValue().data));
     return r;
   }
 
   @Override
-  protected Stream<Entry<String, @NonNull ?>> streamMetaEntries() {
+  protected Stream<Entry<String, ?>> streamMetaEntries() {
     return streamPrimary();
   }
 

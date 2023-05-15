@@ -16,8 +16,8 @@ import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.converters.ConverterManager;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements CacheStorage {
+public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStorage {
 
   public static final byte SERIALIZATION_VERSION = 1;
 
@@ -87,7 +87,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
 
   protected final Class<SER_KEY> mSerKeyClass;
 
-  protected final Class<@NonNull ?> mSerValueClass;
+  protected final Class<?> mSerValueClass;
 
   protected final ConcurrentMap<String, Short> mStringToShort;
 
@@ -133,10 +133,10 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
   protected final boolean mSerializeValue;
 
   protected AbstractCacheStorage(ConverterManager pConverterManager, CACHE pPrimaryCache, @Nullable CACHE pMetaCache,
-    Class<SER_KEY> pSerKeyClass, Class<@NonNull ?> pSerValueClass, boolean pSerializeValue,
-    @Nullable String pStringPrefix, @Nullable String pTypePrefix, @Nullable String pKeyPrefix,
-    @Nullable String pValuePrefix, @Nullable Function<String, @NonNull SER_KEY> pKeySerializer,
-    @Nullable Function<@NonNull SER_KEY, String> pKeyDeserializer) {
+    Class<SER_KEY> pSerKeyClass, Class<?> pSerValueClass, boolean pSerializeValue, @Nullable String pStringPrefix,
+    @Nullable String pTypePrefix, @Nullable String pKeyPrefix, @Nullable String pValuePrefix,
+    @Nullable Function<String, @NotNull SER_KEY> pKeySerializer,
+    @Nullable Function<@NotNull SER_KEY, String> pKeyDeserializer) {
     mConverterManager = pConverterManager;
     mPrimaryCache = pPrimaryCache;
     mMetaCache = pMetaCache;
@@ -147,18 +147,22 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
     mStringToShort = new ConcurrentHashMap<>();
     mShortToString = new ConcurrentHashMap<>();
     mStringCounter = new AtomicInteger();
+    //noinspection HardcodedFileSeparator
     mStringPrefix = pStringPrefix != null ? pStringPrefix : "s/";
     mStringPrefixLen = mStringPrefix.length();
     mTypeToShort = new ConcurrentHashMap<>();
     mShortToType = new ConcurrentHashMap<>();
     mTypeCounter = new AtomicInteger();
+    //noinspection HardcodedFileSeparator
     mTypePrefix = pTypePrefix != null ? pTypePrefix : "t/";
     mTypePrefixLen = mTypePrefix.length();
     mKeyToShort = new ConcurrentHashMap<>();
     mShortToKey = new ConcurrentHashMap<>();
     mKeyCounter = new AtomicInteger();
+    //noinspection HardcodedFileSeparator
     mKeyPrefix = pKeyPrefix != null ? pKeyPrefix : "k/";
     mKeyPrefixLen = mTypePrefix.length();
+    //noinspection HardcodedFileSeparator
     mValuePrefix = pValuePrefix != null ? pValuePrefix : "p/";
     mValuePrefixLen = mValuePrefix.length();
     mSerializeValue = pSerializeValue;
@@ -265,7 +269,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
             @Nullable Type ownerType = decompressType(ownerTypeId);
             Class<?> rawType = (Class<?>) Objects.requireNonNull(decompressType(rawTypeId));
             short actualTypeArgumentsLen = valueBuffer.getShort();
-            @SuppressWarnings("null") @NonNull Type @NonNull [] actualTypeArguments = new Type[actualTypeArgumentsLen];
+            @SuppressWarnings("null") @NotNull Type @NotNull [] actualTypeArguments = new Type[actualTypeArgumentsLen];
             for (short shortI = 0; shortI < actualTypeArgumentsLen; shortI++) {
               short actualTypeId = valueBuffer.getShort();
               if (!mShortToType.containsKey(actualTypeId)) {
@@ -291,10 +295,10 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
             throw new UnsupportedOperationException();
           } else if (typeType == TYPE_WILDCARD) {
             short lowerBoundsLen = valueBuffer.getShort();
-            @SuppressWarnings("null") @NonNull Type @Nullable [] lowerBounds =
+            @SuppressWarnings("null") @NotNull Type @Nullable [] lowerBounds =
               lowerBoundsLen == 0 ? null : new Type[lowerBoundsLen];
             short upperBoundsLen = valueBuffer.getShort();
-            @SuppressWarnings("null") @NonNull Type @Nullable [] upperBounds =
+            @SuppressWarnings("null") @NotNull Type @Nullable [] upperBounds =
               upperBoundsLen == 0 ? null : new Type[lowerBoundsLen];
             if ((lowerBoundsLen > 0) && (lowerBounds != null)) {
               for (short shortI = 0; shortI < lowerBoundsLen; shortI++) {
@@ -362,7 +366,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
    * @param pKey the key
    * @return the optional value
    */
-  protected abstract Optional<@NonNull ?> readFromPrimaryCache(SER_KEY pKey);
+  protected abstract Optional<?> readFromPrimaryCache(SER_KEY pKey);
 
   /**
    * Invalidate entries
@@ -522,7 +526,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
    *
    * @return the entries
    */
-  protected abstract Stream<Map.Entry<SER_KEY, @NonNull ?>> streamPrimary();
+  protected abstract Stream<Map.Entry<SER_KEY, ?>> streamPrimary();
 
   /**
    * Provides a stream of entries from the meta. NOTE: If meta is not a separate cache, then it is expected that regular
@@ -530,7 +534,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
    *
    * @return the entries
    */
-  protected abstract Stream<Map.Entry<SER_KEY, @NonNull ?>> streamMetaEntries();
+  protected abstract Stream<Map.Entry<SER_KEY, ?>> streamMetaEntries();
 
   /**
    * Deserializes a SER_KEY and SER_VALUE into a Key<?> and CacheResult<?>
@@ -554,13 +558,13 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
       /* Get and validate the version */
 
       byte versionFlags = buffer.get();
-      byte version = (byte) (versionFlags & 0x0F);
+      @SuppressWarnings("MagicNumber") byte version = (byte) (versionFlags & 0x0F);
       if (version != SERIALIZATION_VERSION) {
         throw new IllegalStateException(
           "The entry " + fullKey + " has an unrecognized serialization version (" + String.valueOf(version) + ")");
       }
 
-      int flags = (byte) ((versionFlags & 0xF0) >> 4);
+      @SuppressWarnings("MagicNumber") int flags = (byte) ((versionFlags & 0xF0) >> 4);
 
       /* Is null? */
 
@@ -582,15 +586,15 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
 
       /* Now generate the Key */
 
-      @NonNull String[] baseSplit = baseKey.split("/");
+      @NotNull String[] baseSplit = baseKey.split("/");
       int keyLen = baseSplit.length;
-      @NonNull String[] fullSplit = fullKey.split("/");
+      @NotNull String[] fullSplit = fullKey.split("/");
       if (keyLen != fullSplit.length) {
         throw new IllegalStateException(
           "The base key (" + baseKey + ") doesn't have the same number of parts as the full key (" + fullKey + ")");
       }
 
-      @SuppressWarnings({ "unchecked", "null" }) @NonNull KeySPI<Object>[] parts = new KeySPI[keyLen];
+      @SuppressWarnings({ "unchecked", "null" }) @NotNull KeySPI<Object>[] parts = new KeySPI[keyLen];
 
       for (int i = 0; i < keyLen; i++) {
         String partBaseKey = baseSplit[i];
@@ -604,7 +608,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
             parts[i] = new ResolvedKeyPlaceholder<>(new StaticKeyPlaceholder<>(partBaseKey, outputType), fullSplit[i]);
           } else if (placeholderType == PART_TYPE_PLACEHOLDER_DEFAULTS) {
             short defaultKeyId = buffer.getShort();
-            @NonNull Key<String> defaultKey = decompressKey(defaultKeyId);
+            @NotNull Key<String> defaultKey = decompressKey(defaultKeyId);
             @SuppressWarnings(
               { "unchecked", "rawtypes" }) KeySPI<Object> r = (KeySPI<Object>) (KeySPI) new ResolvedKeyPlaceholder<>(new StaticKeyPlaceholderWithDefault(
               partBaseKey,
@@ -652,6 +656,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
       synchronized (this) {
         id = mStringToShort.get(value);
         if (id == null) {
+          //noinspection NumericCastThatLosesPrecision
           id = (short) mStringCounter.incrementAndGet();
           mStringToShort.put(value, id);
           mShortToString.put(id, value);
@@ -686,6 +691,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
       synchronized (this) {
         id = mTypeToShort.get(type);
         if (id == null) {
+          //noinspection NumericCastThatLosesPrecision
           id = (short) mTypeCounter.incrementAndGet();
           mTypeToShort.put(type, id);
           mShortToType.put(id, type);
@@ -703,6 +709,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
             short ownerTypeId = compressType(pt.getOwnerType(), pWriteList);
             short rawTypeId = compressType(pt.getRawType(), pWriteList);
             Type[] actualTypeArguments = pt.getActualTypeArguments();
+            //noinspection NumericCastThatLosesPrecision
             short actualTypeArgumentsLen = (short) actualTypeArguments.length;
             ByteBuffer extraBuffer = ByteBuffer.allocate(6 + (actualTypeArgumentsLen * 2));
             extraBuffer.putShort(ownerTypeId);
@@ -724,19 +731,14 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
             extra = extraBuffer.array();
             size += extra.length;
           } else if (type instanceof TypeVariable) {
-            // TypeVariable gat = (TypeVariable) type;
             throw new UnsupportedOperationException();
-            // short gctId = compressType(gat.getGenericComponentType(), pWriteList);
-            // ByteBuffer extraBuffer = ByteBuffer.allocate(2);
-            // extraBuffer.putShort(gctId);
-            // extraBuffer.rewind();
-            // extra = extraBuffer.array();
-            // size += extra.length;
           } else if (type instanceof WildcardType) {
             WildcardType wt = (WildcardType) type;
             Type[] lowerBounds = wt.getLowerBounds();
+            //noinspection NumericCastThatLosesPrecision
             short lowerBoundsLen = (short) lowerBounds.length;
             Type[] upperBounds = wt.getUpperBounds();
+            //noinspection NumericCastThatLosesPrecision
             short upperBoundsLen = (short) upperBounds.length;
             ByteBuffer extraBuffer = ByteBuffer.allocate(4 + ((lowerBoundsLen + upperBoundsLen) * 2));
             extraBuffer.putShort(lowerBoundsLen);
@@ -800,6 +802,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
       synchronized (this) {
         id = mKeyToShort.get(pKey);
         if (id == null) {
+          //noinspection NumericCastThatLosesPrecision
           id = (short) mKeyCounter.incrementAndGet();
           mKeyToShort.put(pKey, id);
           mShortToKey.put(id, pKey);
@@ -907,7 +910,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
 
     /* Get the set of data */
 
-    Stream<Map.Entry<SER_KEY, @NonNull ?>> rawStream = streamPrimary();
+    Stream<Map.Entry<SER_KEY, ?>> rawStream = streamPrimary();
 
     /* If there is no separate meta cache, then the metadata may be present */
 
@@ -938,7 +941,7 @@ public abstract class AbstractCacheStorage<CACHE, @NonNull SER_KEY> implements C
 
     /* Query the underlying primary cache */
 
-    Optional<@NonNull ?> valueOpt = readFromPrimaryCache(serKey);
+    Optional<?> valueOpt = readFromPrimaryCache(serKey);
 
     /* If it's not found, then we're done */
 

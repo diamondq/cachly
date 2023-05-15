@@ -86,7 +86,7 @@ public class TestGet {
 
   }
 
-  @Inject Cache cache;
+  @Inject public Cache cache;
 
   @BeforeEach
   public void before() {
@@ -108,9 +108,10 @@ public class TestGet {
     cache.invalidate(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
     synchronized (this) {
       try {
+        //noinspection MagicNumber
         wait(3000L);
       }
-      catch (InterruptedException pE) {
+      catch (InterruptedException ignored) {
       }
     }
     String r3 = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
@@ -135,6 +136,7 @@ public class TestGet {
       .map((entry) -> entry.getKey().toString())
       .sorted()
       .collect(Collectors.joining(","));
+    //noinspection HardcodedFileSeparator
     assertEquals("__CacheEngine__,process-definitions,process-definitions/123", popKeys);
 
   }

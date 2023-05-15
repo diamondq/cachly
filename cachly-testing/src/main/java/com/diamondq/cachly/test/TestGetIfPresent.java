@@ -12,7 +12,7 @@ import com.diamondq.common.types.Types;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -87,7 +87,7 @@ public class TestGetIfPresent {
 
   }
 
-  @Inject Cache cache;
+  @Inject public Cache cache;
 
   @BeforeEach
   public void before() {
@@ -125,6 +125,7 @@ public class TestGetIfPresent {
       .map((entry) -> entry.getKey().toString())
       .sorted()
       .collect(Collectors.joining(","));
+    //noinspection HardcodedFileSeparator
     assertEquals("__CacheEngine__,ifpresent-process-definitions,ifpresent-process-definitions/123", popKeys);
 
   }

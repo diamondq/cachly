@@ -26,8 +26,8 @@ import com.diamondq.common.context.ContextFactory;
 import com.diamondq.common.converters.ConverterManager;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -247,7 +247,7 @@ public class CacheEngine implements Cache {
 
       /* Now look at the interfaces */
 
-      @NonNull Class<?>[] interfaceClasses = currentClass.getInterfaces();
+      @NotNull Class<?>[] interfaceClasses = currentClass.getInterfaces();
       for (Class<?> ic : interfaceClasses) {
         List<Class<?>> icChildren = getAllClasses(ic);
         for (Class<?> icChild : icChildren) {
@@ -280,9 +280,9 @@ public class CacheEngine implements Cache {
 
     @Nullable Set<String> placeholderDependencies;
     if (pKey.hasPlaceholders()) {
-      @NonNull KeySPI<Object>[] parts = pKey.getParts();
+      @NotNull KeySPI<Object>[] parts = pKey.getParts();
       int partsLen = parts.length;
-      @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
+      @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
 
       dependencyStack.push(new HashSet<>());
       try {
@@ -399,9 +399,9 @@ public class CacheEngine implements Cache {
        */
 
       if (pKey.hasPlaceholders()) {
-        @NonNull KeySPI<Object>[] parts = pKey.getParts();
+        @NotNull KeySPI<Object>[] parts = pKey.getParts();
         int partsLen = parts.length;
-        @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
+        @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
 
         for (int i = 0; i < partsLen; i++) {
           KeySPI<Object> part = parts[i];
@@ -452,9 +452,9 @@ public class CacheEngine implements Cache {
        */
 
       if (pKey.hasPlaceholders()) {
-        @NonNull KeySPI<Object>[] parts = pKey.getParts();
+        @NotNull KeySPI<Object>[] parts = pKey.getParts();
         int partsLen = parts.length;
-        @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
+        @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
 
         for (int i = 0; i < partsLen; i++) {
           KeySPI<Object> part = parts[i];
@@ -563,9 +563,9 @@ public class CacheEngine implements Cache {
       throw new IllegalStateException();
     }
     @SuppressWarnings("unchecked") KeySPI<Object> hi = (KeySPI<Object>) pHolder;
-    @NonNull KeySPI<Object>[] parts = pKey.getParts();
+    @NotNull KeySPI<Object>[] parts = pKey.getParts();
     int partsLen = parts.length;
-    @SuppressWarnings({ "null", "unchecked" }) @NonNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
+    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
 
     for (int i = 0; i < partsLen; i++) {
       KeySPI<Object> part = parts[i];
@@ -616,10 +616,8 @@ public class CacheEngine implements Cache {
         setupKey(pAccessContext, ki);
       }
       CacheResult<V> result = lookup(pAccessContext, ki, true);
-      if (result.entryFound()) {
-        //noinspection ConstantConditions
-        return ctx.exit(Optional.ofNullable(result.getValue()));
-      }
+      //noinspection ConstantConditions
+      if (result.entryFound()) return ctx.exit(Optional.ofNullable(result.getValue()));
       return ctx.exit(Optional.empty());
     }
   }
@@ -1042,7 +1040,6 @@ public class CacheEngine implements Cache {
   }
 
   @Override
-  @SuppressWarnings({ "unchecked", "rawtypes" })
   public Collection<String> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr) {
     final Collection<String> result = mCacheInfo.reverseDependencyMap.get(pKeyStr);
     if (result == null) return Collections.emptyList();

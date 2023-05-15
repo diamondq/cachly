@@ -12,7 +12,7 @@ import com.diamondq.common.TypeReference;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -73,6 +73,7 @@ public class TestSerializing {
 
     static {
       sMap = new HashMap<>();
+      //noinspection MagicNumber
       sMap.put("abc", new SerializeTest("abc", 123));
     }
 
@@ -104,7 +105,7 @@ public class TestSerializing {
     }
   }
 
-  @Inject Cache cache;
+  @Inject public Cache cache;
 
   @BeforeEach
   public void before() {

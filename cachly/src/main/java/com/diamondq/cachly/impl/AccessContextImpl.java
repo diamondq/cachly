@@ -1,7 +1,7 @@
 package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.AccessContext;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;

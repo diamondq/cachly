@@ -8,7 +8,7 @@ import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.common.types.Types;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -45,7 +45,7 @@ public class TestDefaults {
 
   }
 
-  @Inject Cache cache;
+  @Inject public Cache cache;
 
   @BeforeEach
   public void before() {
