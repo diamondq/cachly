@@ -29,7 +29,7 @@
       <dependency>
         <groupId>com.esotericsoftware</groupId>
         <artifactId>kryo</artifactId>
-        <version>5.2.0</version>
+        <version>5.5.0</version>
       </dependency>
       <dependency>
         <groupId>de.javakaffee</groupId>
