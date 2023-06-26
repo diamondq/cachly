@@ -336,50 +336,66 @@ public class CacheEngine implements Cache {
       return queryResult;
     }
 
-    /* Now attempt to look up the data */
+    /* Synchronize so that if there are two threads requesting the same key at the same time,
+      one loads the result and the second waits and then sees the result. Otherwise, both threads could look up
+      the object (only one is permanently kept), and for certain types of objects (like Class's) this could cause
+      multiple instances of the object to be inuse, when it was meant as a singleton.
 
-    CacheLoader<O> cacheLoader = pKey.getLoader();
+      NOTE: At the moment, this is synchronizing against 'this', so it will block all threads issuing queries.
+      At least, this uses a double-lock check, so once it's been cached, the cached copy will be returned before
+      reaching this point, and thus, no synchronization
+     */
 
-    /* In order to track dependencies, create a new set to add to the current stack */
+    synchronized (this) {
+      queryResult = storage.queryForKey(pAccessContext, pKey);
 
-    dependencyStack.push(new HashSet<>());
+      if (queryResult.entryFound()) return queryResult;
 
-    CacheResult<O> loadedResult = new StaticCacheResult<>();
-    Set<String> dependencies;
-    try {
-      cacheLoader.load(this, pAccessContext, pKey, loadedResult);
-    }
-    finally {
+      /* Now attempt to look up the data */
 
-      /* Pull the dependency set off the stack */
+      CacheLoader<O> cacheLoader = pKey.getLoader();
 
-      dependencies = dependencyStack.pop();
-      if (placeholderDependencies != null) {
-        dependencies.addAll(placeholderDependencies);
+      /* In order to track dependencies, create a new set to add to the current stack */
+
+      dependencyStack.push(new HashSet<>());
+
+      CacheResult<O> loadedResult = new StaticCacheResult<>();
+      Set<String> dependencies;
+      try {
+        cacheLoader.load(this, pAccessContext, pKey, loadedResult);
       }
-    }
+      finally {
 
-    /* Now store the result */
+        /* Pull the dependency set off the stack */
 
-    if (loadedResult.entryFound()) {
-      storage.store(pAccessContext, pKey, loadedResult);
-    }
-
-    /* Store the dependencies for later tracking */
-
-    if (!dependencies.isEmpty()) {
-      for (String dep : dependencies) {
-        Set<KeySPI<?>> set = mCacheInfo.dependencyMap.computeIfAbsent(dep, key -> new HashSet<>());
-        set.add(pKey);
+        dependencies = dependencyStack.pop();
+        if (placeholderDependencies != null) {
+          dependencies.addAll(placeholderDependencies);
+        }
       }
-      Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(pKey.toString(), key -> new HashSet<>());
-      set.addAll(dependencies);
-      mStorageKey.getLastStorage().store(pAccessContext, mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
+
+      /* Now store the result */
+
+      if (loadedResult.entryFound()) {
+        storage.store(pAccessContext, pKey, loadedResult);
+      }
+
+      /* Store the dependencies for later tracking */
+
+      if (!dependencies.isEmpty()) {
+        for (String dep : dependencies) {
+          Set<KeySPI<?>> set = mCacheInfo.dependencyMap.computeIfAbsent(dep, key -> new HashSet<>());
+          set.add(pKey);
+        }
+        Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(pKey.toString(), key -> new HashSet<>());
+        set.addAll(dependencies);
+        mStorageKey.getLastStorage().store(pAccessContext, mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
+      }
+
+      /* Return */
+
+      return loadedResult;
     }
-
-    /* Return */
-
-    return loadedResult;
 
   }
 
