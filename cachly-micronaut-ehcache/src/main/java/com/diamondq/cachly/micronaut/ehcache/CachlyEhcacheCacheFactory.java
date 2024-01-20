@@ -29,8 +29,8 @@ import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.config.units.MemoryUnit;
+import org.ehcache.core.internal.statistics.DefaultStatisticsService;
 import org.ehcache.core.spi.service.StatisticsService;
-import org.ehcache.core.statistics.DefaultStatisticsService;
 import org.ehcache.event.CacheEventListener;
 import org.ehcache.event.EventFiring;
 import org.ehcache.event.EventOrdering;
@@ -91,7 +91,7 @@ public class CachlyEhcacheCacheFactory {
   @SuppressWarnings("MethodMayBeStatic")
   @EachBean(EhcacheConfiguration.class)
   EhcacheSyncCache syncCache(@Parameter EhcacheConfiguration configuration, CacheManager cacheManager,
-    ConversionService<?> conversionService,
+    ConversionService conversionService,
     @javax.inject.Named(TaskExecutors.IO) @Named(TaskExecutors.IO) ExecutorService executorService,
     StatisticsService statisticsService, ApplicationContext pApplicationContext) {
 

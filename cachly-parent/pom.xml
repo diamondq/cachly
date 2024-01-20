@@ -15,7 +15,7 @@
       <dependency>
         <groupId>com.diamondq.common</groupId>
         <artifactId>common-bom</artifactId>
-        <version>0.4.22-8e7c55c</version>
+        <version>0.4.27-4684f01</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -29,7 +29,7 @@
       <dependency>
         <groupId>com.esotericsoftware</groupId>
         <artifactId>kryo</artifactId>
-        <version>5.5.0</version>
+        <version>5.6.0</version>
       </dependency>
       <dependency>
         <groupId>de.javakaffee</groupId>

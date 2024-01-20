@@ -12,9 +12,7 @@ import java.util.List;
 public class KryoFactory {
   @SuppressWarnings("MethodMayBeStatic")
   @Singleton
-  @javax.inject.Singleton
   @Named("cachly")
-  @javax.inject.Named("cachly")
   public Kryo createKryo(List<KryoInitializer> pInitializers) {
     Kryo kryo = new Kryo();
     kryo.setRegistrationRequired(false);

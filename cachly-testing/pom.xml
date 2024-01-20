@@ -41,6 +41,24 @@
     <dependency>
       <groupId>io.micronaut.cache</groupId>
       <artifactId>micronaut-cache-ehcache</artifactId>
+      <exclusions>
+        <!-- The reference within ehcache for jaxb-runtime is [2.2,3), which is picking up 3.0.0-M5, and it shouldn't -->
+        <exclusion>
+          <groupId>org.glassfish.jaxb</groupId>
+          <artifactId>jaxb-runtime</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+    <!-- This direct reference is to replace the specific one excluded above -->
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.9</version>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+    </dependency>
+
   </dependencies>
 </project>

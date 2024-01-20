@@ -19,7 +19,6 @@ import de.javakaffee.kryoserializers.guava.UnmodifiableNavigableSetSerializer;
 import jakarta.inject.Singleton;
 
 @Singleton
-@javax.inject.Singleton
 public class GuavaKryoInitializer implements KryoInitializer {
 
   @Override

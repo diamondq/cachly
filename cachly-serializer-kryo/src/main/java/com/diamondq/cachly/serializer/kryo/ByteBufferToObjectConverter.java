@@ -10,14 +10,12 @@ import jakarta.inject.Singleton;
 import java.nio.ByteBuffer;
 
 @Singleton
-@javax.inject.Singleton
 public class ByteBufferToObjectConverter extends AbstractConverter<ByteBuffer, Object> {
 
   private final Kryo mKryo;
 
   @Inject
-  @javax.inject.Inject
-  public ByteBufferToObjectConverter(@javax.inject.Named("cachly") @Named("cachly") Kryo pKryo) {
+  public ByteBufferToObjectConverter(@Named("cachly") Kryo pKryo) {
     super(ByteBuffer.class, Object.class, "kryo");
     mKryo = pKryo;
   }

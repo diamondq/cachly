@@ -13,7 +13,7 @@ public class CachlyEhcacheSyncCache extends EhcacheSyncCache implements CachlySy
 
   private final boolean mPerformSerialization;
 
-  public CachlyEhcacheSyncCache(ConversionService<?> pConversionService, EhcacheConfiguration pConfiguration,
+  public CachlyEhcacheSyncCache(ConversionService pConversionService, EhcacheConfiguration pConfiguration,
     Cache<?, ?> pNativeCache, ExecutorService pExecutorService, StatisticsService pStatisticsService,
     boolean pPerformSerialization) {
     super(pConversionService, pConfiguration, pNativeCache, pExecutorService, pStatisticsService);

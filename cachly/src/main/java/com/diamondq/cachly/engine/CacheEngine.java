@@ -48,7 +48,6 @@ import java.util.stream.Stream;
  * Implementation of the Cache
  */
 @Singleton
-@javax.inject.Singleton
 public class CacheEngine implements Cache {
 
   private final ContextFactory mContextFactory;
