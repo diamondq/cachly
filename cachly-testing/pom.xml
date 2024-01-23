@@ -16,6 +16,10 @@
     </dependency>
     <dependency>
       <groupId>com.diamondq.cachly</groupId>
+      <artifactId>cachly-micronaut-caffeine</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.diamondq.cachly</groupId>
       <artifactId>cachly-serializer-kryo</artifactId>
     </dependency>
     <dependency>

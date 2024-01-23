@@ -5,6 +5,8 @@
     <file url="file://$PROJECT_DIR$/cachly-bom/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/cachly-masterparent/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/cachly-masterparent/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cachly-micronaut-caffeine/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/cachly-micronaut-caffeine/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/cachly-micronaut-ehcache/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/cachly-micronaut-ehcache/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/cachly-micronaut/src/main/java" charset="UTF-8" />

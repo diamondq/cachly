@@ -15,6 +15,7 @@
     <module>cachly</module>
     <module>cachly-bom</module>
     <module>cachly-micronaut</module>
+    <module>cachly-micronaut-caffeine</module>
     <module>cachly-micronaut-ehcache</module>
     <module>cachly-masterparent</module>
     <module>cachly-parent</module>

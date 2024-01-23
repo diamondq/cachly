@@ -1,3 +1,7 @@
+micronaut:
+  caches:
+    caffeine:
+      maximum-size: 20
 cachly:
   paths:
     ifpresent-process-definitions:

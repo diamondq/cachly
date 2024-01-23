@@ -7,16 +7,16 @@
     <version>${revision}${sha1}${changelist}</version>
     <relativePath>../cachly-parent</relativePath>
   </parent>
-  <artifactId>cachly-micronaut</artifactId>
-  <name>DiamondQ Cachly: Micronaut</name>
+  <artifactId>cachly-micronaut-caffeine</artifactId>
+  <name>DiamondQ Cachly: Micronaut: Caffeine</name>
   <dependencies>
     <dependency>
       <groupId>com.diamondq.cachly</groupId>
-      <artifactId>cachly</artifactId>
+      <artifactId>cachly-micronaut</artifactId>
     </dependency>
     <dependency>
       <groupId>io.micronaut.cache</groupId>
-      <artifactId>micronaut-cache-core</artifactId>
+      <artifactId>micronaut-cache-caffeine</artifactId>
     </dependency>
     <dependency>
       <groupId>jakarta.inject</groupId>
