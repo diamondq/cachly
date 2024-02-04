@@ -632,7 +632,7 @@ public class CacheEngine implements Cache {
       }
       CacheResult<V> result = lookup(pAccessContext, ki, true);
       //noinspection ConstantConditions
-      if (result.entryFound()) return ctx.exit(Optional.ofNullable(result.getValue()));
+      if (result.entryFound()) return ctx.exit(Optional.ofNullable(result.isNull() ? null : result.getValue()));
       return ctx.exit(Optional.empty());
     }
   }

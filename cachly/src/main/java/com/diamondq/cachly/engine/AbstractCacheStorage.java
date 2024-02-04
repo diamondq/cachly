@@ -508,7 +508,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     /* Since we're not serializing, then we just need to wrap the key and value into an object we can store */
 
-    Object finalValue = new MemoryStorageData(pKey, pResult.getValue());
+    Object finalValue = new MemoryStorageData(pKey, pResult.isNull() ? null : pResult.getValue());
 
     @Nullable Duration overrideExpiry = pResult.getOverrideExpiry();
 
