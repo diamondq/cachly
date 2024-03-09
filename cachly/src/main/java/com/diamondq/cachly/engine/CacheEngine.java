@@ -10,6 +10,7 @@ import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.WriteBackCacheLoader;
 import com.diamondq.cachly.impl.AccessContextImpl;
+import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.KeyDetails;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
@@ -24,7 +25,9 @@ import com.diamondq.common.TypeReference;
 import com.diamondq.common.context.Context;
 import com.diamondq.common.context.ContextFactory;
 import com.diamondq.common.converters.ConverterManager;
+import com.diamondq.common.lambda.interfaces.Consumer2;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +45,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 /**
@@ -75,6 +79,8 @@ public class CacheEngine implements Cache {
    *
    * @param pContextFactory the Context Factory
    * @param pConverterManager the Converter Manager
+   * @param pExecutorService the Executor Service
+   * @param pCallbackHandler the Callback Handler
    * @param pPaths the list of Paths for storage
    * @param pNameLocators the name locator
    * @param pCacheStorages the cache storages
@@ -82,8 +88,8 @@ public class CacheEngine implements Cache {
    * @param pAccessContextSPIs the context SPIs
    */
   @Inject
-  @javax.inject.Inject
   public CacheEngine(ContextFactory pContextFactory, ConverterManager pConverterManager,
+    @Named("DiamondQ") ExecutorService pExecutorService, CacheCallbackHandler pCallbackHandler,
     List<CachlyPathConfiguration> pPaths, List<BeanNameLocator> pNameLocators, List<CacheStorage> pCacheStorages,
     List<CacheLoader<?>> pCacheLoaders, List<AccessContextSPI<?>> pAccessContextSPIs) {
 
@@ -109,6 +115,7 @@ public class CacheEngine implements Cache {
           "The CacheStorage " + storage.getClass().getName() + " must have a name (such as @Named) associated with it");
       }
 
+      storage.setCacheEngine(this);
       storagesByName.put(name, storage);
     }
 
@@ -133,7 +140,9 @@ public class CacheEngine implements Cache {
     }
 
     if (!storagesByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME)) {
-      storagesByPath.put(CacheInfoLoader.CACHE_INFO_NAME, new MemoryCacheStorage(pConverterManager));
+      storagesByPath.put(CacheInfoLoader.CACHE_INFO_NAME,
+        new MemoryCacheStorage(pConverterManager, pExecutorService, pCallbackHandler)
+      );
     }
     if (!serializerNameByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME)) {
       serializerNameByPath.put(CacheInfoLoader.CACHE_INFO_NAME, DEFAULT_SERIALIZER);
@@ -260,16 +269,11 @@ public class CacheEngine implements Cache {
     return result;
   }
 
-  /**
-   * This is the main resolution routine. It will take a key and resolve it to the cached value
-   *
-   * @param <O> the result type
-   * @param pKey the key
-   * @return the result
-   */
-  private <O> CacheResult<O> lookup(AccessContext pAccessContext, KeySPI<O> pKey, boolean pLoadIfMissing) {
+  private record PlaceHolderResult<O>(KeySPI<O> key, @Nullable Set<String> placeholderDependencies) {
+  }
 
-    ArrayDeque<Set<String>> dependencyStack = sMonitored.get();
+  private <O> PlaceHolderResult<O> resolvePlaceholders(AccessContext pAccessContext, KeySPI<O> pKey,
+    ArrayDeque<Set<String>> dependencyStack) {
 
     /*
      * If there are still defaults, since they need to be resolved. This is done here since some defaults may
@@ -314,6 +318,29 @@ public class CacheEngine implements Cache {
       placeholderDependencies = null;
     }
 
+    return new PlaceHolderResult<>(pKey, placeholderDependencies);
+  }
+
+  /**
+   * This is the main resolution routine. It will take a key and resolve it to the cached value
+   *
+   * @param <O> the result type
+   * @param pKey the key
+   * @return the result
+   */
+  private <O> CacheResult<O> lookup(AccessContext pAccessContext, KeySPI<O> pKey, boolean pLoadIfMissing) {
+
+    ArrayDeque<Set<String>> dependencyStack = sMonitored.get();
+
+    /*
+     * If there are still defaults, since they need to be resolved. This is done here since some defaults may
+     * require lookups, and we want them included in the dependencies
+     */
+
+    var resolveResult = resolvePlaceholders(pAccessContext, pKey, dependencyStack);
+    pKey = resolveResult.key();
+    @Nullable Set<String> placeholderDependencies = resolveResult.placeholderDependencies();
+
     String keyStr = pKey.toString();
 
     /* Are we monitoring? */
@@ -339,12 +366,11 @@ public class CacheEngine implements Cache {
       the object (only one is permanently kept), and for certain types of objects (like Class's) this could cause
       multiple instances of the object to be inuse, when it was meant as a singleton.
 
-      NOTE: At the moment, this is synchronizing against 'this', so it will block all threads issuing queries.
-      At least, this uses a double-lock check, so once it's been cached, the cached copy will be returned before
-      reaching this point, and thus, no synchronization
+      NOTE: At the moment, this is synchronizing against an intern version of the key string. This will cause a 'memory-leak' for each unique string.
+      However, in most cases, this should only represent 1000s of strings, not millions.
      */
 
-    synchronized (this) {
+    synchronized (pKey.toString().intern()) {
       queryResult = storage.queryForKey(pAccessContext, pKey);
 
       if (queryResult.entryFound()) return queryResult;
@@ -407,33 +433,7 @@ public class CacheEngine implements Cache {
   private <O> void setInternal(AccessContext pAccessContext, KeySPI<O> pKey, CacheResult<O> pCacheResult) {
     try (Context ignored = mContextFactory.newContext(CacheEngine.class, this, pKey, pCacheResult)) {
 
-      /*
-       * If there are still defaults, since they need to be resolved. This is done here since some defaults may
-       * require lookups, and we want them included in the dependencies
-       */
-
-      if (pKey.hasPlaceholders()) {
-        @NotNull KeySPI<Object>[] parts = pKey.getParts();
-        int partsLen = parts.length;
-        @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
-
-        for (int i = 0; i < partsLen; i++) {
-          KeySPI<Object> part = parts[i];
-          if (part instanceof KeyPlaceholderSPI) {
-            @SuppressWarnings("unchecked") KeyPlaceholderSPI<Object> sspi = (KeyPlaceholderSPI<Object>) part;
-            newParts[i] = sspi.resolveDefault(this, pAccessContext);
-          } else if (part instanceof AccessContextPlaceholderSPI) {
-            @SuppressWarnings(
-              "unchecked") AccessContextPlaceholderSPI<Object> sspi = (AccessContextPlaceholderSPI<Object>) part;
-            newParts[i] = sspi.resolve(this, pAccessContext);
-          } else {
-            newParts[i] = part;
-          }
-        }
-
-        pKey = new CompositeKey<>(newParts);
-        setupKey(pAccessContext, pKey);
-      }
+      pKey = resolvePlaceholders(pAccessContext, pKey, new ArrayDeque<>()).key();
 
       /* Find the last storage given the key */
 
@@ -459,33 +459,7 @@ public class CacheEngine implements Cache {
   private <O> void invalidateInternal(AccessContext pAccessContext, KeySPI<O> pKey) {
     try (Context ignored = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
 
-      /*
-       * If there are still defaults, since they need to be resolved. This is done here since some defaults may
-       * require lookups, and we want them included in the dependencies
-       */
-
-      if (pKey.hasPlaceholders()) {
-        @NotNull KeySPI<Object>[] parts = pKey.getParts();
-        int partsLen = parts.length;
-        @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
-
-        for (int i = 0; i < partsLen; i++) {
-          KeySPI<Object> part = parts[i];
-          if (part instanceof KeyPlaceholderSPI) {
-            @SuppressWarnings("unchecked") KeyPlaceholderSPI<Object> sspi = (KeyPlaceholderSPI<Object>) part;
-            newParts[i] = sspi.resolveDefault(this, pAccessContext);
-          } else if (part instanceof AccessContextPlaceholderSPI) {
-            @SuppressWarnings(
-              "unchecked") AccessContextPlaceholderSPI<Object> sspi = (AccessContextPlaceholderSPI<Object>) part;
-            newParts[i] = sspi.resolve(this, pAccessContext);
-          } else {
-            newParts[i] = part;
-          }
-        }
-
-        pKey = new CompositeKey<>(newParts);
-        setupKey(pAccessContext, pKey);
-      }
+      pKey = resolvePlaceholders(pAccessContext, pKey, new ArrayDeque<>()).key();
 
       String keyStr = pKey.toString();
 
@@ -493,13 +467,16 @@ public class CacheEngine implements Cache {
 
       CacheStorage storage = pKey.getLastStorage();
 
-      storage.invalidate(pAccessContext, pKey);
-
       mCacheInfo.reverseDependencyMap.remove(keyStr);
 
       /* Were there dependencies? */
 
       Set<KeySPI<?>> depSet = mCacheInfo.dependencyMap.remove(keyStr);
+
+      /* Call the invalidation routine on the storage. NOTE: This may cause the data to load back depending on callbacks */
+
+      storage.invalidate(pAccessContext, pKey);
+
       if (depSet != null) {
 
         /* Save the updated CacheInfo */
@@ -512,6 +489,7 @@ public class CacheEngine implements Cache {
           invalidate(pAccessContext, dep);
         }
       }
+
     }
   }
 
@@ -1026,5 +1004,28 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, V> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder, String pValue) {
     return resolve((KeySPI<V>) pKey, pHolder, pValue);
+  }
+
+  @Override
+  public <V> void registerOnChange(AccessContext pAccessContext, Key<V> pKey,
+    Consumer2<Key<V>, Optional<V>> pCallback) {
+
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+
+    if (!ki.hasKeyDetails()) {
+      setupKey(pAccessContext, ki);
+    }
+
+    var resolvedKey = resolvePlaceholders(pAccessContext, ki, new ArrayDeque<>()).key();
+
+    /* Find the last storage given the key */
+
+    CacheStorage storage = resolvedKey.getLastStorage();
+
+    /* Register the callback with the actual cache */
+
+    storage.registerOnChange(pAccessContext, resolvedKey, pCallback);
+
+    getIfPresent(pAccessContext, resolvedKey);
   }
 }

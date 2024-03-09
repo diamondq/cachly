@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 @Singleton
-@javax.inject.Singleton
 public class CachlyEhcacheExpiryPolicy<K, V> implements ExpiryPolicy<K, V>, ExpiryHandler, CacheEventListener<K, V> {
 
   private final ConcurrentMap<String, Duration> mExpiries;

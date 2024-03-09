@@ -1,6 +1,7 @@
 package com.diamondq.cachly.micronaut.ehcache;
 
 import com.diamondq.cachly.engine.MemoryStorageData;
+import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.cachly.micronaut.ehcache.CachlyEhcacheConfiguration.CachlyDiskTieredCacheConfiguration;
 import com.diamondq.common.Holder;
 import io.micronaut.cache.ehcache.EhcacheCacheFactory;
@@ -60,7 +61,6 @@ public class CachlyEhcacheCacheFactory {
    * @return The {@link CacheManager}
    */
   @Singleton
-  @javax.inject.Singleton
   @Bean(preDestroy = "close")
   CacheManager cacheManager(StatisticsService statisticsService) {
     CacheManagerBuilder<?> builder = mConfiguration.getBuilder();
@@ -72,7 +72,6 @@ public class CachlyEhcacheCacheFactory {
    */
   @SuppressWarnings("MethodMayBeStatic")
   @Singleton
-  @javax.inject.Singleton
   @Bean(preDestroy = "stop")
   StatisticsService statisticsService() {
     return new DefaultStatisticsService();
@@ -91,8 +90,7 @@ public class CachlyEhcacheCacheFactory {
   @SuppressWarnings("MethodMayBeStatic")
   @EachBean(EhcacheConfiguration.class)
   EhcacheSyncCache syncCache(@Parameter EhcacheConfiguration configuration, CacheManager cacheManager,
-    ConversionService conversionService,
-    @javax.inject.Named(TaskExecutors.IO) @Named(TaskExecutors.IO) ExecutorService executorService,
+    ConversionService conversionService, @Named(TaskExecutors.IO) ExecutorService executorService,
     StatisticsService statisticsService, ApplicationContext pApplicationContext) {
 
     /* Look to see if there is a matching Cachly configuration by the same name */
@@ -200,6 +198,19 @@ public class CachlyEhcacheCacheFactory {
           );
       }
     }
+
+    /* Set up for notification for callbacks */
+
+    var handlerOpt = pApplicationContext.findBean(CacheCallbackHandler.class);
+    handlerOpt.ifPresent((handler) -> {
+      nativeCache.getRuntimeConfiguration().registerCacheEventListener((event) -> {
+        var value = switch (event.getType()) {
+          case EVICTED, EXPIRED, REMOVED -> event.getOldValue();
+          case CREATED, UPDATED -> event.getNewValue();
+        };
+        handler.handleEvent(nativeCache, event.getKey(), value);
+      }, EventOrdering.ORDERED, EventFiring.SYNCHRONOUS, EnumSet.allOf(EventType.class));
+    });
 
     /* Build the Cachly version of the SyncCache */
 

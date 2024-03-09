@@ -15,7 +15,6 @@ import java.util.stream.StreamSupport;
 
 @SuppressWarnings("ClassNamePrefixedWithPackageName")
 @Singleton
-@javax.inject.Singleton
 public class EhcacheKeyExtractor implements KeyExtractor {
 
   @Override

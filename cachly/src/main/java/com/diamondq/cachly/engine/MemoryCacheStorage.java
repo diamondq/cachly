@@ -1,5 +1,6 @@
 package com.diamondq.cachly.engine;
 
+import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.common.converters.ConverterManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,9 +13,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
 public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
+
+  private final CacheCallbackHandler mHandler;
 
   private static final class DataRecord {
     public final           Object data;
@@ -28,9 +32,25 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
 
   private final ConcurrentMap<@NotNull String, @NotNull DataRecord> mData;
 
-  public MemoryCacheStorage(ConverterManager pConverterManager) {
-    super(pConverterManager, "", "", String.class, MemoryStorageData.class, false, null, null, null, null, null, null);
+  public MemoryCacheStorage(ConverterManager pConverterManager, ExecutorService pExecutorService,
+    CacheCallbackHandler pHandler) {
+    super(pConverterManager,
+      pExecutorService,
+      "",
+      "",
+      String.class,
+      MemoryStorageData.class,
+      false,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    );
+    mHandler = pHandler;
     mData = new ConcurrentHashMap<>();
+    pHandler.registerCacheStorage(mData, this);
   }
 
   @Override
@@ -40,6 +60,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
         pEntry.expiresIn != null ? Instant.now().plus(pEntry.expiresIn).toEpochMilli() : null
       )
     );
+    mHandler.handleEvent(mData, pEntry.serKey, pEntry.serValue);
   }
 
   @Override
@@ -58,7 +79,10 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
   @Override
   protected void invalidate(String pCache, @Nullable String pKey) {
     if (pKey == null) mData.clear();
-    else mData.remove(pKey);
+    else {
+      var origValue = mData.remove(pKey);
+      if (origValue != null) mHandler.handleEvent(mData, pKey, origValue.data);
+    }
   }
 
   @Override

@@ -13,6 +13,11 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * A composite key is made up of many smaller key parts
+ *
+ * @param <O> the data type
+ */
 public class CompositeKey<O> implements KeySPI<O> {
 
   private final @NotNull KeySPI<Object>[] mParts;
@@ -23,12 +28,27 @@ public class CompositeKey<O> implements KeySPI<O> {
 
   private final boolean mHasPlaceholders;
 
+  /**
+   * A constructor that takes a string (that may have / separator characters)
+   *
+   * @param pKey the key string
+   * @param pType the type
+   */
+  @SuppressWarnings("unchecked")
+  public CompositeKey(String pKey, Type pType) {
+    this(Arrays.stream(pKey.split("/")).map((partStr) -> new StaticKey<>(partStr, pType)).toArray(KeySPI[]::new));
+  }
+
+  /**
+   * Constructor that takes 2 keys
+   *
+   * @param pKey1 the first key
+   * @param pKey2 the second key
+   */
   public CompositeKey(Key<?> pKey1, Key<O> pKey2) {
-    if (!(pKey1 instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<?> ki1 = (KeySPI<?>) pKey1;
+    if (!(pKey1 instanceof KeySPI<?> ki1)) throw new IllegalStateException();
     @NotNull KeySPI<Object>[] ki1Parts = ki1.getParts();
-    if (!(pKey2 instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<O> ki2 = (KeySPI<O>) pKey2;
+    if (!(pKey2 instanceof KeySPI<O> ki2)) throw new IllegalStateException();
     @NotNull KeySPI<Object>[] ki2Parts = ki2.getParts();
     int partsLen = ki1Parts.length + ki2Parts.length;
     @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[partsLen];
@@ -45,15 +65,19 @@ public class CompositeKey<O> implements KeySPI<O> {
     mHasPlaceholders = hasPlaceHolders;
   }
 
+  /**
+   * Constructor that takes 3 keys
+   *
+   * @param pKey1 the first key
+   * @param pKey2 the second key
+   * @param pKey3 the third key
+   */
   public CompositeKey(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
-    if (!(pKey1 instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<?> ki1 = (KeySPI<?>) pKey1;
+    if (!(pKey1 instanceof KeySPI<?> ki1)) throw new IllegalStateException();
     @NotNull KeySPI<Object>[] ki1Parts = ki1.getParts();
-    if (!(pKey2 instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<?> ki2 = (KeySPI<?>) pKey2;
+    if (!(pKey2 instanceof KeySPI<?> ki2)) throw new IllegalStateException();
     @NotNull KeySPI<Object>[] ki2Parts = ki2.getParts();
-    if (!(pKey3 instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<O> ki3 = (KeySPI<O>) pKey3;
+    if (!(pKey3 instanceof KeySPI<O> ki3)) throw new IllegalStateException();
     @NotNull KeySPI<Object>[] ki3Parts = ki3.getParts();
     int partsLen = ki1Parts.length + ki2Parts.length + ki3Parts.length;
     @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[partsLen];
@@ -71,6 +95,11 @@ public class CompositeKey<O> implements KeySPI<O> {
     mHasPlaceholders = hasPlaceHolders;
   }
 
+  /**
+   * Constructor that takes an array of keys
+   *
+   * @param pNewParts the array
+   */
   public CompositeKey(@NotNull KeySPI<Object>[] pNewParts) {
     mParts = pNewParts;
     mPartsLen = mParts.length;

@@ -28,6 +28,9 @@ cachly:
     actual:
       storage: my-cache
       serializer: kryo
+    callbacks:
+      storage: my-cache
+      serializer: kryo
   ehcache:
     my-cache:
       disk:

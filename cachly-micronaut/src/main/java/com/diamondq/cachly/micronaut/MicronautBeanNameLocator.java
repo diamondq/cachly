@@ -13,13 +13,11 @@ import java.util.Optional;
 
 @SuppressWarnings("ClassNamePrefixedWithPackageName")
 @Singleton
-@javax.inject.Singleton
 public class MicronautBeanNameLocator implements BeanNameLocator {
 
   private final ApplicationContext mAppContext;
 
   @Inject
-  @javax.inject.Inject
   public MicronautBeanNameLocator(ApplicationContext pAppContext) {
     mAppContext = pAppContext;
   }

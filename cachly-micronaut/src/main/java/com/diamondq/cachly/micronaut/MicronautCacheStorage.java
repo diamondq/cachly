@@ -3,11 +3,13 @@ package com.diamondq.cachly.micronaut;
 import com.diamondq.cachly.engine.AbstractCacheStorage;
 import com.diamondq.cachly.engine.CommonKeyValuePair;
 import com.diamondq.cachly.engine.MemoryStorageData;
+import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.common.converters.ConverterManager;
 import io.micronaut.cache.SyncCache;
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.scheduling.TaskExecutors;
 import jakarta.inject.Inject;
-import org.jetbrains.annotations.NotNull;
+import jakarta.inject.Named;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
@@ -16,8 +18,12 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
+/**
+ * Implements the Cache Storage for interacting with Micronaut Caches
+ */
 @SuppressWarnings("ClassNamePrefixedWithPackageName")
 @EachBean(SyncCache.class)
 public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, String> {
@@ -26,11 +32,21 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
 
   private final List<ExpiryHandler> mExpiryHandlers;
 
+  /**
+   * Injection Constructor
+   *
+   * @param pConverterManager the Converter Manager
+   * @param pExecutorService the Executor Service
+   * @param pHandler the Callback Handler bridge
+   * @param pPrimaryCache the Micronaut cache for storage
+   * @param pKeyExtractors the list of key extractors to get the contents from the native cache
+   * @param pExpiryHandlers the list of handlers for expiry
+   */
   @Inject
-  @javax.inject.Inject
-  public MicronautCacheStorage(ConverterManager pConverterManager, SyncCache<?> pPrimaryCache,
-    List<KeyExtractor> pKeyExtractors, List<ExpiryHandler> pExpiryHandlers) {
-    super(pConverterManager,
+  public MicronautCacheStorage(ConverterManager pConverterManager,
+    @Named(TaskExecutors.IO) ExecutorService pExecutorService, CacheCallbackHandler pHandler,
+    SyncCache<?> pPrimaryCache, List<KeyExtractor> pKeyExtractors, List<ExpiryHandler> pExpiryHandlers) {
+    super(pConverterManager, pExecutorService,
 
       /* The cache object */
 
@@ -62,6 +78,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
     );
     mKeyExtractors = pKeyExtractors;
     mExpiryHandlers = pExpiryHandlers;
+    pHandler.registerCacheStorage(mPrimaryCache.getNativeCache(), this);
     init();
   }
 
@@ -74,12 +91,12 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
   }
 
   @Override
-  protected Optional<@NotNull ?> readFromPrimaryCache(String pKey) {
+  protected Optional<?> readFromPrimaryCache(String pKey) {
     return mPrimaryCache.get(pKey, mSerValueClass);
   }
 
   @Override
-  protected Stream<Entry<String, @NotNull ?>> streamPrimary() {
+  protected Stream<Entry<String, ?>> streamPrimary() {
     Object nativeCache = mPrimaryCache.getNativeCache();
     for (KeyExtractor ke : mKeyExtractors) {
       @Nullable Stream<Entry<String, Object>> entries = ke.getEntries(nativeCache);
@@ -110,7 +127,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
   }
 
   @Override
-  protected Stream<Entry<String, @NotNull ?>> streamMetaEntries() {
+  protected Stream<Entry<String, ?>> streamMetaEntries() {
     return streamPrimary();
   }
 

@@ -1,5 +1,6 @@
 package com.diamondq.cachly;
 
+import com.diamondq.common.lambda.interfaces.Consumer2;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
@@ -668,5 +669,13 @@ public interface Cache {
    */
   <K1, V> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder, String pValue);
 
-//  <V> void registerOnChange(Key<V> pKey);
+  /**
+   * Register a callback that is called immediately, and then any time the value of the key changes
+   *
+   * @param pAccessContext the Access Context
+   * @param pKey the key (must be fully resolved)
+   * @param pCallback the callback
+   * @param <V> the key type
+   */
+  <V> void registerOnChange(AccessContext pAccessContext, Key<V> pKey, Consumer2<Key<V>, Optional<V>> pCallback);
 }

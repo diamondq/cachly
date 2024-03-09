@@ -14,7 +14,6 @@ import jakarta.inject.Singleton;
  * Cache Loader representing the internal CacheInfo data
  */
 @Singleton
-@javax.inject.Singleton
 public class CacheInfoLoader implements CacheLoader<CacheInfo> {
   /**
    * The key name used for the Cache Info storage
