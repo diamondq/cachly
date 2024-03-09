@@ -10,13 +10,21 @@ import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.common.TypeReference;
 import jakarta.inject.Singleton;
 
+/**
+ * Cache Loader representing the internal CacheInfo data
+ */
 @Singleton
 @javax.inject.Singleton
 public class CacheInfoLoader implements CacheLoader<CacheInfo> {
+  /**
+   * The key name used for the Cache Info storage
+   */
   public static final String CACHE_INFO_NAME = "__CacheEngine__";
 
-  public static final TypeReference<CacheInfo> TYPEREF = new TypeReference<CacheInfo>() {
-    // type reference
+  /**
+   * The TypeReference for the CacheInfo
+   */
+  public static final TypeReference<CacheInfo> TYPEREF = new TypeReference<>() {
   };
 
   @Override

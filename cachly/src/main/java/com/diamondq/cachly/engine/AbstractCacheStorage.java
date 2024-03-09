@@ -41,8 +41,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+/**
+ * This is the main abstract class for implementing Cache Storages. It provides a lot of the functionality that is
+ * reused across all implementations.
+ *
+ * @param <CACHE> the underlying Cache type (i.e. EhCache)
+ * @param <SER_KEY> the underlying type of the key
+ */
 public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStorage {
 
+  /**
+   * Represents the serialization version number so that in the case of a change in the serialization format, older
+   * persisted entries can be recognized and properly deserialized.
+   */
   public static final byte SERIALIZATION_VERSION = 1;
 
   public static final int FLAG_ISNULL = 0x01;
@@ -79,14 +90,29 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    */
   protected final @Nullable CACHE mMetaCache;
 
+  /**
+   * The key serialization function
+   */
   protected final @Nullable Function<String, SER_KEY> mKeySerializer;
 
+  /**
+   * The key deserialization function
+   */
   protected final @Nullable Function<SER_KEY, String> mKeyDeserializer;
 
+  /**
+   * The Converter Manager instance
+   */
   protected final ConverterManager mConverterManager;
 
+  /**
+   * The class of the serialized key
+   */
   protected final Class<SER_KEY> mSerKeyClass;
 
+  /**
+   * The class of the serialized value
+   */
   protected final Class<?> mSerValueClass;
 
   protected final ConcurrentMap<String, Short> mStringToShort;
@@ -115,8 +141,14 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
   protected final AtomicInteger mKeyCounter;
 
+  /**
+   * The key prefix
+   */
   protected final String mKeyPrefix;
 
+  /**
+   * The length of the key prefix
+   */
   protected final int mKeyPrefixLen;
 
   /**
@@ -124,6 +156,9 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    */
   protected final @Nullable String mValuePrefix;
 
+  /**
+   * The length of the value prefix
+   */
   protected final int mValuePrefixLen;
 
   /**
@@ -132,6 +167,23 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    */
   protected final boolean mSerializeValue;
 
+  /**
+   * Primary constructor
+   *
+   * @param pConverterManager the Converter Manager used to perform data conversions
+   * @param pPrimaryCache the underlying cache to store data
+   * @param pMetaCache the underlying cache to store metadata
+   * @param pSerKeyClass the class used for serialized keys
+   * @param pSerValueClass the class used for serialized values
+   * @param pSerializeValue true if values should be serialized or false if just stored directly. Usually false for
+   *   memory based caches, but true is usually needed for persistent caches.
+   * @param pStringPrefix a prefix to add to all keys
+   * @param pTypePrefix a prefix to add to all types
+   * @param pKeyPrefix the prefix for keys
+   * @param pValuePrefix the prefix for values
+   * @param pKeySerializer the function that will serialize keys from a string to the serialized format
+   * @param pKeyDeserializer the function that will deserialize keys from the serialized format to a string
+   */
   protected AbstractCacheStorage(ConverterManager pConverterManager, CACHE pPrimaryCache, @Nullable CACHE pMetaCache,
     Class<SER_KEY> pSerKeyClass, Class<?> pSerValueClass, boolean pSerializeValue, @Nullable String pStringPrefix,
     @Nullable String pTypePrefix, @Nullable String pKeyPrefix, @Nullable String pValuePrefix,
@@ -432,8 +484,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
       int size = 0;
       for (KeySPI<?> part : pKey.getParts()) {
-        if (part instanceof ResolvedKeyPlaceholder) {
-          ResolvedKeyPlaceholder<?> rkp = (ResolvedKeyPlaceholder<?>) part;
+        if (part instanceof ResolvedKeyPlaceholder<?> rkp) {
           KeySPI<?> placeholder = rkp.getPlaceholder();
           if (placeholder instanceof StaticKeyPlaceholder) {
             size += 1;
@@ -442,8 +493,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           } else {
             throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
           }
-        } else if (part instanceof ResolvedAccessContextPlaceholder) {
-          ResolvedAccessContextPlaceholder<?> racp = (ResolvedAccessContextPlaceholder<?>) part;
+        } else if (part instanceof ResolvedAccessContextPlaceholder<?> racp) {
           KeySPI<?> placeholder = racp.getPlaceholder();
           if (placeholder instanceof StaticAccessContextPlaceholder) {
             size += 3;
@@ -470,20 +520,17 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
       /* Write any of the placeholder part data */
 
       for (KeySPI<?> part : pKey.getParts()) {
-        if (part instanceof ResolvedKeyPlaceholder) {
-          ResolvedKeyPlaceholder<?> rkp = (ResolvedKeyPlaceholder<?>) part;
+        if (part instanceof ResolvedKeyPlaceholder<?> rkp) {
           KeySPI<?> placeholder = rkp.getPlaceholder();
           if (placeholder instanceof StaticKeyPlaceholder) {
             result.put(PART_TYPE_PLACEHOLDER);
-          } else if (placeholder instanceof StaticKeyPlaceholderWithDefault) {
-            StaticKeyPlaceholderWithDefault skpwd = (StaticKeyPlaceholderWithDefault) placeholder;
+          } else if (placeholder instanceof StaticKeyPlaceholderWithDefault skpwd) {
             result.put(PART_TYPE_PLACEHOLDER_DEFAULTS);
             result.putShort(compressKey(skpwd.getDefaultKey(), listOfEntries));
           } else {
             throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
           }
-        } else if (part instanceof ResolvedAccessContextPlaceholder) {
-          ResolvedAccessContextPlaceholder<?> racp = (ResolvedAccessContextPlaceholder<?>) part;
+        } else if (part instanceof ResolvedAccessContextPlaceholder<?> racp) {
           KeySPI<?> placeholder = racp.getPlaceholder();
           if (placeholder instanceof StaticAccessContextPlaceholder) {
             result.put(PART_TYPE_ACCESS_CONTEXT);
@@ -704,8 +751,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
             String className = ClassUtils.getCanonicalName((Class<?>) type);
             extra = className.getBytes(StandardCharsets.UTF_8);
             size += extra.length;
-          } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
+          } else if (type instanceof ParameterizedType pt) {
             short ownerTypeId = compressType(pt.getOwnerType(), pWriteList);
             short rawTypeId = compressType(pt.getRawType(), pWriteList);
             Type[] actualTypeArguments = pt.getActualTypeArguments();
@@ -722,8 +768,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
             extraBuffer.rewind();
             extra = extraBuffer.array();
             size += extra.length;
-          } else if (type instanceof GenericArrayType) {
-            GenericArrayType gat = (GenericArrayType) type;
+          } else if (type instanceof GenericArrayType gat) {
             short gctId = compressType(gat.getGenericComponentType(), pWriteList);
             ByteBuffer extraBuffer = ByteBuffer.allocate(2);
             extraBuffer.putShort(gctId);
@@ -732,8 +777,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
             size += extra.length;
           } else if (type instanceof TypeVariable) {
             throw new UnsupportedOperationException();
-          } else if (type instanceof WildcardType) {
-            WildcardType wt = (WildcardType) type;
+          } else if (type instanceof WildcardType wt) {
             Type[] lowerBounds = wt.getLowerBounds();
             //noinspection NumericCastThatLosesPrecision
             short lowerBoundsLen = (short) lowerBounds.length;

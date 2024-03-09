@@ -191,8 +191,7 @@ public class CacheEngine implements Cache {
 
     Map<Class<?>, Object> data;
     if (pExistingContext != null) {
-      if (pExistingContext instanceof AccessContextImpl) {
-        AccessContextImpl ac = (AccessContextImpl) pExistingContext;
+      if (pExistingContext instanceof AccessContextImpl ac) {
         data = new HashMap<>(ac.getData());
       } else {
         throw new IllegalArgumentException("The provided AccessContext (" + pExistingContext.getClass().getName()
@@ -445,8 +444,7 @@ public class CacheEngine implements Cache {
       /* Now attempt to look up the data */
 
       CacheLoader<O> cacheLoader = pKey.getLoader();
-      if (cacheLoader instanceof WriteBackCacheLoader) {
-        WriteBackCacheLoader<O> writeBackCacheLoader = (WriteBackCacheLoader<O>) cacheLoader;
+      if (cacheLoader instanceof WriteBackCacheLoader<O> writeBackCacheLoader) {
         writeBackCacheLoader.store(this, pAccessContext, pKey, pCacheResult);
       }
 
@@ -554,8 +552,7 @@ public class CacheEngine implements Cache {
         part.storeKeyDetails(keyDetails);
       }
 
-      if (part instanceof StaticAccessContextPlaceholder) {
-        StaticAccessContextPlaceholder<?> sacp = (StaticAccessContextPlaceholder<?>) part;
+      if (part instanceof StaticAccessContextPlaceholder<?> sacp) {
         sacp.setAccessContextSPI(mAccessContextSPIMap);
       }
       //noinspection HardcodedFileSeparator
@@ -596,10 +593,9 @@ public class CacheEngine implements Cache {
   @Override
   public <V> V get(AccessContext pAccessContext, Key<V> pKey) {
     try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
-      if (!(pKey instanceof KeySPI)) {
+      if (!(pKey instanceof KeySPI<V> ki)) {
         throw ctx.reportThrowable(new IllegalStateException());
       }
-      KeySPI<V> ki = (KeySPI<V>) pKey;
       if (!ki.hasKeyDetails()) {
         setupKey(pAccessContext, ki);
       }
@@ -623,10 +619,9 @@ public class CacheEngine implements Cache {
   @Override
   public <V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey) {
     try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
-      if (!(pKey instanceof KeySPI)) {
+      if (!(pKey instanceof KeySPI<V> ki)) {
         throw ctx.reportThrowable(new IllegalStateException());
       }
-      KeySPI<V> ki = (KeySPI<V>) pKey;
       if (!ki.hasKeyDetails()) {
         setupKey(pAccessContext, ki);
       }
@@ -639,30 +634,27 @@ public class CacheEngine implements Cache {
 
   @Override
   public <K1, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     return get(pAccessContext, resolve(ki, pHolder1, pValue1));
   }
 
   @Override
   public <K1, K2, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     return get(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
   }
 
   @Override
   public <K1, K2, K3, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     return get(pAccessContext, resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3));
   }
 
@@ -670,10 +662,9 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, K4, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     KeyPlaceholder<K4> pHolder4, String pValue4) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     return get(pAccessContext,
       resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4, pValue4)
     );
@@ -682,20 +673,18 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     return getIfPresent(pAccessContext, resolve(ki, pHolder1, pValue1));
   }
 
   @Override
   public <K1, K2, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     return getIfPresent(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
   }
 
@@ -703,10 +692,9 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey,
     KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2,
     KeyPlaceholder<K3> pHolder3, String pValue3) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     return getIfPresent(pAccessContext,
       resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3)
     );
@@ -716,10 +704,9 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, K4, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey,
     KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2,
     KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     return getIfPresent(pAccessContext,
       resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4, pValue4)
     );
@@ -727,8 +714,7 @@ public class CacheEngine implements Cache {
 
   @Override
   public <V> void set(AccessContext pAccessContext, Key<V> pKey, V pValue) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -737,8 +723,7 @@ public class CacheEngine implements Cache {
 
   @Override
   public <V> void set(AccessContext pAccessContext, Key<V> pKey, V pValue, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -747,8 +732,7 @@ public class CacheEngine implements Cache {
 
   @Override
   public <V> void setNotFound(AccessContext pAccessContext, Key<V> pKey) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -757,8 +741,7 @@ public class CacheEngine implements Cache {
 
   @Override
   public <V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -768,8 +751,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     V pValue) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -779,8 +761,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     V pValue, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -790,8 +771,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -801,8 +781,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -812,8 +791,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, K2, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, V pValue) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -823,8 +801,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, K2, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
     KeyPlaceholder<K2> pHolder2, String pValue2, V pValue, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -834,8 +811,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, K2, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -845,8 +821,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, K2, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -857,8 +832,7 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     V pValue) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -869,8 +843,7 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue,
     Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -884,8 +857,7 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, K2, K3, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -896,8 +868,7 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -911,8 +882,7 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, K4, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     KeyPlaceholder<K4> pHolder4, String pValue4, V pValue) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -929,8 +899,7 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, K4, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     KeyPlaceholder<K4> pHolder4, String pValue4, V pValue, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -948,8 +917,7 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, K4, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     KeyPlaceholder<K4> pHolder4, String pValue4) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -962,8 +930,7 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, K4, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     KeyPlaceholder<K4> pHolder4, String pValue4, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI)) throw new IllegalStateException();
-    KeySPI<V> ki = (KeySPI<V>) pKey;
+    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -978,10 +945,9 @@ public class CacheEngine implements Cache {
 
   @Override
   public <V> void invalidate(AccessContext pAccessContext, Key<V> pKey) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     if (!ki.hasKeyDetails()) {
       setupKey(pAccessContext, ki);
     }
@@ -991,30 +957,27 @@ public class CacheEngine implements Cache {
   @Override
   public <K1, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     invalidate(pAccessContext, resolve(ki, pHolder1, pValue1));
   }
 
   @Override
   public <K1, K2, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     invalidate(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
   }
 
   @Override
   public <K1, K2, K3, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     invalidate(pAccessContext, resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3));
   }
 
@@ -1022,10 +985,9 @@ public class CacheEngine implements Cache {
   public <K1, K2, K3, K4, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
     String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
     KeyPlaceholder<K4> pHolder4, String pValue4) {
-    if (!(pKey instanceof KeySPI)) {
+    if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }
-    KeySPI<V> ki = (KeySPI<V>) pKey;
     invalidate(pAccessContext,
       resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4, pValue4)
     );

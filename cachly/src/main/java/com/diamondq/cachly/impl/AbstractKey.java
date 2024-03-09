@@ -10,18 +10,45 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.Objects;
 
+/**
+ * Some basic methods for implementing keys
+ *
+ * @param <O> the key type
+ */
 public class AbstractKey<O> implements KeySPI<O> {
 
+  /**
+   * The key string
+   */
   protected final String mKey;
 
+  /**
+   * The key details
+   */
   protected @Nullable KeyDetails<O> mKeyDetails;
 
+  /**
+   * The parts of the key
+   */
   protected final @NotNull KeySPI<Object>[] mParts;
 
+  /**
+   * The output type
+   */
   protected final Type mOutputType;
 
+  /**
+   * Whether there are placeholders within the parts
+   */
   protected final boolean mHasPlaceholders;
 
+  /**
+   * Primary Constructor
+   *
+   * @param pKey the key
+   * @param pOutputType the output type
+   * @param pHasPlaceholders whether this has placeholders
+   */
   public AbstractKey(String pKey, Type pOutputType, boolean pHasPlaceholders) {
     mKey = pKey;
     mOutputType = pOutputType;

@@ -9,6 +9,7 @@ import java.lang.reflect.Type;
  *
  * @param <O> the type of data stored at this key
  */
+@SuppressWarnings("unused")
 public interface Key<O> {
 
   /**

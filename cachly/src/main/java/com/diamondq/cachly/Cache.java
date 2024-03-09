@@ -667,4 +667,6 @@ public interface Cache {
    * @return an updated key
    */
   <K1, V> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder, String pValue);
+
+//  <V> void registerOnChange(Key<V> pKey);
 }

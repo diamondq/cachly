@@ -1,4 +1,9 @@
 package com.diamondq.cachly;
 
-public interface KeyPlaceholder<O> extends Key<O> { // empty
+/**
+ * Represents a placeholder
+ *
+ * @param <O> the data type
+ */
+public interface KeyPlaceholder<O> extends Key<O> {
 }

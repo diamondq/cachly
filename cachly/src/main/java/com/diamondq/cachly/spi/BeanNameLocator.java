@@ -8,5 +8,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface BeanNameLocator {
 
+  /**
+   * Returns the name of the given bean
+   *
+   * @param pBean the bean
+   * @param <T> the type of the bean
+   * @return the name of the bean or null if there is no name.
+   */
   <T> @Nullable String getBeanName(@NotNull T pBean);
 }
