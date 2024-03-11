@@ -19,7 +19,7 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
           cache: 'maven'
-      - uses: cactuslab/maven-toolchains-xml-action@v1
+      - uses: cactuslab/maven-toolchains-xml-action@v2
         with:
           toolchains: |
             [
@@ -32,7 +32,7 @@ jobs:
       # Get the build number
       - name: Build Number Generator
         id: buildnumber
-        uses: einaregilsson/build-number@v3
+        uses: onyxmueller/build-tag-number@v1.0.3
         with:
           token: ${{ secrets.github_token }}
       - name: Import GPG key
