@@ -3,17 +3,23 @@ package com.diamondq.cachly.impl;
 import com.diamondq.cachly.AccessContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Represents data used during resolution of the key and resolution of the value
+ */
 public final class AccessContextImpl implements AccessContext {
 
   private final Map<Class<?>, Object> mData;
 
+  /**
+   * Primary Constructor
+   *
+   * @param pData the map of data to store
+   */
   public AccessContextImpl(Map<Class<?>, Object> pData) {
-    mData = Collections.unmodifiableMap(new HashMap<>(pData));
+    mData = Map.copyOf(pData);
   }
 
   @Override

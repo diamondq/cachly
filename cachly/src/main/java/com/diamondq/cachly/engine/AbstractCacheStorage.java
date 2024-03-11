@@ -4,7 +4,6 @@ import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.impl.AccessContextImpl;
 import com.diamondq.cachly.impl.CompositeKey;
 import com.diamondq.cachly.impl.ResolvedAccessContextPlaceholder;
 import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
@@ -61,6 +60,9 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    */
   public static final byte SERIALIZATION_VERSION = 1;
 
+  /**
+   * The flag indicating that the value is actually null (as opposed to not found)
+   */
   public static final int FLAG_ISNULL = 0x01;
 
   private static final byte TYPE_CLASS = 1;
@@ -80,12 +82,35 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   private static final byte PART_TYPE_PLACEHOLDER_DEFAULTS = 3;
   private static final Type NULL_TYPE                      = NULL_TYPE_CLASS.class;
 
-  protected class CallbackInfo {
-    public final    Consumer2<Key<?>, Optional<?>> callback;
-    public volatile Optional<?>                    lastValue;
+  /**
+   * Holds information about the callback
+   */
+  protected static class CallbackInfo {
+    /**
+     * The actual callback function to call
+     */
+    public final Consumer2<Key<?>, Optional<?>> callback;
 
-    public CallbackInfo(Consumer2<Key<?>, Optional<?>> pCallback) {
+    /**
+     * The access context used during the registration. It's used for any lookups during event firing.
+     */
+    public final AccessContext accessContext;
+
+    /**
+     * The last value. This is used to determine if a change has actually occurred. Sometimes events fire on a key but
+     * the result is the same.
+     */
+    public volatile Optional<?> lastValue;
+
+    /**
+     * Primary Constructor
+     *
+     * @param pAccessContext the access context to store
+     * @param pCallback the callback function
+     */
+    public CallbackInfo(AccessContext pAccessContext, Consumer2<Key<?>, Optional<?>> pCallback) {
       callback = pCallback;
+      accessContext = pAccessContext;
       lastValue = Optional.empty();
     }
   }
@@ -93,54 +118,94 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   /**
    * The executor service
    */
-  protected final           ExecutorService                 mExecutorService;
+  protected final           ExecutorService           mExecutorService;
   /**
    * The primary cache
    */
-  protected final           CACHE                           mPrimaryCache;
+  protected final           CACHE                     mPrimaryCache;
   /**
    * The meta cache or null if there isn't one.
    */
-  protected final @Nullable CACHE                           mMetaCache;
+  protected final @Nullable CACHE                     mMetaCache;
   /**
    * The key serialization function
    */
-  protected final @Nullable Function<String, SER_KEY>       mKeySerializer;
+  protected final @Nullable Function<String, SER_KEY> mKeySerializer;
   /**
    * The key deserialization function
    */
-  protected final @Nullable Function<SER_KEY, String>       mKeyDeserializer;
+  protected final @Nullable Function<SER_KEY, String> mKeyDeserializer;
   /**
    * The Converter Manager instance
    */
-  protected final           ConverterManager                mConverterManager;
+  protected final           ConverterManager          mConverterManager;
   /**
    * The class of the serialized key
    */
-  protected final           Class<SER_KEY>                  mSerKeyClass;
+  protected final           Class<SER_KEY>            mSerKeyClass;
   /**
    * The class of the serialized value
    */
-  protected final           Class<?>                        mSerValueClass;
+  protected final           Class<?>                  mSerValueClass;
+
+  /**
+   * The map of strings to short ids
+   */
   protected final           ConcurrentMap<String, Short>    mStringToShort;
+  /**
+   * The map of short ids to strings
+   */
   protected final           ConcurrentMap<Short, String>    mShortToString;
+  /**
+   * The counter for tracking string ids
+   */
   protected final           AtomicInteger                   mStringCounter;
+  /**
+   * The prefix to write before strings
+   */
   protected final           String                          mStringPrefix;
+  /**
+   * The length of the string prefix (for performance)
+   */
   protected final           int                             mStringPrefixLen;
+  /**
+   * The map of types to short ids
+   */
   protected final           ConcurrentMap<Type, Short>      mTypeToShort;
+  /**
+   * The map of short ids to types
+   */
   protected final           ConcurrentMap<Short, Type>      mShortToType;
+  /**
+   * The counter for tracking type ids
+   */
   protected final           AtomicInteger                   mTypeCounter;
+  /**
+   * The prefix to write before types
+   */
   protected final           String                          mTypePrefix;
+  /**
+   * The length of the type prefix (for performance)
+   */
   protected final           int                             mTypePrefixLen;
+  /**
+   * The map of keys to short ids
+   */
   protected final           ConcurrentMap<Key<?>, Short>    mKeyToShort;
+  /**
+   * The map of short ids to keys
+   */
   protected final           ConcurrentMap<Short, Key<?>>    mShortToKey;
+  /**
+   * The counter for tracking key ids
+   */
   protected final           AtomicInteger                   mKeyCounter;
   /**
    * The key prefix
    */
   protected final           String                          mKeyPrefix;
   /**
-   * The length of the key prefix
+   * The length of the key prefix (for performance)
    */
   protected final           int                             mKeyPrefixLen;
   /**
@@ -708,6 +773,13 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     return new SimpleEntry<>(msd.key, new StaticCacheResult<@Nullable Object>(msd.value, true));
   }
 
+  /**
+   * Compress a string
+   *
+   * @param pValue the string to compress
+   * @param pWriteList the write list to add additional key/values if necessary
+   * @return the short id assigned to the string
+   */
   protected short compressString(@Nullable String pValue, List<CommonKeyValuePair<CACHE, SER_KEY>> pWriteList) {
     String value = pValue == null ? "__NULL__" : pValue;
     Short id = mStringToShort.get(value);
@@ -735,6 +807,12 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     return id;
   }
 
+  /**
+   * Decompress a string
+   *
+   * @param pId the short id
+   * @return the string
+   */
   protected @Nullable String decompressString(short pId) {
     String str = mShortToString.get(pId);
     if (str == null)
@@ -743,6 +821,13 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     return str;
   }
 
+  /**
+   * Compress a type
+   *
+   * @param pType the type
+   * @param pWriteList the list to write additional key/value if necessary
+   * @return the short id
+   */
   protected short compressType(@Nullable Type pType, List<CommonKeyValuePair<CACHE, SER_KEY>> pWriteList) {
     Type type = pType == null ? NULL_TYPE : pType;
     Short id = mTypeToShort.get(type);
@@ -844,6 +929,12 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     return id;
   }
 
+  /**
+   * Decompress a type
+   *
+   * @param pTypeId the type short id
+   * @return the type
+   */
   protected @Nullable Type decompressType(short pTypeId) {
     Type type = mShortToType.get(pTypeId);
     if (type == null)
@@ -852,6 +943,13 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     return type;
   }
 
+  /**
+   * Compress a key
+   *
+   * @param pKey the key
+   * @param pWriteList the list of key/values to write if necessary
+   * @return the key short id
+   */
   protected short compressKey(KeySPI<?> pKey, List<CommonKeyValuePair<CACHE, SER_KEY>> pWriteList) {
     Short id = mKeyToShort.get(pKey);
     if (id == null) {
@@ -894,12 +992,25 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     return id;
   }
 
+  /**
+   * Decompress a key
+   *
+   * @param pId the key id
+   * @param <V> the key type
+   * @return the key
+   */
   protected <V> Key<V> decompressKey(short pId) {
     @SuppressWarnings("unchecked") Key<V> key = (Key<V>) mShortToKey.get(pId);
     if (key == null) throw new IllegalArgumentException("The key id (" + String.valueOf(pId) + ") is not recognized");
     return key;
   }
 
+  /**
+   * Converts a byte buffer into the SER_VALUE type
+   *
+   * @param pValue the byte buffer
+   * @return the value
+   */
   protected Object convertByteBufferToSERVALUE(ByteBuffer pValue) {
 
     /* Shortcut if they are the same */
@@ -909,6 +1020,12 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     return mConverterManager.convert(pValue, mSerValueClass);
   }
 
+  /**
+   * Converts a SER_VALUE into a Byte Buffer
+   *
+   * @param pValue the SER_VALUE
+   * @return the new byte buffer
+   */
   protected ByteBuffer convertSERVALUEtoByteBuffer(Object pValue) {
 
     if (mSerializeValue) {
@@ -949,23 +1066,38 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   }
 
   /**
+   * Returns whether a callback is assigned to the given key
+   *
+   * @param pKey the key
+   * @param <O> the key type
+   * @return true if there is a callback or false otherwise
+   */
+  protected <O> boolean hasCallback(KeySPI<O> pKey) {
+    var callbackInfoList = mCallbacks.get(pKey.toString());
+    return callbackInfoList != null && !callbackInfoList.isEmpty();
+  }
+
+  /**
    * Helper method that calls any necessary callbacks
    *
    * @param pKey the key
-   * @param loadedResult the loaded result
    * @param <O> the key type
    */
-  private <O> void callCallbacks(KeySPI<O> pKey, CacheResult<O> loadedResult) {
+  private <O> void callCallbacks(KeySPI<O> pKey) {
     var callbackInfoList = mCallbacks.get(pKey.toString());
     if (callbackInfoList != null) {
       for (var callbackInfo : callbackInfoList) {
         @SuppressWarnings(
           { "unchecked", "rawtypes" }) Consumer2<Key<O>, Optional<O>> castedCallback = (Consumer2<Key<O>, Optional<O>>) (Consumer2) callbackInfo.callback;
+
+        var cacheEngine = Objects.requireNonNull(mCacheEngine);
+        var value = cacheEngine.getIfPresent(callbackInfo.accessContext, pKey);
+
         /* Check if the value is different */
-        Optional<O> newValue = loadedResult.entryFound() ? Optional.of(loadedResult.getValue()) : Optional.empty();
-        if (!newValue.equals(callbackInfo.lastValue)) {
-          callbackInfo.lastValue = newValue;
-          castedCallback.accept(pKey, newValue);
+
+        if (!value.equals(callbackInfo.lastValue)) {
+          callbackInfo.lastValue = value;
+          castedCallback.accept(pKey, value);
         }
       }
     }
@@ -1102,7 +1234,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     var list = mCallbacks.computeIfAbsent(pKey.toString(), (localKey) -> new CopyOnWriteArrayList<>());
     @SuppressWarnings(
       { "unchecked", "rawtypes" }) Consumer2<Key<?>, Optional<?>> callback = (Consumer2<Key<?>, Optional<?>>) (Consumer2) pCallback;
-    list.add(new CallbackInfo(callback));
+    list.add(new CallbackInfo(pAccessContext, callback));
   }
 
   @Override
@@ -1128,14 +1260,11 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     @SuppressWarnings("unchecked") KeySPI<Object> keyObj = (KeySPI<Object>) entry.getKey();
 
+    if (!hasCallback(keyObj)) return;
+
     /* Because this might be called on a non-reentrant thread, we'll move the querying for real data into another thread */
 
-    mExecutorService.submit(() -> {
-      var value = Objects.requireNonNull(mCacheEngine)
-        .getIfPresent(new AccessContextImpl(Collections.emptyMap()), keyObj);
-
-      callCallbacks(keyObj, value.isPresent() ? new StaticCacheResult<>(value.get(), true) : CacheResult.notFound());
-    });
+    mExecutorService.submit(() -> callCallbacks(keyObj));
   }
 
   private static class NULL_TYPE_CLASS {
