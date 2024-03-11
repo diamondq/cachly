@@ -28,7 +28,7 @@ jobs:
       # Get the short revision number
       - name: Set Outputs
         id: vars
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       # Get the build number
       - name: Build Number Generator
         id: buildnumber
