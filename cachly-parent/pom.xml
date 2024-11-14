@@ -15,7 +15,7 @@
       <dependency>
         <groupId>com.diamondq.common</groupId>
         <artifactId>common-bom</artifactId>
-        <version>0.4.32-de9c655</version>
+        <version>0.4.40-3cd441b</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -29,14 +29,14 @@
       <dependency>
         <groupId>io.micronaut.cache</groupId>
         <artifactId>micronaut-cache-bom</artifactId>
-        <version>4.2.1</version>
+        <version>4.2.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware</groupId>
         <artifactId>kryo</artifactId>
-        <version>5.6.0</version>
+        <version>5.6.2</version>
       </dependency>
       <dependency>
         <groupId>de.javakaffee</groupId>
