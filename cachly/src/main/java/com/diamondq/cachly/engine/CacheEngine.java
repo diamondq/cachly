@@ -58,6 +58,8 @@ public class CacheEngine implements Cache {
 
   private final Map<String, CacheStorage> mCacheStorageByPath;
 
+  private final Map<String, CacheStorage> mCacheStorageByName;
+
   private final Map<String, CacheLoaderInfo<Object>> mLoadersByPath;
 
   private final Map<String, String> mSerializerNameByPath;
@@ -97,7 +99,7 @@ public class CacheEngine implements Cache {
 
     /* Build the map of storages by name */
 
-    Map<String, CacheStorage> storagesByName = new HashMap<>();
+    Map<String, CacheStorage> storagesByName = new ConcurrentHashMap<>();
     for (CacheStorage storage : pCacheStorages) {
 
       /* Query the bean name locators for the name */
@@ -121,8 +123,8 @@ public class CacheEngine implements Cache {
 
     /* Build the storages by path */
 
-    Map<String, CacheStorage> storagesByPath = new HashMap<>();
-    Map<String, String> serializerNameByPath = new HashMap<>();
+    Map<String, CacheStorage> storagesByPath = new ConcurrentHashMap<>();
+    Map<String, String> serializerNameByPath = new ConcurrentHashMap<>();
     for (CachlyPathConfiguration pathConfig : pPaths) {
       @Nullable String storage = pathConfig.getStorage();
       @Nullable String serializerName = pathConfig.getSerializer();
@@ -150,7 +152,7 @@ public class CacheEngine implements Cache {
 
     /* Build the map of loaders by path */
 
-    Map<String, CacheLoaderInfo<Object>> loadersByPath = new HashMap<>();
+    Map<String, CacheLoaderInfo<Object>> loadersByPath = new ConcurrentHashMap<>();
     for (CacheLoader<?> loader : pCacheLoaders) {
       @SuppressWarnings("unchecked") CacheLoaderInfo<Object> details = (CacheLoaderInfo<Object>) loader.getInfo();
       String path = details.key.toString();
@@ -167,6 +169,7 @@ public class CacheEngine implements Cache {
     }
 
     mCacheStorageByPath = storagesByPath;
+    mCacheStorageByName = storagesByName;
     mLoadersByPath = loadersByPath;
     mSerializerNameByPath = serializerNameByPath;
     mAccessContextSPIMap = accessContextsSPIMap;
@@ -188,6 +191,30 @@ public class CacheEngine implements Cache {
     } else {
       mCacheInfo = cacheInfoResult.getValue();
     }
+  }
+
+  @Override
+  public void addPathConfiguration(CachlyPathConfiguration pPathConfig) {
+    @Nullable String storage = pPathConfig.getStorage();
+    @Nullable String serializerName = pPathConfig.getSerializer();
+    String path = pPathConfig.getName();
+    CacheStorage cacheStorage = mCacheStorageByName.get(storage);
+    if (cacheStorage == null) {
+      throw new IllegalArgumentException(
+        "Configuration has a storage called " + storage + " at path " + path + " which cannot be located");
+    }
+    mCacheStorageByPath.put(path, cacheStorage);
+    if (serializerName == null) {
+      serializerName = DEFAULT_SERIALIZER;
+    }
+    mSerializerNameByPath.put(path, serializerName);
+  }
+
+  @Override
+  public void addCacheLoader(CacheLoader<?> pCacheLoader) {
+    @SuppressWarnings("unchecked") CacheLoaderInfo<Object> details = (CacheLoaderInfo<Object>) pCacheLoader.getInfo();
+    String path = details.key.toString();
+    mLoadersByPath.put(path, details);
   }
 
   @Override
@@ -364,10 +391,10 @@ public class CacheEngine implements Cache {
     /* Synchronize so that if there are two threads requesting the same key at the same time,
       one loads the result and the second waits and then sees the result. Otherwise, both threads could look up
       the object (only one is permanently kept), and for certain types of objects (like Class's) this could cause
-      multiple instances of the object to be inuse, when it was meant as a singleton.
+      multiple instances of the object to be inuse when it was meant as a singleton.
 
       NOTE: At the moment, this is synchronizing against an intern version of the key string. This will cause a 'memory-leak' for each unique string.
-      However, in most cases, this should only represent 1000s of strings, not millions.
+      However, in most cases, this should only represent thousands of strings, not millions.
      */
 
     synchronized (pKey.toString().intern()) {
@@ -379,7 +406,7 @@ public class CacheEngine implements Cache {
 
       CacheLoader<O> cacheLoader = pKey.getLoader();
 
-      /* In order to track dependencies, create a new set to add to the current stack */
+      /* To track dependencies, create a new set to add to the current stack */
 
       dependencyStack.push(new HashSet<>());
 
@@ -483,7 +510,7 @@ public class CacheEngine implements Cache {
 
         mStorageKey.getLastStorage().store(pAccessContext, mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
 
-        /* Invalidate all the sub keys */
+        /* Invalidate all the keys */
 
         for (KeySPI<?> dep : depSet) {
           invalidate(pAccessContext, dep);

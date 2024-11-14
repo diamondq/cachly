@@ -1,5 +1,6 @@
 package com.diamondq.cachly;
 
+import com.diamondq.cachly.engine.CachlyPathConfiguration;
 import com.diamondq.common.lambda.interfaces.Consumer2;
 import org.jetbrains.annotations.Nullable;
 
@@ -670,7 +671,7 @@ public interface Cache {
   <K1, V> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder, String pValue);
 
   /**
-   * Register a callback that is called immediately, and then any time the value of the key changes
+   * Register a callback which is called immediately, and then any time the value of the key changes
    *
    * @param pAccessContext the Access Context
    * @param pKey the key (must be fully resolved)
@@ -678,4 +679,19 @@ public interface Cache {
    * @param <V> the key type
    */
   <V> void registerOnChange(AccessContext pAccessContext, Key<V> pKey, Consumer2<Key<V>, Optional<V>> pCallback);
+
+  /**
+   * Adds a new path configuration dynamically (i.e., one that wasn't automatically set up via injection).
+   *
+   * @param pPathConfig the path config
+   */
+  void addPathConfiguration(CachlyPathConfiguration pPathConfig);
+
+  /**
+   * Adds a new cache loader dynamically (i.e., one that wasn't automatically set up via injection).
+   *
+   * @param pCacheLoader the cache loader
+   */
+  void addCacheLoader(CacheLoader<?> pCacheLoader);
+
 }
