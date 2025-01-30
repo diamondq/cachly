@@ -1,5 +1,6 @@
 package com.diamondq.cachly.engine;
 
+import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.common.converters.ConverterManager;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
+/**
+ * Cache Storage of entries into memory
+ */
 public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
 
   private final CacheCallbackHandler mHandler;
@@ -32,6 +36,13 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
 
   private final ConcurrentMap<@NotNull String, @NotNull DataRecord> mData;
 
+  /**
+   * Primary constructor
+   *
+   * @param pConverterManager the Converter Manager
+   * @param pExecutorService the Executor Service
+   * @param pHandler the Handler
+   */
   public MemoryCacheStorage(ConverterManager pConverterManager, ExecutorService pExecutorService,
     CacheCallbackHandler pHandler) {
     super(pConverterManager,
@@ -55,12 +66,12 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
 
   @Override
   protected void writeToCache(CommonKeyValuePair<String, String> pEntry) {
-    mData.put(pEntry.serKey,
+    var hasOld = mData.put(pEntry.serKey,
       new DataRecord(Objects.requireNonNull(pEntry.serValue),
         pEntry.expiresIn != null ? Instant.now().plus(pEntry.expiresIn).toEpochMilli() : null
       )
-    );
-    mHandler.handleEvent(mData, pEntry.serKey, pEntry.serValue);
+    ) != null;
+    mHandler.handleEvent(mData, pEntry.serKey, hasOld ? CacheKeyEvent.MODIFIED : CacheKeyEvent.ADDED, pEntry.serValue);
   }
 
   @Override
@@ -81,7 +92,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
     if (pKey == null) mData.clear();
     else {
       var origValue = mData.remove(pKey);
-      if (origValue != null) mHandler.handleEvent(mData, pKey, origValue.data);
+      if (origValue != null) mHandler.handleEvent(mData, pKey, CacheKeyEvent.REMOVED, origValue.data);
     }
   }
 

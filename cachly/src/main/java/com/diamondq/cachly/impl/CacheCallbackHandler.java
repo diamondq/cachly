@@ -1,5 +1,6 @@
 package com.diamondq.cachly.impl;
 
+import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.engine.CacheStorage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -40,12 +41,13 @@ public class CacheCallbackHandler {
    *
    * @param pNativeCache the native cache
    * @param pKey the key
+   * @param pEvent the event
    * @param pValue the value (NOTE: May not be the latest)
    */
-  public void handleEvent(Object pNativeCache, Object pKey, @Nullable Object pValue) {
+  public void handleEvent(Object pNativeCache, Object pKey, CacheKeyEvent pEvent, @Nullable Object pValue) {
     var cacheStorage = mNativeCacheToCacheStorageMap.get(pNativeCache);
     if (cacheStorage == null) return;
 
-    cacheStorage.handleEvent(pKey, pValue);
+    cacheStorage.handleEvent(pKey, pEvent, pValue);
   }
 }

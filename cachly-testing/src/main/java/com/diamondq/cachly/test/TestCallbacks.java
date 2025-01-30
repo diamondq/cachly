@@ -124,7 +124,7 @@ public class TestCallbacks {
     AtomicReference<StringBuilder> builder = new AtomicReference<>(new StringBuilder());
     cache.registerOnChange(ac,
       Keys.STRING_MAP,
-      (key, value) -> builder.get()
+      (key, event, value) -> builder.get()
         .append("|")
         .append(key.toString())
         .append("|")
@@ -134,7 +134,7 @@ public class TestCallbacks {
     var resolvedKey = cache.resolve(Keys.STRING_FROM_MAP, Keys.KEY_PLACEHOLDER, "123");
     cache.registerOnChange(ac,
       resolvedKey,
-      (key, value) -> builder.get()
+      (key, event, value) -> builder.get()
         .append("|")
         .append(key.toString())
         .append("|")

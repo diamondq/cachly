@@ -2,6 +2,8 @@ package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
+import com.diamondq.cachly.CacheInvalidator;
+import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.impl.CompositeKey;
@@ -14,7 +16,7 @@ import com.diamondq.cachly.impl.StaticKeyPlaceholder;
 import com.diamondq.cachly.impl.StaticKeyPlaceholderWithDefault;
 import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.converters.ConverterManager;
-import com.diamondq.common.lambda.interfaces.Consumer2;
+import com.diamondq.common.lambda.interfaces.Consumer3;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +91,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     /**
      * The actual callback function to call
      */
-    public final Consumer2<Key<?>, Optional<?>> callback;
+    public final Consumer3<Key<?>, CacheKeyEvent, Optional<?>> callback;
 
     /**
      * The access context used during the registration. It's used for any lookups during event firing.
@@ -97,8 +99,11 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     public final AccessContext accessContext;
 
     /**
-     * The last value. This is used to determine if a change has actually occurred. Sometimes events fire on a key but
-     * the result is the same.
+     * The last value.
+     * <p>
+     * This is used to determine if a change has actually occurred.
+     * <p>
+     * Sometimes events fire on a key, but the result is the same.
      */
     public volatile Optional<?> lastValue;
 
@@ -108,7 +113,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
      * @param pAccessContext the access context to store
      * @param pCallback the callback function
      */
-    public CallbackInfo(AccessContext pAccessContext, Consumer2<Key<?>, Optional<?>> pCallback) {
+    public CallbackInfo(AccessContext pAccessContext, Consumer3<Key<?>, CacheKeyEvent, Optional<?>> pCallback) {
       callback = pCallback;
       accessContext = pAccessContext;
       lastValue = Optional.empty();
@@ -124,7 +129,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    */
   protected final           CACHE                     mPrimaryCache;
   /**
-   * The meta cache or null if there isn't one.
+   * The meta-cache or null if there isn't one.
    */
   protected final @Nullable CACHE                     mMetaCache;
   /**
@@ -245,7 +250,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * @param pSerKeyClass the class used for serialized keys
    * @param pSerValueClass the class used for serialized values
    * @param pSerializeValue true if values should be serialized or false if just stored directly. Usually false for
-   *   memory based caches, but true is usually needed for persistent caches.
+   *   memory-based caches, but true is usually needed for persistent caches.
    * @param pStringPrefix a prefix to add to all keys
    * @param pTypePrefix a prefix to add to all types
    * @param pKeyPrefix the prefix for keys
@@ -353,7 +358,9 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
           /*
            * Because all keys are being read in sequentially, we may not have the type entries needed to resolve the key
-           * yet. Therefore, just remember it, and do it later
+           * yet.
+           *
+           * Therefore, remember it, and do it later
            */
 
           temporaryKeys.put(id, valueBuffer);
@@ -554,6 +561,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
         valueBufferSize = 0;
       }
 
+      //noinspection ExtractMethodRecommender
       int size = 0;
       for (KeySPI<?> part : pKey.getParts()) {
         if (part instanceof ResolvedKeyPlaceholder<?> rkp) {
@@ -698,7 +706,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
       short outputTypeId = buffer.getShort();
       short valueClassId = buffer.getShort();
 
-      /* Decompress the ids */
+      /* Decompress ids */
 
       String baseKey = Objects.requireNonNull(decompressString(baseKeyId));
       @Nullable String serializer = decompressString(serializerId);
@@ -725,7 +733,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           if (placeholderType == PART_TYPE_ACCESS_CONTEXT) {
             parts[i] = new ResolvedAccessContextPlaceholder<>(new StaticAccessContextPlaceholder<>(strippedPartBaseKey,
               outputType
-            ), fullSplit[i]);
+            ), fullSplit[i]
+            );
           } else if (placeholderType == PART_TYPE_PLACEHOLDER) {
             parts[i] = new ResolvedKeyPlaceholder<>(new StaticKeyPlaceholder<>(strippedPartBaseKey, outputType),
               fullSplit[i]
@@ -738,7 +747,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
               strippedPartBaseKey,
               outputType,
               defaultKey
-            ), fullSplit[i]);
+            ), fullSplit[i]
+            );
             parts[i] = r;
           } else {
             throw new IllegalStateException(
@@ -777,7 +787,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * Compress a string
    *
    * @param pValue the string to compress
-   * @param pWriteList the write list to add additional key/values if necessary
+   * @param pWriteList the list to add additional key/values if necessary
    * @return the short id assigned to the string
    */
   protected short compressString(@Nullable String pValue, List<CommonKeyValuePair<CACHE, SER_KEY>> pWriteList) {
@@ -1081,14 +1091,15 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * Helper method that calls any necessary callbacks
    *
    * @param pKey the key
+   * @param pEvent the event
    * @param <O> the key type
    */
-  private <O> void callCallbacks(KeySPI<O> pKey) {
+  private <O> void callCallbacks(KeySPI<O> pKey, CacheKeyEvent pEvent) {
     var callbackInfoList = mCallbacks.get(pKey.toString());
     if (callbackInfoList != null) {
       for (var callbackInfo : callbackInfoList) {
         @SuppressWarnings(
-          { "unchecked", "rawtypes" }) Consumer2<Key<O>, Optional<O>> castedCallback = (Consumer2<Key<O>, Optional<O>>) (Consumer2) callbackInfo.callback;
+          { "unchecked", "rawtypes" }) Consumer3<Key<O>, CacheKeyEvent, Optional<O>> castedCallback = (Consumer3<Key<O>, CacheKeyEvent, Optional<O>>) (Consumer3) callbackInfo.callback;
 
         var cacheEngine = Objects.requireNonNull(mCacheEngine);
         var value = cacheEngine.getIfPresent(callbackInfo.accessContext, pKey);
@@ -1097,8 +1108,17 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
         if (!value.equals(callbackInfo.lastValue)) {
           callbackInfo.lastValue = value;
-          castedCallback.accept(pKey, value);
+          castedCallback.accept(pKey, pEvent, value);
         }
+      }
+    }
+
+    if (pEvent == CacheKeyEvent.REMOVED) {
+      if (!pKey.hasKeyDetails()) Objects.requireNonNull(mCacheEngine).setupKey(pKey);
+      var loader = pKey.getLoader();
+      if (loader instanceof CacheInvalidator) {
+        @SuppressWarnings("unchecked") CacheInvalidator<O> ci = (CacheInvalidator<O>) loader;
+        ci.invalidate(Objects.requireNonNull(mCacheEngine), pKey);
       }
     }
 
@@ -1107,7 +1127,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   }
 
   /**
-   * Prepares a semaphore so that we can wait on this thread until the callback occurs
+   * Prepares semaphore so that we can wait on this thread until the callback occurs
    *
    * @param pKey the key
    * @param <V> the key type
@@ -1148,7 +1168,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     String keyStr = (mValuePrefix != null ? mValuePrefix + pKey : pKey.toString());
 
-    /* Get the 'serialized version of the key */
+    /* Get the serialized version of the key */
 
     @SuppressWarnings("unchecked") SER_KEY serKey = (
       mKeySerializer != null ? mKeySerializer.apply(keyStr) : (SER_KEY) keyStr);
@@ -1182,7 +1202,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     Stream<Map.Entry<SER_KEY, ?>> rawStream = streamPrimary();
 
-    /* If there is no separate meta cache, then the metadata may be present */
+    /* If there is no separate meta-cache, then the metadata may be present */
 
     if ((mMetaCache == null) && (mValuePrefix != null)) {
       if (mKeyDeserializer != null) {
@@ -1204,7 +1224,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     String keyStr = (mValuePrefix != null ? mValuePrefix + pKey : pKey.toString());
 
-    /* Get the 'serialized version of the key */
+    /* Get the serialized version of the key */
 
     @SuppressWarnings("unchecked") SER_KEY serKey = (
       mKeySerializer != null ? mKeySerializer.apply(keyStr) : (SER_KEY) keyStr);
@@ -1229,11 +1249,11 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
   @Override
   public <V> void registerOnChange(AccessContext pAccessContext, KeySPI<V> pKey,
-    Consumer2<Key<V>, Optional<V>> pCallback) {
+    Consumer3<Key<V>, CacheKeyEvent, Optional<V>> pCallback) {
 
     var list = mCallbacks.computeIfAbsent(pKey.toString(), (localKey) -> new CopyOnWriteArrayList<>());
     @SuppressWarnings(
-      { "unchecked", "rawtypes" }) Consumer2<Key<?>, Optional<?>> callback = (Consumer2<Key<?>, Optional<?>>) (Consumer2) pCallback;
+      { "unchecked", "rawtypes" }) Consumer3<Key<?>, CacheKeyEvent, Optional<?>> callback = (Consumer3<Key<?>, CacheKeyEvent, Optional<?>>) (Consumer3) pCallback;
     list.add(new CallbackInfo(pAccessContext, callback));
   }
 
@@ -1243,7 +1263,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   }
 
   @Override
-  public void handleEvent(Object pKey, @Nullable Object pValue) {
+  public void handleEvent(Object pKey, CacheKeyEvent pEvent, @Nullable Object pValue) {
     @SuppressWarnings("unchecked") SER_KEY serKey = (SER_KEY) pKey;
 
     /* If the key doesn't start with the value prefix, then this is likely metadata, so that's not relevant */
@@ -1260,11 +1280,9 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     @SuppressWarnings("unchecked") KeySPI<Object> keyObj = (KeySPI<Object>) entry.getKey();
 
-    if (!hasCallback(keyObj)) return;
-
     /* Because this might be called on a non-reentrant thread, we'll move the querying for real data into another thread */
 
-    mExecutorService.submit(() -> callCallbacks(keyObj));
+    mExecutorService.submit(() -> callCallbacks(keyObj, pEvent));
   }
 
   private static class NULL_TYPE_CLASS {

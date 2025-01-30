@@ -1,5 +1,6 @@
 package com.diamondq.cachly.micronaut.ehcache;
 
+import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.engine.MemoryStorageData;
 import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.cachly.micronaut.ehcache.CachlyEhcacheConfiguration.CachlyDiskTieredCacheConfiguration;
@@ -43,6 +44,9 @@ import java.util.EnumSet;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
+/**
+ * Cache Factory for EHCaches
+ */
 @Factory
 @Replaces(factory = EhcacheCacheFactory.class)
 public class CachlyEhcacheCacheFactory {
@@ -99,7 +103,7 @@ public class CachlyEhcacheCacheFactory {
       Qualifiers.byName(configuration.getName())
     );
 
-    /* Are we going to be performing serialization */
+    /* Are we going to be performing serialization? */
 
     boolean performSerialization = true;
     if (cachlyConfigOpt.isPresent()) {
@@ -137,7 +141,7 @@ public class CachlyEhcacheCacheFactory {
       ResourcePools rps = resourcePoolsHolder.object;
       if (rps != null) {
 
-        /* Are there any we want to override */
+        /* Are there any we want to override? */
 
         ResourcePoolsBuilder rpBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder();
         boolean updated = false;
@@ -148,12 +152,10 @@ public class CachlyEhcacheCacheFactory {
           @Nullable CachlyDiskTieredCacheConfiguration cachlyDisk = cachlyConfig.getDisk();
           if ((cachlyDisk != null) && (rt == ResourceType.Core.DISK)) {
             ResourcePool rp = rps.getPoolForResource(rt);
-            if (rp instanceof SizedResourcePool) {
-              SizedResourcePool srp = (SizedResourcePool) rp;
+            if (rp instanceof SizedResourcePool srp) {
               long size = srp.getSize();
               ResourceUnit unit = srp.getUnit();
-              if (unit instanceof MemoryUnit) {
-                MemoryUnit memoryUnit = (MemoryUnit) unit;
+              if (unit instanceof MemoryUnit memoryUnit) {
                 @Nullable Boolean persist = cachlyDisk.getPersist();
                 if (persist == null) persist = false;
                 rpBuilder = rpBuilder.disk(size, memoryUnit, persist);
@@ -202,15 +204,19 @@ public class CachlyEhcacheCacheFactory {
     /* Set up for notification for callbacks */
 
     var handlerOpt = pApplicationContext.findBean(CacheCallbackHandler.class);
-    handlerOpt.ifPresent((handler) -> {
-      nativeCache.getRuntimeConfiguration().registerCacheEventListener((event) -> {
+    handlerOpt.ifPresent((handler) -> nativeCache.getRuntimeConfiguration().registerCacheEventListener((event) -> {
         var value = switch (event.getType()) {
           case EVICTED, EXPIRED, REMOVED -> event.getOldValue();
           case CREATED, UPDATED -> event.getNewValue();
         };
-        handler.handleEvent(nativeCache, event.getKey(), value);
-      }, EventOrdering.ORDERED, EventFiring.SYNCHRONOUS, EnumSet.allOf(EventType.class));
-    });
+        var eventEnum = switch (event.getType()) {
+          case EVICTED, EXPIRED, REMOVED -> CacheKeyEvent.REMOVED;
+          case CREATED -> CacheKeyEvent.ADDED;
+          case UPDATED -> CacheKeyEvent.MODIFIED;
+        };
+        handler.handleEvent(nativeCache, event.getKey(), eventEnum, value);
+      }, EventOrdering.ORDERED, EventFiring.SYNCHRONOUS, EnumSet.allOf(EventType.class)
+    ));
 
     /* Build the Cachly version of the SyncCache */
 

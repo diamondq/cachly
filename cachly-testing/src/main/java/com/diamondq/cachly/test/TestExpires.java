@@ -2,6 +2,7 @@ package com.diamondq.cachly.test;
 
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
+import com.diamondq.cachly.CacheInvalidator;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
 import com.diamondq.cachly.CacheResult;
@@ -15,15 +16,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+/**
+ * Perform tests on expiring keys
+ */
 @SuppressWarnings("ClassNamePrefixedWithPackageName")
 @MicronautTest
 public class TestExpires {
 
-  public static class Keys {
+  private static final AtomicInteger sEXPIRED_COUNTER = new AtomicInteger(0);
+
+  private static class Keys {
 
     private static class Strings {
       public static final String PARTIAL_LOAD_TIMESTAMP = "load-timestamp";
@@ -33,8 +40,11 @@ public class TestExpires {
 
   }
 
+  /**
+   * Loader that will return the current timestamp
+   */
   @Singleton
-  public static class TimestampLoader implements CacheLoader<Long> {
+  public static class TimestampLoader implements CacheLoader<Long>, CacheInvalidator<Long> {
 
     @Override
     public CacheLoaderInfo<Long> getInfo() {
@@ -47,13 +57,24 @@ public class TestExpires {
       pResult.setValue(System.currentTimeMillis()).setOverrideExpiry(Duration.ofMillis(500));
     }
 
+    @Override
+    public void invalidate(Cache pCache, Key<Long> pKey) {
+      sEXPIRED_COUNTER.incrementAndGet();
+    }
   }
 
+  /**
+   * The Cache
+   */
   @Inject public Cache cache;
 
+  /**
+   * Called before each test
+   */
   @BeforeEach
   public void before() {
     cache.invalidateAll(cache.createAccessContext(null));
+    sEXPIRED_COUNTER.set(0);
   }
 
   @Test
@@ -66,6 +87,9 @@ public class TestExpires {
     Thread.sleep(2000L);
     Long thirdResult = cache.get(ac, Keys.LOAD_TIMESTAMP);
     assertNotEquals(firstResult, thirdResult);
+    //noinspection MagicNumber
+    Thread.sleep(2000L);
+    assertEquals(sEXPIRED_COUNTER.get(), 1);
   }
 
 }

@@ -1,10 +1,11 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.AccessContext;
+import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.spi.KeySPI;
-import com.diamondq.common.lambda.interfaces.Consumer2;
+import com.diamondq.common.lambda.interfaces.Consumer3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -68,15 +69,17 @@ public interface CacheStorage {
    * @param pCallback the callback
    * @param <V> the key type
    */
-  <V> void registerOnChange(AccessContext pAccessContext, KeySPI<V> pKey, Consumer2<Key<V>, Optional<V>> pCallback);
+  <V> void registerOnChange(AccessContext pAccessContext, KeySPI<V> pKey,
+    Consumer3<Key<V>, CacheKeyEvent, Optional<V>> pCallback);
 
   /**
    * Called by the low-level cache informing that a key has changed
    *
    * @param pKey the key (from the low level cache)
+   * @param pEvent the event
    * @param pValue the value (from the low level cache; may not be the latest)
    */
-  void handleEvent(Object pKey, @Nullable Object pValue);
+  void handleEvent(Object pKey, CacheKeyEvent pEvent, @Nullable Object pValue);
 
   /**
    * This is called during construction. It's necessary because otherwise you'd have a parent &lt;--> child problem

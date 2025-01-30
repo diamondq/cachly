@@ -1,7 +1,7 @@
 package com.diamondq.cachly;
 
 import com.diamondq.cachly.engine.CachlyPathConfiguration;
-import com.diamondq.common.lambda.interfaces.Consumer2;
+import com.diamondq.common.lambda.interfaces.Consumer3;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
@@ -626,7 +626,7 @@ public interface Cache {
   void invalidateAll(AccessContext pAccessContext);
 
   /**
-   * Returns all the existing CacheLoaderInfo associated to their path
+   * Returns all the existing CacheLoaderInfo associated with their path
    *
    * @return the Map of path to CacheLoaderInfo
    */
@@ -678,7 +678,8 @@ public interface Cache {
    * @param pCallback the callback
    * @param <V> the key type
    */
-  <V> void registerOnChange(AccessContext pAccessContext, Key<V> pKey, Consumer2<Key<V>, Optional<V>> pCallback);
+  <V> void registerOnChange(AccessContext pAccessContext, Key<V> pKey,
+    Consumer3<Key<V>, CacheKeyEvent, Optional<V>> pCallback);
 
   /**
    * Adds a new path configuration dynamically (i.e., one that wasn't automatically set up via injection).
