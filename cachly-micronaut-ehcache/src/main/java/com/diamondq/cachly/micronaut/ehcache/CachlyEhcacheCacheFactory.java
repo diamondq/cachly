@@ -38,7 +38,7 @@ import org.ehcache.event.EventFiring;
 import org.ehcache.event.EventOrdering;
 import org.ehcache.event.EventType;
 import org.ehcache.expiry.ExpiryPolicy;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Optional;
@@ -103,17 +103,17 @@ public class CachlyEhcacheCacheFactory {
       Qualifiers.byName(configuration.getName())
     );
 
-    /* Are we going to be performing serialization? */
+    /* Performing serialization? */
 
     boolean performSerialization = true;
     if (cachlyConfigOpt.isPresent()) {
       CachlyEhcacheConfiguration cachlyConfig = cachlyConfigOpt.get();
 
-      @Nullable Boolean configSerializer = cachlyConfig.getSerializer();
+      Boolean configSerializer = cachlyConfig.getSerializer();
       if (configSerializer != null) performSerialization = configSerializer;
     }
 
-    /* If the value type is still the default, then change it to match whether we're serializing */
+    /* If the value type is still the default, then change it to match whether the code is serializing */
 
     Class<?> existingValueType = configuration.getValueType();
     if (existingValueType == EhcacheConfiguration.DEFAULT_VALUE_TYPE) {
@@ -141,7 +141,7 @@ public class CachlyEhcacheCacheFactory {
       ResourcePools rps = resourcePoolsHolder.object;
       if (rps != null) {
 
-        /* Are there any we want to override? */
+        /* Are there any to override? */
 
         ResourcePoolsBuilder rpBuilder = ResourcePoolsBuilder.newResourcePoolsBuilder();
         boolean updated = false;
@@ -149,14 +149,14 @@ public class CachlyEhcacheCacheFactory {
 
           /* Does the Cachly config have some disk information? */
 
-          @Nullable CachlyDiskTieredCacheConfiguration cachlyDisk = cachlyConfig.getDisk();
+          CachlyDiskTieredCacheConfiguration cachlyDisk = cachlyConfig.getDisk();
           if ((cachlyDisk != null) && (rt == ResourceType.Core.DISK)) {
             ResourcePool rp = rps.getPoolForResource(rt);
             if (rp instanceof SizedResourcePool srp) {
               long size = srp.getSize();
               ResourceUnit unit = srp.getUnit();
               if (unit instanceof MemoryUnit memoryUnit) {
-                @Nullable Boolean persist = cachlyDisk.getPersist();
+                Boolean persist = cachlyDisk.getPersist();
                 if (persist == null) persist = false;
                 rpBuilder = rpBuilder.disk(size, memoryUnit, persist);
                 updated = true;

@@ -10,7 +10,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.scheduling.TaskExecutors;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
@@ -52,7 +52,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
 
       pPrimaryCache,
 
-      /* There is no meta cache. Metadata is stored in the primary cache */
+      /* There is no meta-cache. Metadata is stored in the primary cache */
 
       null,
 
@@ -60,11 +60,11 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
 
       String.class,
 
-      /* The value type is either a byte[] if we're serializing or a MemoryStorageData if we're not */
+      /* The value type is either a byte[] if serializing or a MemoryStorageData if not */
 
       (pPrimaryCache instanceof CachlySyncCache ? (((CachlySyncCache) pPrimaryCache).getPerformSerialization() ? byte[].class : MemoryStorageData.class) : MemoryStorageData.class),
 
-      /* Indicate whether we're serializing */
+      /* Indicate whether the code is serializing */
 
       (!(pPrimaryCache instanceof CachlySyncCache) || ((CachlySyncCache) pPrimaryCache).getPerformSerialization()),
 
@@ -84,7 +84,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
 
   @Override
   protected void writeToCache(CommonKeyValuePair<SyncCache<?>, String> pEntry) {
-    @Nullable Duration expiresIn = pEntry.expiresIn;
+    Duration expiresIn = pEntry.expiresIn;
     if (expiresIn != null) for (ExpiryHandler eh : mExpiryHandlers)
       eh.markForExpiry(pEntry.serKey, expiresIn);
     pEntry.cache.put(pEntry.serKey, Objects.requireNonNull(pEntry.serValue));
@@ -99,7 +99,7 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
   protected Stream<Entry<String, ?>> streamPrimary() {
     Object nativeCache = mPrimaryCache.getNativeCache();
     for (KeyExtractor ke : mKeyExtractors) {
-      @Nullable Stream<Entry<String, Object>> entries = ke.getEntries(nativeCache);
+      Stream<Entry<String, Object>> entries = ke.getEntries(nativeCache);
       if (entries != null) return entries.map((entry) -> {
         Object value = entry.getValue();
         if (mSerializeValue) {

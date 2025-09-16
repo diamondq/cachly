@@ -3,8 +3,7 @@ package com.diamondq.cachly.engine;
 import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.common.converters.ConverterManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.AbstractMap;
@@ -24,6 +23,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
 
   private final CacheCallbackHandler mHandler;
 
+  @SuppressWarnings("ClassCanBeRecord")
   private static final class DataRecord {
     public final           Object data;
     public final @Nullable Long   expiresAt;
@@ -34,7 +34,7 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
     }
   }
 
-  private final ConcurrentMap<@NotNull String, @NotNull DataRecord> mData;
+  private final ConcurrentMap<String, DataRecord> mData;
 
   /**
    * Primary constructor

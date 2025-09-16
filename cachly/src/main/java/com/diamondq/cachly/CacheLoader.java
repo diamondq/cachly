@@ -1,16 +1,18 @@
 package com.diamondq.cachly;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * This represents a cache loader that is capable of calculating or retrieving a given value
  *
  * @param <O> the expected result type
  */
-public interface CacheLoader<O> {
+public interface CacheLoader<O extends @Nullable Object> {
 
   /**
    * Returns information about this CacheLoader
    *
-   * @return the info
+   * @return the information
    */
   CacheLoaderInfo<O> getInfo();
 

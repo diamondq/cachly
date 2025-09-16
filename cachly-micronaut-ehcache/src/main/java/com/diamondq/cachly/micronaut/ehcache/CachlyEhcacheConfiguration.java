@@ -4,8 +4,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.naming.Named;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @EachProperty("cachly.ehcache")
 public class CachlyEhcacheConfiguration implements Named {
@@ -23,7 +22,7 @@ public class CachlyEhcacheConfiguration implements Named {
   }
 
   @Override
-  public @NotNull String getName() {
+  public String getName() {
     return mName;
   }
 

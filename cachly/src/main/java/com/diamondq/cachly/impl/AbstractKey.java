@@ -4,8 +4,7 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -15,7 +14,7 @@ import java.util.Objects;
  *
  * @param <O> the key type
  */
-public class AbstractKey<O> implements KeySPI<O> {
+public class AbstractKey<O extends @Nullable Object> implements KeySPI<O> {
 
   /**
    * The key string
@@ -30,7 +29,7 @@ public class AbstractKey<O> implements KeySPI<O> {
   /**
    * The parts of the key
    */
-  protected final @NotNull KeySPI<Object>[] mParts;
+  protected final KeySPI<@Nullable Object>[] mParts;
 
   /**
    * The output type
@@ -52,7 +51,7 @@ public class AbstractKey<O> implements KeySPI<O> {
   public AbstractKey(String pKey, Type pOutputType, boolean pHasPlaceholders) {
     mKey = pKey;
     mOutputType = pOutputType;
-    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[] { this };
+    @SuppressWarnings({ "null", "unchecked" }) KeySPI<@Nullable Object>[] tempParts = new KeySPI[] { this };
     mParts = tempParts;
     mHasPlaceholders = pHasPlaceholders;
   }
@@ -76,7 +75,7 @@ public class AbstractKey<O> implements KeySPI<O> {
   }
 
   @Override
-  public @NotNull KeySPI<Object>[] getParts() {
+  public KeySPI<@Nullable Object>[] getParts() {
     return mParts;
   }
 
@@ -84,7 +83,7 @@ public class AbstractKey<O> implements KeySPI<O> {
    * @see com.diamondq.cachly.Key#getPreviousKey(com.diamondq.cachly.Key)
    */
   @Override
-  public <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
+  public <P extends @Nullable Object> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
 
     /* There are no previous keys in a SimpleKey */
 
@@ -92,7 +91,7 @@ public class AbstractKey<O> implements KeySPI<O> {
   }
 
   @Override
-  public @Nullable KeySPI<Object> getPreviousKey() {
+  public @Nullable KeySPI<@Nullable Object> getPreviousKey() {
 
     /* There are no previous keys in a SimpleKey */
 
@@ -111,7 +110,7 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public CacheStorage getLastStorage() {
-    @Nullable KeyDetails<O> keyDetails = mKeyDetails;
+    KeyDetails<O> keyDetails = mKeyDetails;
     if (keyDetails == null)
       throw new IllegalStateException("Unable to find a cache storage that will cover " + getFullBaseKey());
     return keyDetails.getLastStorage();
@@ -119,7 +118,7 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public String getLastSerializerName() {
-    @Nullable KeyDetails<O> keyDetails = mKeyDetails;
+    KeyDetails<O> keyDetails = mKeyDetails;
     if (keyDetails == null)
       throw new IllegalStateException("Unable to find a serializer that will cover " + getFullBaseKey());
     return keyDetails.getLastSerializerName();
@@ -127,7 +126,7 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public boolean supportsNull() {
-    @Nullable KeyDetails<O> keyDetails = mKeyDetails;
+    KeyDetails<O> keyDetails = mKeyDetails;
     if (keyDetails == null)
       throw new IllegalStateException("Unable to find a cache loader that will cover " + getFullBaseKey());
     return keyDetails.supportsNull();
@@ -135,7 +134,7 @@ public class AbstractKey<O> implements KeySPI<O> {
 
   @Override
   public CacheLoader<O> getLoader() {
-    @Nullable KeyDetails<O> keyDetails = mKeyDetails;
+    KeyDetails<O> keyDetails = mKeyDetails;
     if (keyDetails == null)
       throw new IllegalStateException("Unable to find a cache loader that will cover " + getFullBaseKey());
     return keyDetails.getLoader();

@@ -12,7 +12,6 @@ import com.diamondq.common.types.Types;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -97,13 +96,13 @@ public class TestGetIfPresent {
   @Test
   void test() {
     AccessContext ac = cache.createAccessContext(null);
-    @Nullable String r = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
+    String r = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
     assertNotNull(r);
-    @Nullable String r2 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
+    String r2 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
     assertNotNull(r2);
     assertEquals(r, r2);
     cache.invalidate(ac, Keys.PROCESS_DEFINITIONS);
-    @Nullable String r3 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
+    String r3 = cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElse(null);
     assertNotNull(r3);
     assertEquals(r, r3);
   }
@@ -117,7 +116,7 @@ public class TestGetIfPresent {
       .collect(Collectors.joining(","));
     assertEquals("", emptyKeys);
 
-    /* Grab some entries which will populate the cache */
+    /* Grab some entries that will populate the cache */
 
     cache.getIfPresent(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").orElseThrow(IllegalArgumentException::new);
 

@@ -16,7 +16,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class CacheInfoLoader implements CacheLoader<CacheInfo> {
   /**
-   * The key name used for the Cache Info storage
+   * The key name used for the Cache Information storage
    */
   public static final String CACHE_INFO_NAME = "__CacheEngine__";
 

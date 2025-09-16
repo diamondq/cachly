@@ -1,6 +1,6 @@
 package com.diamondq.cachly.spi;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 

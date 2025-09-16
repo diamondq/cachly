@@ -1,8 +1,7 @@
 package com.diamondq.cachly;
 
 import com.diamondq.cachly.impl.StaticCacheResult;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 
@@ -12,14 +11,15 @@ import java.time.Duration;
  * @param <V> the value type
  */
 @SuppressWarnings("UnusedReturnValue")
-public interface CacheResult<V> {
+public interface CacheResult<V extends @Nullable Object> {
 
   /**
    * Returns the expiry assigned to this result
    *
    * @return the duration or null if there is no expiry
    */
-  @Nullable Duration getOverrideExpiry();
+  @Nullable
+  Duration getOverrideExpiry();
 
   /**
    * Sets the expiry
@@ -73,7 +73,7 @@ public interface CacheResult<V> {
    *
    * @return the value
    */
-  @NotNull V getValue();
+  V getValue();
 
   /**
    * Returns not found result

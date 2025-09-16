@@ -30,8 +30,7 @@ import com.diamondq.common.lambda.interfaces.Consumer3;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -105,7 +104,7 @@ public class CacheEngine implements Cache {
 
       /* Query the bean name locators for the name */
 
-      @Nullable String name = null;
+      String name = null;
       for (BeanNameLocator bnl : pNameLocators) {
         name = bnl.getBeanName(storage);
         //noinspection VariableNotUsedInsideIf
@@ -127,8 +126,8 @@ public class CacheEngine implements Cache {
     Map<String, CacheStorage> storagesByPath = new ConcurrentHashMap<>();
     Map<String, String> serializerNameByPath = new ConcurrentHashMap<>();
     for (CachlyPathConfiguration pathConfig : pPaths) {
-      @Nullable String storage = pathConfig.getStorage();
-      @Nullable String serializerName = pathConfig.getSerializer();
+      String storage = pathConfig.getStorage();
+      String serializerName = pathConfig.getSerializer();
       String path = pathConfig.getName();
       CacheStorage cacheStorage = storagesByName.get(storage);
       if (cacheStorage == null) {
@@ -177,7 +176,7 @@ public class CacheEngine implements Cache {
     mEmptyAccessContext = new AccessContextImpl(Collections.emptyMap());
     mAccessContextClassMap = new ConcurrentHashMap<>();
 
-    /* Set up the storage key and cache info */
+    /* Set up the storage key and cache information */
 
     mStorageKey = (KeySPI<CacheInfo>) KeyBuilder.of(CacheInfoLoader.CACHE_INFO_NAME,
       new TypeReference<CacheInfo>() { // type
@@ -196,8 +195,8 @@ public class CacheEngine implements Cache {
 
   @Override
   public void addPathConfiguration(CachlyPathConfiguration pPathConfig) {
-    @Nullable String storage = pPathConfig.getStorage();
-    @Nullable String serializerName = pPathConfig.getSerializer();
+    String storage = pPathConfig.getStorage();
+    String serializerName = pPathConfig.getSerializer();
     String path = pPathConfig.getName();
     CacheStorage cacheStorage = mCacheStorageByName.get(storage);
     if (cacheStorage == null) {
@@ -221,8 +220,7 @@ public class CacheEngine implements Cache {
   @Override
   public AccessContext createAccessContext(@Nullable AccessContext pExistingContext,
     @Nullable Object @Nullable ... pData) {
-    @Nullable Object @Nullable [] localData = pData;
-    if ((pExistingContext == null) && ((localData == null) || (localData.length == 0))) {
+    if ((pExistingContext == null) && ((pData == null) || (pData.length == 0))) {
       return mEmptyAccessContext;
     }
 
@@ -238,11 +236,11 @@ public class CacheEngine implements Cache {
       data = new HashMap<>();
     }
 
-    if (localData != null) {
-      for (@Nullable Object accessData : localData) {
+    if (pData != null) {
+      for (Object accessData : pData) {
         if (accessData != null) {
           Class<?> accessDataClass = accessData.getClass();
-          @Nullable Class<?> acClass = mAccessContextClassMap.get(accessDataClass);
+          Class<?> acClass = mAccessContextClassMap.get(accessDataClass);
           if (acClass == null) {
 
             /* Pull apart the class and try to find a matching AccessContextSPI */
@@ -282,7 +280,7 @@ public class CacheEngine implements Cache {
 
       /* Now look at the interfaces */
 
-      @NotNull Class<?>[] interfaceClasses = currentClass.getInterfaces();
+      Class<?>[] interfaceClasses = currentClass.getInterfaces();
       for (Class<?> ic : interfaceClasses) {
         List<Class<?>> icChildren = getAllClasses(ic);
         for (Class<?> icChild : icChildren) {
@@ -305,14 +303,14 @@ public class CacheEngine implements Cache {
 
     /*
      * If there are still defaults, since they need to be resolved. This is done here since some defaults may
-     * require lookups, and we want them included in the dependencies
+     * require lookups and want them included in the dependencies
      */
 
-    @Nullable Set<String> placeholderDependencies;
+    Set<String> placeholderDependencies;
     if (pKey.hasPlaceholders()) {
-      @NotNull KeySPI<Object>[] parts = pKey.getParts();
+      KeySPI<Object>[] parts = pKey.getParts();
       int partsLen = parts.length;
-      @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
+      @SuppressWarnings({ "null", "unchecked" }) KeySPI<Object>[] newParts = new KeySPI[partsLen];
 
       dependencyStack.push(new HashSet<>());
       try {
@@ -362,16 +360,16 @@ public class CacheEngine implements Cache {
 
     /*
      * If there are still defaults, since they need to be resolved. This is done here since some defaults may
-     * require lookups, and we want them included in the dependencies
+     * require lookups and want them included in the dependencies
      */
 
     var resolveResult = resolvePlaceholders(pAccessContext, pKey, dependencyStack);
     pKey = resolveResult.key();
-    @Nullable Set<String> placeholderDependencies = resolveResult.placeholderDependencies();
+    Set<String> placeholderDependencies = resolveResult.placeholderDependencies();
 
     String keyStr = pKey.toString();
 
-    /* Are we monitoring? */
+    /* Is monitoring enabled? */
 
     if (!dependencyStack.isEmpty()) {
       dependencyStack.peek().add(keyStr);
@@ -521,31 +519,37 @@ public class CacheEngine implements Cache {
     }
   }
 
+  /**
+   * Performs the key setup
+   *
+   * @param pKey the key
+   * @param <O> the key type
+   */
   public <O> void setupKey(KeySPI<O> pKey) {
     KeySPI<Object>[] parts = pKey.getParts();
     StringBuilder sb = new StringBuilder();
-    @Nullable CacheStorage lastStorage = null;
-    @Nullable String lastSerializerName = null;
+    CacheStorage lastStorage = null;
+    String lastSerializerName = null;
     for (KeySPI<Object> part : parts) {
       sb.append(part.getBaseKey());
 
       String currentPath = sb.toString();
 
-      /* Lookup the storage */
+      /* Look up the storage */
 
       CacheStorage testCacheStorage = mCacheStorageByPath.get(currentPath);
       if (testCacheStorage != null) {
         lastStorage = testCacheStorage;
       }
 
-      /* Lookup the serializer */
+      /* Look up the serializer */
 
       String testSerializerName = mSerializerNameByPath.get(currentPath);
       if (testSerializerName != null) {
         lastSerializerName = testSerializerName;
       }
 
-      /* Now lookup the loader */
+      /* Now look up the loader */
 
       CacheLoaderInfo<Object> loaderInfo = mLoadersByPath.get(currentPath);
 
@@ -576,14 +580,15 @@ public class CacheEngine implements Cache {
    * @param pValue the value
    * @return the new composite key with the placeholder removed
    */
-  private static <K, V> KeySPI<V> resolve(KeySPI<V> pKey, KeyPlaceholder<K> pHolder, String pValue) {
+  private static <K extends @Nullable Object, V extends @Nullable Object> KeySPI<V> resolve(KeySPI<V> pKey,
+    KeyPlaceholder<K> pHolder, String pValue) {
     if (!(pHolder instanceof KeySPI)) {
       throw new IllegalStateException();
     }
     @SuppressWarnings("unchecked") KeySPI<Object> hi = (KeySPI<Object>) pHolder;
-    @NotNull KeySPI<Object>[] parts = pKey.getParts();
+    KeySPI<Object>[] parts = pKey.getParts();
     int partsLen = parts.length;
-    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] newParts = new KeySPI[partsLen];
+    @SuppressWarnings({ "null", "unchecked" }) KeySPI<Object>[] newParts = new KeySPI[partsLen];
 
     for (int i = 0; i < partsLen; i++) {
       KeySPI<Object> part = parts[i];
@@ -597,7 +602,7 @@ public class CacheEngine implements Cache {
   }
 
   @Override
-  public <V> V get(AccessContext pAccessContext, Key<V> pKey) {
+  public <V extends @Nullable Object> V get(AccessContext pAccessContext, Key<V> pKey) {
     try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
       if (!(pKey instanceof KeySPI<V> ki)) {
         throw ctx.reportThrowable(new IllegalStateException());
@@ -639,7 +644,8 @@ public class CacheEngine implements Cache {
   }
 
   @Override
-  public <K1, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
+  public <K1 extends @Nullable Object, V extends @Nullable Object> V get(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1) {
     if (!(pKey instanceof KeySPI<V> ki)) {
       throw new IllegalStateException();
     }

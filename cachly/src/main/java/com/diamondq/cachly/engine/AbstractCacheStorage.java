@@ -19,8 +19,7 @@ import com.diamondq.common.converters.ConverterManager;
 import com.diamondq.common.lambda.interfaces.Consumer3;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.ParameterizedType;
@@ -261,8 +260,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   protected AbstractCacheStorage(ConverterManager pConverterManager, ExecutorService pExecutorService,
     CACHE pPrimaryCache, @Nullable CACHE pMetaCache, Class<SER_KEY> pSerKeyClass, Class<?> pSerValueClass,
     boolean pSerializeValue, @Nullable String pStringPrefix, @Nullable String pTypePrefix, @Nullable String pKeyPrefix,
-    @Nullable String pValuePrefix, @Nullable Function<String, @NotNull SER_KEY> pKeySerializer,
-    @Nullable Function<@NotNull SER_KEY, String> pKeyDeserializer) {
+    @Nullable String pValuePrefix, @Nullable Function<String, SER_KEY> pKeySerializer,
+    @Nullable Function<SER_KEY, String> pKeyDeserializer) {
     mConverterManager = pConverterManager;
     mExecutorService = pExecutorService;
     mPrimaryCache = pPrimaryCache;
@@ -305,7 +304,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   }
 
   /**
-   * Query the underlying cache to retrieve the metadata info
+   * Query the underlying cache to retrieve the metadata information
    */
   protected void init() {
     if (mSerializeValue) {
@@ -357,10 +356,10 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
 
           /*
-           * Because all keys are being read in sequentially, we may not have the type entries needed to resolve the key
+           * Because all keys are being read in sequentially, the type entries needed to resolve the key may not exist
            * yet.
            *
-           * Therefore, remember it, and do it later
+           * Therefore, remember it and do it later
            */
 
           temporaryKeys.put(id, valueBuffer);
@@ -397,10 +396,10 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
               continue;
             }
 
-            @Nullable Type ownerType = decompressType(ownerTypeId);
+            Type ownerType = decompressType(ownerTypeId);
             Class<?> rawType = (Class<?>) Objects.requireNonNull(decompressType(rawTypeId));
             short actualTypeArgumentsLen = valueBuffer.getShort();
-            @SuppressWarnings("null") @NotNull Type @NotNull [] actualTypeArguments = new Type[actualTypeArgumentsLen];
+            Type[] actualTypeArguments = new Type[actualTypeArgumentsLen];
             for (short shortI = 0; shortI < actualTypeArgumentsLen; shortI++) {
               short actualTypeId = valueBuffer.getShort();
               if (!mShortToType.containsKey(actualTypeId)) {
@@ -426,12 +425,10 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
             throw new UnsupportedOperationException();
           } else if (typeType == TYPE_WILDCARD) {
             short lowerBoundsLen = valueBuffer.getShort();
-            @SuppressWarnings("null") @NotNull Type @Nullable [] lowerBounds =
-              lowerBoundsLen == 0 ? null : new Type[lowerBoundsLen];
+            Type[] lowerBounds = lowerBoundsLen == 0 ? null : new Type[lowerBoundsLen];
             short upperBoundsLen = valueBuffer.getShort();
-            @SuppressWarnings("null") @NotNull Type @Nullable [] upperBounds =
-              upperBoundsLen == 0 ? null : new Type[lowerBoundsLen];
-            if ((lowerBoundsLen > 0) && (lowerBounds != null)) {
+            Type[] upperBounds = upperBoundsLen == 0 ? null : new Type[lowerBoundsLen];
+            if (lowerBoundsLen > 0) {
               for (short shortI = 0; shortI < lowerBoundsLen; shortI++) {
                 short lowerBoundsTypeId = valueBuffer.getShort();
                 if (!mShortToType.containsKey(lowerBoundsTypeId)) {
@@ -530,17 +527,17 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
       String baseKey = pKey.getFullBaseKey();
       String serializerName = pKey.getLastSerializerName();
-      @Nullable String serializer = Cache.DEFAULT_SERIALIZER.equals(serializerName) ? null : serializerName;
+      String serializer = Cache.DEFAULT_SERIALIZER.equals(serializerName) ? null : serializerName;
       Type outputType = pKey.getOutputType();
-      @Nullable Duration overrideExpiry = pResult.getOverrideExpiry();
+      Duration overrideExpiry = pResult.getOverrideExpiry();
       boolean isNull = pResult.isNull();
-      @Nullable V value = isNull ? null : pResult.getValue();
+      V value = isNull ? null : pResult.getValue();
       @SuppressWarnings(
         { "null", "unchecked" }) Class<V> valueClass = !isNull ? (Class<V>) value.getClass() : (Class<V>) outputType;
 
       List<CommonKeyValuePair<CACHE, SER_KEY>> listOfEntries = new ArrayList<>();
 
-      /* Now, we need to compress the metadata into smaller pieces */
+      /* Now, compress the metadata into smaller pieces */
 
       short baseKeyId = compressString(baseKey, listOfEntries);
       short serializerId = compressString(serializer, listOfEntries);
@@ -549,7 +546,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
       /* Now build the block */
 
-      @Nullable ByteBuffer valueBuffer;
+      ByteBuffer valueBuffer;
       int valueBufferSize;
 
       if (!isNull) {
@@ -633,11 +630,11 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
       return listOfEntries;
     }
 
-    /* Since we're not serializing, then we just need to wrap the key and value into an object we can store */
+    /* Since the code is not serializing, then just need to wrap the key and value into an object that can be stored */
 
     Object finalValue = new MemoryStorageData(pKey, pResult.isNull() ? null : pResult.getValue());
 
-    @Nullable Duration overrideExpiry = pResult.getOverrideExpiry();
+    Duration overrideExpiry = pResult.getOverrideExpiry();
 
     return Collections.singletonList(new CommonKeyValuePair<>(mPrimaryCache,
       primaryKey,
@@ -709,21 +706,21 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
       /* Decompress ids */
 
       String baseKey = Objects.requireNonNull(decompressString(baseKeyId));
-      @Nullable String serializer = decompressString(serializerId);
+      String serializer = decompressString(serializerId);
       Type outputType = Objects.requireNonNull(decompressType(outputTypeId));
       Type valueClass = Objects.requireNonNull(decompressType(valueClassId));
 
       /* Now generate the Key */
 
-      @NotNull String[] baseSplit = baseKey.split("/");
+      String[] baseSplit = baseKey.split("/");
       int keyLen = baseSplit.length;
-      @NotNull String[] fullSplit = fullKey.split("/");
+      String[] fullSplit = fullKey.split("/");
       if (keyLen != fullSplit.length) {
         throw new IllegalStateException(
           "The base key (" + baseKey + ") doesn't have the same number of parts as the full key (" + fullKey + ")");
       }
 
-      @SuppressWarnings({ "unchecked", "null" }) @NotNull KeySPI<Object>[] parts = new KeySPI[keyLen];
+      @SuppressWarnings("unchecked") KeySPI<Object>[] parts = new KeySPI[keyLen];
 
       for (int i = 0; i < keyLen; i++) {
         String partBaseKey = baseSplit[i];
@@ -741,7 +738,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
             );
           } else if (placeholderType == PART_TYPE_PLACEHOLDER_DEFAULTS) {
             short defaultKeyId = buffer.getShort();
-            @NotNull Key<String> defaultKey = decompressKey(defaultKeyId);
+            Key<String> defaultKey = decompressKey(defaultKeyId);
             @SuppressWarnings(
               { "unchecked", "rawtypes" }) KeySPI<Object> r = (KeySPI<Object>) (KeySPI) new ResolvedKeyPlaceholder<>(new StaticKeyPlaceholderWithDefault(
               strippedPartBaseKey,
@@ -763,7 +760,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
       /* Now generate the value */
 
-      @Nullable Object value;
+      Object value;
       if (isNull) {
         value = null;
       } else {
@@ -771,12 +768,12 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
         value = mConverterManager.convert(dataBuffer, valueClass, serializer);
       }
 
-      CacheResult<?> finalValue = new StaticCacheResult<@Nullable Object>(value, true);
+      var finalValue = new StaticCacheResult<@Nullable Object>(value, true);
 
       return new SimpleEntry<>(finalKey, finalValue);
     }
 
-    /* Since we're not deserializing from bytes, it's just a simple return */
+    /* Since this code is not deserializing from bytes, it's just a simple return */
 
     MemoryStorageData msd = (MemoryStorageData) pValue;
 
@@ -1060,7 +1057,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     var kvPairs = serializeEntry(pKey, pLoadedResult);
 
-    /* Mark that we're waiting for a callback from the cache */
+    /* Mark that the code is waiting for a callback from the cache */
 
     var semaphore = prepareSemphore(pKey);
 
@@ -1127,7 +1124,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   }
 
   /**
-   * Prepares semaphore so that we can wait on this thread until the callback occurs
+   * Prepares semaphore so that the code can wait on this thread until the callback occurs
    *
    * @param pKey the key
    * @param <V> the key type
@@ -1173,7 +1170,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     @SuppressWarnings("unchecked") SER_KEY serKey = (
       mKeySerializer != null ? mKeySerializer.apply(keyStr) : (SER_KEY) keyStr);
 
-    /* Mark that we're waiting for a callback from the cache */
+    /* Mark that the code is waiting for a callback from the cache */
 
     var semaphore = prepareSemphore(pKey);
 
@@ -1189,7 +1186,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   public void invalidateAll(AccessContext pAccessContext) {
     invalidate(mPrimaryCache, null);
 
-    /* Since we have removed everything, we can also remove all the metadata */
+    /* Since the code has removed everything, all the metadata can also be removed */
 
     CACHE metaCache = mMetaCache;
     if (metaCache != null) invalidate(metaCache, null);
@@ -1233,7 +1230,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     Optional<?> valueOpt = readFromPrimaryCache(serKey);
 
-    /* If it's not found, then we're done */
+    /* If it's not found, then done */
 
     if (valueOpt.isEmpty()) return CacheResult.notFound();
 
@@ -1280,7 +1277,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     @SuppressWarnings("unchecked") KeySPI<Object> keyObj = (KeySPI<Object>) entry.getKey();
 
-    /* Because this might be called on a non-reentrant thread, we'll move the querying for real data into another thread */
+    /* Because this might be called on a non-reentrant thread, move the querying for real data into another thread */
 
     mExecutorService.submit(() -> callCallbacks(keyObj, pEvent));
   }

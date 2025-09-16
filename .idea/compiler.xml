@@ -29,10 +29,9 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
       </profile>
-      <profile name="Annotation profile for cachly-micronaut" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
+      <profile name="Annotation profile for cachly.main" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
@@ -49,18 +48,12 @@
           <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation-processor/4.3.0/micronaut-validation-processor-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation/4.3.0/micronaut-validation-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/reactor/micronaut-reactor/3.2.1/micronaut-reactor-3.2.1.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/projectreactor/reactor-core/3.5.11/reactor-core-3.5.11.jar" />
         </processorPath>
-        <module name="cachly-micronaut" />
+        <module name="cachly.main" />
       </profile>
-      <profile name="Annotation profile for cachly-micronaut-ehcache" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
+      <profile name="Annotation profile for cachly.test" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
@@ -77,18 +70,12 @@
           <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation-processor/4.3.0/micronaut-validation-processor-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation/4.3.0/micronaut-validation-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/reactor/micronaut-reactor/3.2.1/micronaut-reactor-3.2.1.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/projectreactor/reactor-core/3.5.11/reactor-core-3.5.11.jar" />
         </processorPath>
-        <module name="cachly-micronaut-ehcache" />
+        <module name="cachly.test" />
       </profile>
-      <profile name="Annotation profile for cachly-serializer-kryo" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
+      <profile name="Annotation profile for cachly-micronaut.main" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
@@ -105,18 +92,12 @@
           <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation-processor/4.3.0/micronaut-validation-processor-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation/4.3.0/micronaut-validation-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/reactor/micronaut-reactor/3.2.1/micronaut-reactor-3.2.1.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/projectreactor/reactor-core/3.5.11/reactor-core-3.5.11.jar" />
         </processorPath>
-        <module name="cachly-serializer-kryo" />
+        <module name="cachly-micronaut.main" />
       </profile>
-      <profile name="Annotation profile for cachly-testing" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
+      <profile name="Annotation profile for cachly-micronaut.test" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
@@ -133,18 +114,12 @@
           <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation-processor/4.3.0/micronaut-validation-processor-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation/4.3.0/micronaut-validation-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/reactor/micronaut-reactor/3.2.1/micronaut-reactor-3.2.1.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/projectreactor/reactor-core/3.5.11/reactor-core-3.5.11.jar" />
         </processorPath>
-        <module name="cachly-testing" />
+        <module name="cachly-micronaut.test" />
       </profile>
-      <profile name="Annotation profile for cachly-micronaut-caffeine" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
+      <profile name="Annotation profile for cachly-micronaut-caffeine.main" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
@@ -161,18 +136,12 @@
           <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation-processor/4.3.0/micronaut-validation-processor-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation/4.3.0/micronaut-validation-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/reactor/micronaut-reactor/3.2.1/micronaut-reactor-3.2.1.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/projectreactor/reactor-core/3.5.11/reactor-core-3.5.11.jar" />
         </processorPath>
-        <module name="cachly-micronaut-caffeine" />
+        <module name="cachly-micronaut-caffeine.main" />
       </profile>
-      <profile name="Annotation profile for cachly" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
+      <profile name="Annotation profile for cachly-micronaut-caffeine.test" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
@@ -189,14 +158,163 @@
           <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
           <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation-processor/4.3.0/micronaut-validation-processor-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/validation/micronaut-validation/4.3.0/micronaut-validation-4.3.0.jar" />
-          <entry name="$MAVEN_REPOSITORY$/jakarta/validation/jakarta.validation-api/3.0.2/jakarta.validation-api-3.0.2.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/micronaut/reactor/micronaut-reactor/3.2.1/micronaut-reactor-3.2.1.jar" />
-          <entry name="$MAVEN_REPOSITORY$/io/projectreactor/reactor-core/3.5.11/reactor-core-3.5.11.jar" />
         </processorPath>
-        <module name="cachly" />
+        <module name="cachly-micronaut-caffeine.test" />
+      </profile>
+      <profile name="Annotation profile for cachly-micronaut-ehcache.main" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-processor/4.2.3/micronaut-core-processor-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject/4.2.3/micronaut-inject-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core/4.2.3/micronaut-core-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-aop/4.2.3/micronaut-aop-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-symbol-solver-core/3.25.7/javaparser-symbol-solver-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
+        </processorPath>
+        <module name="cachly-micronaut-ehcache.main" />
+      </profile>
+      <profile name="Annotation profile for cachly-micronaut-ehcache.test" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-processor/4.2.3/micronaut-core-processor-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject/4.2.3/micronaut-inject-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core/4.2.3/micronaut-core-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-aop/4.2.3/micronaut-aop-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-symbol-solver-core/3.25.7/javaparser-symbol-solver-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
+        </processorPath>
+        <module name="cachly-micronaut-ehcache.test" />
+      </profile>
+      <profile name="Annotation profile for cachly-serializer-kryo.main" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-processor/4.2.3/micronaut-core-processor-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject/4.2.3/micronaut-inject-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core/4.2.3/micronaut-core-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-aop/4.2.3/micronaut-aop-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-symbol-solver-core/3.25.7/javaparser-symbol-solver-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
+        </processorPath>
+        <module name="cachly-serializer-kryo.main" />
+      </profile>
+      <profile name="Annotation profile for cachly-serializer-kryo.test" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-processor/4.2.3/micronaut-core-processor-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject/4.2.3/micronaut-inject-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core/4.2.3/micronaut-core-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-aop/4.2.3/micronaut-aop-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-symbol-solver-core/3.25.7/javaparser-symbol-solver-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
+        </processorPath>
+        <module name="cachly-serializer-kryo.test" />
+      </profile>
+      <profile name="Annotation profile for cachly-testing.main" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-processor/4.2.3/micronaut-core-processor-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject/4.2.3/micronaut-inject-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core/4.2.3/micronaut-core-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-aop/4.2.3/micronaut-aop-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-symbol-solver-core/3.25.7/javaparser-symbol-solver-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
+        </processorPath>
+        <module name="cachly-testing.main" />
+      </profile>
+      <profile name="Annotation profile for cachly-testing.test" enabled="true">
+        <sourceOutputDir name="../generated-sources/annotations" />
+        <sourceTestOutputDir name="../generated-test-sources/test-annotations" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject-java/4.2.3/micronaut-inject-java-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-processor/4.2.3/micronaut-core-processor-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-inject/4.2.3/micronaut-inject-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/inject/jakarta.inject-api/2.0.1/jakarta.inject-api-2.0.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/jakarta/annotation/jakarta.annotation-api/2.1.1/jakarta.annotation-api-2.1.1.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core/4.2.3/micronaut-core-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-aop/4.2.3/micronaut-aop-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-symbol-solver-core/3.25.7/javaparser-symbol-solver-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/com/github/javaparser/javaparser-core/3.25.7/javaparser-core-3.25.7.jar" />
+          <entry name="$MAVEN_REPOSITORY$/io/micronaut/micronaut-core-reactive/4.2.3/micronaut-core-reactive-4.2.3.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar" />
+        </processorPath>
+        <module name="cachly-testing.test" />
       </profile>
     </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="cachly" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut-caffeine" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut-caffeine.main" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut-caffeine.test" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut-ehcache" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut-ehcache.main" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut-ehcache.test" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut.main" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-micronaut.test" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-serializer-kryo" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-serializer-kryo.main" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-serializer-kryo.test" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-testing" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-testing.main" options="-parameters -Xlint:unchecked" />
+      <module name="cachly-testing.test" options="-parameters -Xlint:unchecked" />
+      <module name="cachly.main" options="-parameters -Xlint:unchecked" />
+      <module name="cachly.test" options="-parameters -Xlint:unchecked" />
+    </option>
   </component>
 </project>

@@ -3,14 +3,18 @@ package com.diamondq.cachly.base;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
 import com.diamondq.cachly.Key;
+import org.jspecify.annotations.Nullable;
 
 /**
  * This abstract base class simplifies the implementation of a CacheLoader
  *
  * @param <VALUE> the type of the data returned
  */
-public abstract class AbstractCacheLoader<VALUE> implements CacheLoader<VALUE> {
+public abstract class AbstractCacheLoader<VALUE extends @Nullable Object> implements CacheLoader<VALUE> {
 
+  /**
+   * The cache loader information
+   */
   protected final CacheLoaderInfo<VALUE> mCacheLoaderInfo;
 
   /**

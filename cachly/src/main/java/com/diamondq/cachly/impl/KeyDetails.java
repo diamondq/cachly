@@ -2,8 +2,9 @@ package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.engine.CacheStorage;
+import org.jspecify.annotations.Nullable;
 
-public class KeyDetails<O> {
+public class KeyDetails<O extends @Nullable Object> {
 
   private final CacheStorage mLastStorage;
 

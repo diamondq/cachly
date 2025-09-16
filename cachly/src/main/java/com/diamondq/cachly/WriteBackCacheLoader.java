@@ -1,12 +1,14 @@
 package com.diamondq.cachly;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * Allows for direct writes to the cache to also be written back to the original source
  *
  * @param <O> the value type
  */
 @SuppressWarnings("unused")
-public interface WriteBackCacheLoader<O> extends CacheLoader<O> {
+public interface WriteBackCacheLoader<O extends @Nullable Object> extends CacheLoader<O> {
 
   /**
    * Called to store a specific key and value

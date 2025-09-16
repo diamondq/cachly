@@ -4,6 +4,7 @@ import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
@@ -13,8 +14,12 @@ import java.util.Map;
  *
  * @param <VALUE> the VALUE type
  */
-public class AbstractMapChildCacheLoader<VALUE> extends AbstractCacheLoader<VALUE> {
+@SuppressWarnings("unused")
+public class AbstractMapChildCacheLoader<VALUE extends @Nullable Object> extends AbstractCacheLoader<VALUE> {
 
+  /**
+   * The map key
+   */
   protected final Key<Map<String, VALUE>> mMapKey;
 
   /**
@@ -48,7 +53,7 @@ public class AbstractMapChildCacheLoader<VALUE> extends AbstractCacheLoader<VALU
 
     if ((bo == null) && (mCacheLoaderInfo.supportsNull)) {
 
-      /* Since the value can be null, we need to differentiate from a NULL value and a non-existing value */
+      /* Since the value can be null, the code must differentiate from a NULL value and a non-existing value */
 
       if (map.containsKey(pKey.getKey())) pResult.setNullableVaue(null);
       else pResult.setNotFound();

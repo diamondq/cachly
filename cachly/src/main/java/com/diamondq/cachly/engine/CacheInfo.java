@@ -1,6 +1,7 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.spi.KeySPI;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -14,7 +15,7 @@ public class CacheInfo {
   /**
    * The dependency map from a given key to a set of keys
    */
-  public final Map<String, Set<KeySPI<?>>> dependencyMap;
+  public final Map<String, Set<KeySPI<? extends @Nullable Object>>> dependencyMap;
 
   /**
    * The reverse dependency map from a key to a parent key

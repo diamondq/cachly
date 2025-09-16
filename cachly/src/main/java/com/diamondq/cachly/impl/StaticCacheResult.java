@@ -1,19 +1,18 @@
 package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheResult;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Objects;
 
-public class StaticCacheResult<V> implements CacheResult<V> {
+public class StaticCacheResult<V extends @Nullable Object> implements CacheResult<V> {
 
   public static final CacheResult<Object> sNOT_FOUND = new StaticCacheResult<>();
 
   private @Nullable Duration mDuration;
 
-  private V mValue;
+  private @Nullable V mValue;
 
   private boolean mFound;
 
@@ -22,7 +21,7 @@ public class StaticCacheResult<V> implements CacheResult<V> {
     mFound = false;
   }
 
-  public StaticCacheResult(V pValue, boolean pFound) {
+  public StaticCacheResult(@Nullable V pValue, boolean pFound) {
     mValue = pValue;
     mFound = pFound;
   }
@@ -40,7 +39,7 @@ public class StaticCacheResult<V> implements CacheResult<V> {
   }
 
   @Override
-  public @NotNull V getValue() {
+  public V getValue() {
     return Objects.requireNonNull(mValue);
   }
 

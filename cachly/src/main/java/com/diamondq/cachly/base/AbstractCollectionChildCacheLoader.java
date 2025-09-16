@@ -5,6 +5,7 @@ import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.common.lambda.interfaces.Predicate2;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -15,11 +16,17 @@ import java.util.Collection;
  * @param <VALUE> the VALUE type
  * @param <COLL> the collection type
  */
-public class AbstractCollectionChildCacheLoader<VALUE, COLL extends Collection<VALUE>>
+public class AbstractCollectionChildCacheLoader<VALUE extends @Nullable Object, COLL extends Collection<VALUE>>
   extends AbstractCacheLoader<VALUE> {
 
+  /**
+   * The list key
+   */
   protected final Key<COLL> mListKey;
 
+  /**
+   * The matcher
+   */
   protected final Predicate2<String, VALUE> mMatcher;
 
   /**
@@ -47,7 +54,7 @@ public class AbstractCollectionChildCacheLoader<VALUE, COLL extends Collection<V
 
     /* Query for the map */
 
-    Collection<VALUE> coll = pCache.get(pAccessContext, mListKey);
+    var coll = pCache.get(pAccessContext, mListKey);
 
     /* Attempt to get the requested key from the collection. */
 

@@ -14,7 +14,7 @@ import com.diamondq.common.types.Types;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +39,7 @@ public class TestAccessContext {
     }
 
     private static class LocalTypes {
-      public static final TypeReference<Date> DATE = new TypeReference<Date>() {
+      public static final TypeReference<Date> DATE = new TypeReference<>() {
       };
     }
 
@@ -97,7 +97,7 @@ public class TestAccessContext {
 
     @Override
     public void load(Cache pCache, AccessContext pAccessContext, Key<String> pKey, CacheResult<String> pResult) {
-      @Nullable Key<@Nullable Void> prevKey = pKey.getPreviousKey(Keys.USERS);
+      Key<@Nullable Void> prevKey = pKey.getPreviousKey(Keys.USERS);
       if (prevKey == null) throw new IllegalStateException();
       pResult.setValue(prevKey.getKey());
     }
@@ -152,7 +152,7 @@ public class TestAccessContext {
     assertNotNull(d81);
     assertNotEquals(d71, d81);
 
-    /* Now get them again, and verify they are same/different */
+    /* Now get them again and verify they are the same / different */
 
     Date d72 = cache.get(ac7, Keys.USER_BY_DATE);
     assertNotNull(d72);

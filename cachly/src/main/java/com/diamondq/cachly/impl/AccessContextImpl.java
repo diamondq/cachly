@@ -1,7 +1,6 @@
 package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.AccessContext;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -9,6 +8,7 @@ import java.util.Optional;
 /**
  * Represents data used during resolution of the key and resolution of the value
  */
+@SuppressWarnings("ClassCanBeRecord")
 public final class AccessContextImpl implements AccessContext {
 
   private final Map<Class<?>, Object> mData;
@@ -29,7 +29,7 @@ public final class AccessContextImpl implements AccessContext {
 
   @Override
   public <X> Optional<X> get(Class<X> pClass) {
-    @SuppressWarnings("unchecked") @Nullable X result = (X) mData.get(pClass);
+    @SuppressWarnings("unchecked") X result = (X) mData.get(pClass);
     return Optional.ofNullable(result);
   }
 }

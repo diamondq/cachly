@@ -4,17 +4,17 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.impl.KeyDetails;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
- * General definition of all types of Keys
+ * General definition of all key types
  *
  * @param <O> the key type
  */
-public interface KeySPI<O> extends Key<O> {
+public interface KeySPI<O extends @Nullable Object> extends Key<O> {
 
-  @Nullable KeySPI<Object> getPreviousKey();
+  @Nullable
+  KeySPI<@Nullable Object> getPreviousKey();
 
   /**
    * Returns the storage used by the last part of the key
@@ -52,7 +52,7 @@ public interface KeySPI<O> extends Key<O> {
   void storeKeyDetails(KeyDetails<O> pDetails);
 
   /**
-   * Returns whether a key details has been associated with this key
+   * Returns whether key details have been associated with this key
    *
    * @return true or false
    */
@@ -63,7 +63,7 @@ public interface KeySPI<O> extends Key<O> {
    *
    * @return the array of parts
    */
-  @NotNull KeySPI<Object>[] getParts();
+  KeySPI<@Nullable Object>[] getParts();
 
   /**
    * Returns the base key

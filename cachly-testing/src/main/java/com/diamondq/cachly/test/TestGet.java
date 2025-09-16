@@ -12,6 +12,7 @@ import com.diamondq.common.types.Types;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,11 +39,11 @@ public class TestGet {
       Types.MAP_OF_STRING_TO_STRING
     );
 
-    public static final KeyPlaceholder<String> PD_BY_ID_PLACE = KeyBuilder.placeholder(Strings.PARTIAL_ID,
+    public static final KeyPlaceholder<@Nullable String> PD_BY_ID_PLACE = KeyBuilder.placeholder(Strings.PARTIAL_ID,
       Types.STRING
     );
 
-    public static final Key<String> PD_BY_ID = KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
+    public static final Key<@Nullable String> PD_BY_ID = KeyBuilder.from(PROCESS_DEFINITIONS, PD_BY_ID_PLACE);
 
   }
 
@@ -96,7 +97,10 @@ public class TestGet {
   @Test
   void test() {
     AccessContext ac = cache.createAccessContext(null);
-    String r = cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
+    String r = cache.<@Nullable String, @Nullable String>get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
+    if (r == null) {
+
+    }
     assertNotNull(r);
     final Collection<String> deps = cache.getDependentOnKeys(ac,
       cache.resolve(Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123").toString()
@@ -128,7 +132,7 @@ public class TestGet {
       .collect(Collectors.joining(","));
     assertEquals("", emptyKeys);
 
-    /* Grab some entries which will populate the cache */
+    /* Grab some entries that will populate the cache */
 
     cache.get(ac, Keys.PD_BY_ID, Keys.PD_BY_ID_PLACE, "123");
 

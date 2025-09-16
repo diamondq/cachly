@@ -1,14 +1,15 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.Key;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
+@SuppressWarnings("ClassCanBeRecord")
 public class MemoryStorageData {
-  public final Key<?> key;
+  public final Key<? extends @Nullable Object> key;
 
   public final @Nullable Object value;
 
-  public MemoryStorageData(Key<?> pKey, @Nullable Object pValue) {
+  public MemoryStorageData(Key<? extends @Nullable Object> pKey, @Nullable Object pValue) {
     key = pKey;
     value = pValue;
   }

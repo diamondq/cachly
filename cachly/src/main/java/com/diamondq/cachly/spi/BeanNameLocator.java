@@ -1,10 +1,9 @@
 package com.diamondq.cachly.spi;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
- * As there may be many ways to assign a name to a bean (@Named is only one) this provides a method to look it up
+ * As there may be many ways to assign a name to a bean (@Named is only one), this provides a method to look it up
  */
 public interface BeanNameLocator {
 
@@ -15,5 +14,5 @@ public interface BeanNameLocator {
    * @param <T> the type of the bean
    * @return the name of the bean or null if there is no name.
    */
-  <T> @Nullable String getBeanName(@NotNull T pBean);
+  <T> @Nullable String getBeanName(T pBean);
 }

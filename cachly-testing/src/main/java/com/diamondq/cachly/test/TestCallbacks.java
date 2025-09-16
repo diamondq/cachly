@@ -126,7 +126,7 @@ public class TestCallbacks {
       Keys.STRING_MAP,
       (key, event, value) -> builder.get()
         .append("|")
-        .append(key.toString())
+        .append(key)
         .append("|")
         .append(value.map(Object::toString).orElse("(null)"))
         .append("|\n")
@@ -136,13 +136,13 @@ public class TestCallbacks {
       resolvedKey,
       (key, event, value) -> builder.get()
         .append("|")
-        .append(key.toString())
+        .append(key)
         .append("|")
         .append(value.map(Object::toString).orElse("(null)"))
         .append("|\n")
     );
 
-    /* Verify that we got calling during registration */
+    /* Verify that the code was called during registration */
 
     assertEquals("|callbacks|{123=ProcessDef123}|\n|callbacks/123|ProcessDef123|\n",
       builder.get().toString(),

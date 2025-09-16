@@ -4,24 +4,23 @@ import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
+public class ResolvedAccessContextPlaceholder<O extends @Nullable Object> implements KeySPI<O> {
 
   private final KeySPI<O> mPlaceholder;
 
   private final String mKey;
 
-  private final @NotNull KeySPI<Object>[] mParts;
+  private final KeySPI<@Nullable Object>[] mParts;
 
   public ResolvedAccessContextPlaceholder(KeySPI<O> pPlaceholder, String pKey) {
     mPlaceholder = pPlaceholder;
     mKey = pKey;
-    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[] { this };
+    @SuppressWarnings("unchecked") KeySPI<@Nullable Object>[] tempParts = new KeySPI[] { this };
     mParts = tempParts;
   }
 
@@ -73,12 +72,12 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
   }
 
   @Override
-  public @NotNull KeySPI<Object>[] getParts() {
+  public KeySPI<@Nullable Object>[] getParts() {
     return mParts;
   }
 
   @Override
-  public @Nullable KeySPI<Object> getPreviousKey() {
+  public @Nullable KeySPI<@Nullable Object> getPreviousKey() {
     return null;
   }
 
@@ -86,7 +85,7 @@ public class ResolvedAccessContextPlaceholder<O> implements KeySPI<O> {
    * @see com.diamondq.cachly.Key#getPreviousKey(com.diamondq.cachly.Key)
    */
   @Override
-  public <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
+  public <P extends @Nullable Object> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
     return null;
   }
 

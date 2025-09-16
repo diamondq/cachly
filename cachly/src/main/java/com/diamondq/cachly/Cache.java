@@ -2,7 +2,7 @@ package com.diamondq.cachly;
 
 import com.diamondq.cachly.engine.CachlyPathConfiguration;
 import com.diamondq.common.lambda.interfaces.Consumer3;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -51,7 +51,8 @@ public interface Cache {
    * @param pValue1 the value for the first placeholder
    * @return the result
    */
-  <K1, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
+  <K1 extends @Nullable Object, V extends @Nullable Object> V get(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1);
 
   /**
    * Retrieves a value from the cache
@@ -628,7 +629,7 @@ public interface Cache {
   /**
    * Returns all the existing CacheLoaderInfo associated with their path
    *
-   * @return the Map of path to CacheLoaderInfo
+   * @return the Map of a path to CacheLoaderInfo
    */
   Map<String, CacheLoaderInfo<?>> getCacheLoadersByPath();
 

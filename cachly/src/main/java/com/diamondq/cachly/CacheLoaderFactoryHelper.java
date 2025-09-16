@@ -1,7 +1,7 @@
 package com.diamondq.cachly;
 
 import com.diamondq.common.lambda.interfaces.Consumer3;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A Helper class that provides some pre-built Cache Loaders

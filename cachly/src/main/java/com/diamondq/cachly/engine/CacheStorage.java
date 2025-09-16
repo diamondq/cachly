@@ -6,7 +6,7 @@ import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.lambda.interfaces.Consumer3;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +25,7 @@ public interface CacheStorage {
    * @param <V> the key type
    * @return the result
    */
-  <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey);
+  <V extends @Nullable Object> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey);
 
   /**
    * Stores a new value into the Cache Storage
@@ -35,24 +35,25 @@ public interface CacheStorage {
    * @param pLoadedResult the data to store
    * @param <V> the key type
    */
-  <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult);
+  <V extends @Nullable Object> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult);
 
   /**
-   * Invalidates (i.e. removes) a given key and its value from the Cache Storage
+   * Invalidates (i.e., removes) a given key and its value from the Cache Storage
    *
    * @param pAccessContext the Access Storage
    * @param pKey the key
    * @param <V> the key type
    */
-  <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey);
+  <V extends @Nullable Object> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey);
 
   /**
-   * Returns a stream of all stored key and values
+   * Returns a stream of all stored keys and values
    *
    * @param pAccessContext the access context
    * @return the stream of Key and Values
    */
-  Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext);
+  Stream<Map.Entry<Key<? extends @Nullable Object>, CacheResult<? extends @Nullable Object>>> streamEntries(
+    AccessContext pAccessContext);
 
   /**
    * Invalidates all the keys and values
@@ -69,20 +70,20 @@ public interface CacheStorage {
    * @param pCallback the callback
    * @param <V> the key type
    */
-  <V> void registerOnChange(AccessContext pAccessContext, KeySPI<V> pKey,
+  <V extends @Nullable Object> void registerOnChange(AccessContext pAccessContext, KeySPI<V> pKey,
     Consumer3<Key<V>, CacheKeyEvent, Optional<V>> pCallback);
 
   /**
    * Called by the low-level cache informing that a key has changed
    *
-   * @param pKey the key (from the low level cache)
+   * @param pKey the key (from the low-level cache)
    * @param pEvent the event
-   * @param pValue the value (from the low level cache; may not be the latest)
+   * @param pValue the value (from the low-level cache; may not be the latest)
    */
   void handleEvent(Object pKey, CacheKeyEvent pEvent, @Nullable Object pValue);
 
   /**
-   * This is called during construction. It's necessary because otherwise you'd have a parent &lt;--> child problem
+   * This is called during construction. It's necessary because otherwise there would be a parent &lt;--> child problem
    *
    * @param pCacheEngine the cache engine
    */

@@ -1,11 +1,14 @@
 package com.diamondq.cachly;
 
+import org.jspecify.annotations.Nullable;
+
 /**
- * Each Cache Loader must return a Cache Loader Info that defines information about this loader
+ * Each Cache Loader must return a Cache Loader Information that defines information about this loader
  *
  * @param <O> the type of the loader
  */
-public class CacheLoaderInfo<O> {
+@SuppressWarnings("ClassCanBeRecord")
+public class CacheLoaderInfo<O extends @Nullable Object> {
 
   /**
    * The key that this loader is supporting

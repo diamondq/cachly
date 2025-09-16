@@ -12,7 +12,7 @@ import com.diamondq.common.TypeReference;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -49,7 +49,7 @@ public class TestSerializing {
         // reference
       };
 
-      public static final TypeReference<Map<String, SerializeTest>> MAP_OF_STRING_TO_SERIALIZE_TEST = new TypeReference<Map<String, SerializeTest>>() {                                                                                                                                                                                                           // type
+      public static final TypeReference<Map<String, SerializeTest>> MAP_OF_STRING_TO_SERIALIZE_TEST = new TypeReference<>() {                                                                                                                                                                                                           // type
         // reference
       };
     }

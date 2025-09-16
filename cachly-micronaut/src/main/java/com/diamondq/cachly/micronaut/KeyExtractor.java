@@ -1,6 +1,6 @@
 package com.diamondq.cachly.micronaut;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -15,6 +15,6 @@ public interface KeyExtractor {
    * @param <V> the value type
    * @return the list of keys or null if keys cannot be extracted
    */
-  <K, V> @Nullable Stream<Map.Entry<K, V>> getEntries(Object pNativeCache);
+  <K, V extends @Nullable Object> @Nullable Stream<Map.Entry<K, V>> getEntries(Object pNativeCache);
 
 }

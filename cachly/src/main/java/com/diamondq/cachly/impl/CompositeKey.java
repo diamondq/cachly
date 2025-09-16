@@ -6,8 +6,7 @@ import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.engine.CacheStorage;
 import com.diamondq.cachly.spi.KeySPI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -18,9 +17,9 @@ import java.util.Objects;
  *
  * @param <O> the data type
  */
-public class CompositeKey<O> implements KeySPI<O> {
+public class CompositeKey<O extends @Nullable Object> implements KeySPI<O> {
 
-  private final @NotNull KeySPI<Object>[] mParts;
+  private final KeySPI<@Nullable Object>[] mParts;
 
   private final KeySPI<O> mLast;
 
@@ -45,20 +44,20 @@ public class CompositeKey<O> implements KeySPI<O> {
    * @param pKey1 the first key
    * @param pKey2 the second key
    */
-  public CompositeKey(Key<?> pKey1, Key<O> pKey2) {
-    if (!(pKey1 instanceof KeySPI<?> ki1)) throw new IllegalStateException();
-    @NotNull KeySPI<Object>[] ki1Parts = ki1.getParts();
+  public CompositeKey(Key<? extends @Nullable Object> pKey1, Key<O> pKey2) {
+    if (!(pKey1 instanceof KeySPI<? extends @Nullable Object> ki1)) throw new IllegalStateException();
+    KeySPI<@Nullable Object>[] ki1Parts = ki1.getParts();
     if (!(pKey2 instanceof KeySPI<O> ki2)) throw new IllegalStateException();
-    @NotNull KeySPI<Object>[] ki2Parts = ki2.getParts();
+    KeySPI<@Nullable Object>[] ki2Parts = ki2.getParts();
     int partsLen = ki1Parts.length + ki2Parts.length;
-    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[partsLen];
+    @SuppressWarnings("unchecked") KeySPI<@Nullable Object>[] tempParts = new KeySPI[partsLen];
     System.arraycopy(ki1Parts, 0, tempParts, 0, ki1Parts.length);
     System.arraycopy(ki2Parts, 0, tempParts, ki1Parts.length, ki2Parts.length);
     mParts = tempParts;
     mPartsLen = mParts.length;
     mLast = ki2;
     boolean hasPlaceHolders = false;
-    for (KeySPI<Object> mPart : mParts) {
+    for (KeySPI<@Nullable Object> mPart : mParts) {
       if (mPart instanceof KeyPlaceholder) hasPlaceHolders = true;
       else if (mPart instanceof AccessContextPlaceholder) hasPlaceHolders = true;
     }
@@ -72,15 +71,15 @@ public class CompositeKey<O> implements KeySPI<O> {
    * @param pKey2 the second key
    * @param pKey3 the third key
    */
-  public CompositeKey(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
-    if (!(pKey1 instanceof KeySPI<?> ki1)) throw new IllegalStateException();
-    @NotNull KeySPI<Object>[] ki1Parts = ki1.getParts();
-    if (!(pKey2 instanceof KeySPI<?> ki2)) throw new IllegalStateException();
-    @NotNull KeySPI<Object>[] ki2Parts = ki2.getParts();
+  public CompositeKey(Key<? extends @Nullable Object> pKey1, Key<? extends @Nullable Object> pKey2, Key<O> pKey3) {
+    if (!(pKey1 instanceof KeySPI<? extends @Nullable Object> ki1)) throw new IllegalStateException();
+    KeySPI<@Nullable Object>[] ki1Parts = ki1.getParts();
+    if (!(pKey2 instanceof KeySPI<? extends @Nullable Object> ki2)) throw new IllegalStateException();
+    KeySPI<@Nullable Object>[] ki2Parts = ki2.getParts();
     if (!(pKey3 instanceof KeySPI<O> ki3)) throw new IllegalStateException();
-    @NotNull KeySPI<Object>[] ki3Parts = ki3.getParts();
+    KeySPI<@Nullable Object>[] ki3Parts = ki3.getParts();
     int partsLen = ki1Parts.length + ki2Parts.length + ki3Parts.length;
-    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] tempParts = new KeySPI[partsLen];
+    @SuppressWarnings("unchecked") KeySPI<@Nullable Object>[] tempParts = new KeySPI[partsLen];
     System.arraycopy(ki1Parts, 0, tempParts, 0, ki1Parts.length);
     System.arraycopy(ki2Parts, 0, tempParts, ki1Parts.length, ki2Parts.length);
     System.arraycopy(ki3Parts, 0, tempParts, ki1Parts.length + ki2Parts.length, ki3Parts.length);
@@ -88,7 +87,7 @@ public class CompositeKey<O> implements KeySPI<O> {
     mPartsLen = mParts.length;
     mLast = ki3;
     boolean hasPlaceHolders = false;
-    for (KeySPI<Object> mPart : mParts) {
+    for (KeySPI<@Nullable Object> mPart : mParts) {
       if (mPart instanceof KeyPlaceholder) hasPlaceHolders = true;
       else if (mPart instanceof AccessContextPlaceholder) hasPlaceHolders = true;
     }
@@ -100,13 +99,13 @@ public class CompositeKey<O> implements KeySPI<O> {
    *
    * @param pNewParts the array
    */
-  public CompositeKey(@NotNull KeySPI<Object>[] pNewParts) {
+  public CompositeKey(KeySPI<@Nullable Object>[] pNewParts) {
     mParts = pNewParts;
     mPartsLen = mParts.length;
     @SuppressWarnings("unchecked") KeySPI<O> temp = (KeySPI<O>) mParts[mPartsLen - 1];
     mLast = temp;
     boolean hasPlaceHolders = false;
-    for (KeySPI<Object> mPart : mParts) {
+    for (KeySPI<@Nullable Object> mPart : mParts) {
       if (mPart instanceof KeyPlaceholder) hasPlaceHolders = true;
       else if (mPart instanceof AccessContextPlaceholder) hasPlaceHolders = true;
     }
@@ -127,7 +126,7 @@ public class CompositeKey<O> implements KeySPI<O> {
   }
 
   @Override
-  public @NotNull KeySPI<Object>[] getParts() {
+  public KeySPI<@Nullable Object>[] getParts() {
     return mParts;
   }
 
@@ -169,9 +168,9 @@ public class CompositeKey<O> implements KeySPI<O> {
   }
 
   @Override
-  public @Nullable KeySPI<Object> getPreviousKey() {
+  public @Nullable KeySPI<@Nullable Object> getPreviousKey() {
     if (mPartsLen == 1) return null;
-    @SuppressWarnings({ "null", "unchecked" }) @NotNull KeySPI<Object>[] parentParts = new KeySPI[mPartsLen - 1];
+    @SuppressWarnings("unchecked") KeySPI<@Nullable Object>[] parentParts = new KeySPI[mPartsLen - 1];
     System.arraycopy(mParts, 0, parentParts, 0, mPartsLen - 1);
     return new CompositeKey<>(parentParts);
   }
@@ -180,8 +179,8 @@ public class CompositeKey<O> implements KeySPI<O> {
    * @see com.diamondq.cachly.Key#getPreviousKey(com.diamondq.cachly.Key)
    */
   @Override
-  public <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
-    @SuppressWarnings("unchecked") @Nullable KeySPI<Object> testKey = (KeySPI<Object>) this;
+  public <P extends @Nullable Object> @Nullable Key<P> getPreviousKey(Key<P> pTemplate) {
+    @SuppressWarnings("unchecked") KeySPI<@Nullable Object> testKey = (KeySPI<@Nullable Object>) this;
     String testKeyStr = pTemplate.toString();
     while (testKey != null) {
       if (testKey.getFullBaseKey().equals(testKeyStr)) {
@@ -195,7 +194,7 @@ public class CompositeKey<O> implements KeySPI<O> {
 
   @Override
   public boolean hasKeyDetails() {
-    for (KeySPI<?> part : mParts)
+    for (KeySPI<? extends @Nullable Object> part : mParts)
       if (!part.hasKeyDetails()) return false;
     return true;
   }
@@ -213,7 +212,7 @@ public class CompositeKey<O> implements KeySPI<O> {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    for (KeySPI<?> part : mParts) {
+    for (KeySPI<? extends @Nullable Object> part : mParts) {
       sb.append(part.getKey());
       //noinspection HardcodedFileSeparator
       sb.append("/");

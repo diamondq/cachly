@@ -1,7 +1,7 @@
 package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.Key;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 

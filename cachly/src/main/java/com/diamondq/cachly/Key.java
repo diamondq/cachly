@@ -1,6 +1,6 @@
 package com.diamondq.cachly;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Type;
 
@@ -10,7 +10,7 @@ import java.lang.reflect.Type;
  * @param <O> the type of data stored at this key
  */
 @SuppressWarnings("unused")
-public interface Key<O> {
+public interface Key<O extends @Nullable Object> {
 
   /**
    * Returns the previous key given a template key
@@ -22,8 +22,9 @@ public interface Key<O> {
   <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate);
 
   /**
-   * Returns the string partial of the last piece of the key. This is usually the piece of data that CacheLoader's need
-   * to retrieve their data.
+   * Returns the string partial of the last piece from the key.
+   * <p>
+   * This is usually the piece of data that CacheLoader's need to retrieve their data.
    *
    * @return the key data
    */

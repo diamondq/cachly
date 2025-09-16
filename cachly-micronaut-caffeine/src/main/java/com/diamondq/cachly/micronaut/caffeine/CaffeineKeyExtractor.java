@@ -3,7 +3,7 @@ package com.diamondq.cachly.micronaut.caffeine;
 import com.diamondq.cachly.micronaut.KeyExtractor;
 import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.inject.Singleton;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.stream.Stream;
@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 public class CaffeineKeyExtractor implements KeyExtractor {
 
   @Override
-  public <K, V> @Nullable Stream<Map.Entry<K, V>> getEntries(Object pNativeCache) {
+  public <K, V extends @Nullable Object> @Nullable Stream<Map.Entry<K, V>> getEntries(Object pNativeCache) {
     if (pNativeCache instanceof Cache<?, ?> cm) {
       @SuppressWarnings("unchecked") Cache<K, V> castedCM = (Cache<K, V>) cm;
       return castedCM.asMap().entrySet().stream();
