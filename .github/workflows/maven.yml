@@ -11,19 +11,19 @@ jobs:
     steps:
       # Checkout the source code
       - uses: actions/checkout@v4
-      # Make sure that we have a Java 8 environment
-      - name: Set up JDK 17
+      # Make sure that we have a Java 25 environment
+      - name: Set up JDK 25
         id: setupJava
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: 25
           distribution: 'corretto'
           cache: 'maven'
       - uses: cactuslab/maven-toolchains-xml-action@v2
         with:
           toolchains: |
             [
-              {"jdkVersion": "17", "jdkHome": "${{ steps.setupJava.outputs.path }}"}
+              {"jdkVersion": "25", "jdkHome": "${{ steps.setupJava.outputs.path }}"}
             ]
       # Get the short revision number
       - name: Set Outputs
