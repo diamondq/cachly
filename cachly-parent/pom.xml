@@ -15,7 +15,7 @@
       <dependency>
         <groupId>com.diamondq.common</groupId>
         <artifactId>common-bom</artifactId>
-        <version>0.4.53-5b1982a</version>
+        <version>0.4.57-9ca7c81</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>

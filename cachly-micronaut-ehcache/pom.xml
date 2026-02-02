@@ -9,6 +9,9 @@
   </parent>
   <artifactId>cachly-micronaut-ehcache</artifactId>
   <name>DiamondQ Cachly: Micronaut: Ehcache</name>
+  <properties>
+    <osgi.base.package>com.diamondq.cachly.micronaut.ehcache</osgi.base.package>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.diamondq.cachly</groupId>

@@ -2,6 +2,7 @@ package com.diamondq.cachly.engine;
 
 import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.impl.CacheCallbackHandler;
+import com.diamondq.cachly.spi.BeanNameable;
 import com.diamondq.common.converters.ConverterManager;
 import org.jspecify.annotations.Nullable;
 
@@ -19,9 +20,10 @@ import java.util.stream.Stream;
 /**
  * Cache Storage of entries into memory
  */
-public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
+public class MemoryCacheStorage extends AbstractCacheStorage<String, String> implements BeanNameable {
 
   private final CacheCallbackHandler mHandler;
+  private final String               mBeanName;
 
   @SuppressWarnings("ClassCanBeRecord")
   private static final class DataRecord {
@@ -42,9 +44,10 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
    * @param pConverterManager the Converter Manager
    * @param pExecutorService the Executor Service
    * @param pHandler the Handler
+   * @param pBeanName the bean name
    */
   public MemoryCacheStorage(ConverterManager pConverterManager, ExecutorService pExecutorService,
-    CacheCallbackHandler pHandler) {
+    CacheCallbackHandler pHandler, String pBeanName) {
     super(pConverterManager,
       pExecutorService,
       "",
@@ -59,9 +62,15 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> {
       null,
       null
     );
+    mBeanName = pBeanName;
     mHandler = pHandler;
     mData = new ConcurrentHashMap<>();
     pHandler.registerCacheStorage(mData, this);
+  }
+
+  @Override
+  public String getBeanName() {
+    return mBeanName;
   }
 
   @Override

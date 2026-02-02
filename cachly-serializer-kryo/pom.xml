@@ -9,6 +9,9 @@
   </parent>
   <artifactId>cachly-serializer-kryo</artifactId>
   <name>DiamondQ Cachly: Serializer: Kryo</name>
+  <properties>
+    <osgi.base.package>com.diamondq.cachly.serializer.kryo</osgi.base.package>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.diamondq.common</groupId>

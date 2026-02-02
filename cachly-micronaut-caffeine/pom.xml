@@ -9,6 +9,9 @@
   </parent>
   <artifactId>cachly-micronaut-caffeine</artifactId>
   <name>DiamondQ Cachly: Micronaut: Caffeine</name>
+  <properties>
+    <osgi.base.package>com.diamondq.cachly.micronaut.caffeine</osgi.base.package>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.diamondq.cachly</groupId>

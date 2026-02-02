@@ -17,8 +17,13 @@ import de.javakaffee.kryoserializers.guava.TreeBasedTableSerializer;
 import de.javakaffee.kryoserializers.guava.TreeMultimapSerializer;
 import de.javakaffee.kryoserializers.guava.UnmodifiableNavigableSetSerializer;
 import jakarta.inject.Singleton;
+import org.osgi.service.component.annotations.Component;
 
+/**
+ * Initializer for Guava classes
+ */
 @Singleton
+@Component(service = KryoInitializer.class)
 public class GuavaKryoInitializer implements KryoInitializer {
 
   @Override

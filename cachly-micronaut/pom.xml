@@ -9,6 +9,9 @@
   </parent>
   <artifactId>cachly-micronaut</artifactId>
   <name>DiamondQ Cachly: Micronaut</name>
+  <properties>
+    <osgi.base.package>com.diamondq.cachly.micronaut</osgi.base.package>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.diamondq.cachly</groupId>

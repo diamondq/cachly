@@ -31,6 +31,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -42,9 +47,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 
@@ -52,32 +59,96 @@ import java.util.stream.Stream;
  * Implementation of the Cache
  */
 @Singleton
+@Component(service = Cache.class)
 public class CacheEngine implements Cache {
 
-  private final ContextFactory mContextFactory;
+  /**
+   * The callback handler
+   */
+  @Reference protected CacheCallbackHandler mCallbackHandler;
+  /**
+   * The executor service
+   */
+  @Reference protected ExecutorService      mExecutorService;
+  /**
+   * The converter manager
+   */
+  @Reference protected ConverterManager     mConverterManager;
+  /**
+   * The context factory
+   */
+  @Reference protected ContextFactory       mContextFactory;
 
-  private final Map<String, CacheStorage> mCacheStorageByPath;
+  /**
+   * Defines the bean name locators that are available
+   */
+  protected final List<BeanNameLocator> mBeanNameLocators = new CopyOnWriteArrayList<>();
 
-  private final Map<String, CacheStorage> mCacheStorageByName;
+  private final Map<String, CacheStorage> mCacheStorageByPath = new ConcurrentHashMap<>();
 
-  private final Map<String, CacheLoaderInfo<Object>> mLoadersByPath;
+  private final Map<String, CacheStorage> mCacheStorageByName = new ConcurrentHashMap<>();
 
-  private final Map<String, String> mSerializerNameByPath;
+  private final Map<String, CacheLoaderInfo<Object>> mLoadersByPath = new ConcurrentHashMap<>();
+
+  private final Map<String, String> mSerializerNameByPath = new ConcurrentHashMap<>();
 
   private static final ThreadLocal<ArrayDeque<Set<String>>> sMonitored = ThreadLocal.withInitial(ArrayDeque::new);
 
-  private final KeySPI<CacheInfo> mStorageKey;
+  private final KeySPI<CacheInfo> mStorageKey = (KeySPI<CacheInfo>) KeyBuilder.of(CacheInfoLoader.CACHE_INFO_NAME,
+    new TypeReference<CacheInfo>() { // type
+      // reference
+    }
+  );
 
-  private final CacheInfo mCacheInfo;
+  private @Nullable CacheInfo mCacheInfo;
 
-  private final AccessContext mEmptyAccessContext;
+  private final AccessContext mEmptyAccessContext = new AccessContextImpl(Collections.emptyMap());
 
-  private final Map<Class<?>, List<AccessContextSPI<?>>> mAccessContextSPIMap;
+  private final Map<Class<?>, List<AccessContextSPI<?>>> mAccessContextSPIMap = new ConcurrentHashMap<>();
 
-  private final Map<Class<?>, Class<?>> mAccessContextClassMap;
+  private final Map<Class<?>, Class<?>> mAccessContextClassMap = new ConcurrentHashMap<>();
 
   /**
-   * Injection Constructor
+   * Constructor for OSGi-based solutions
+   */
+  public CacheEngine() {
+  }
+
+  /**
+   * Constructor for basic use
+   *
+   * @param pCallbackHandler the Callback Handler
+   * @param pExecutorService the Executor Service
+   * @param pConverterManager the Converter Manager
+   * @param pContextFactory the Context Factory
+   */
+  public CacheEngine(CacheCallbackHandler pCallbackHandler, ExecutorService pExecutorService,
+    ConverterManager pConverterManager, ContextFactory pContextFactory) {
+    mCallbackHandler = pCallbackHandler;
+    mExecutorService = pExecutorService;
+    mConverterManager = pConverterManager;
+    mContextFactory = pContextFactory;
+  }
+
+  @Override
+  @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+  public void addBeanNameLocator(BeanNameLocator pBeanNameLocator) {
+    mBeanNameLocators.add(pBeanNameLocator);
+  }
+
+  @Override
+  public void removeBeanNameLocator(BeanNameLocator pBeanNameLocator) {
+    mBeanNameLocators.remove(pBeanNameLocator);
+  }
+
+  @Override
+  @Activate
+  public void activate() {
+    finishSetup();
+  }
+
+  /**
+   * Injection Constructor for CDI-based solutions
    *
    * @param pContextFactory the Context Factory
    * @param pConverterManager the Converter Manager
@@ -96,104 +167,65 @@ public class CacheEngine implements Cache {
     List<CacheLoader<?>> pCacheLoaders, List<AccessContextSPI<?>> pAccessContextSPIs) {
 
     mContextFactory = pContextFactory;
+    mConverterManager = pConverterManager;
+    mExecutorService = pExecutorService;
+    mCallbackHandler = pCallbackHandler;
+    pNameLocators.forEach(this::addBeanNameLocator);
 
     /* Build the map of storages by name */
 
-    Map<String, CacheStorage> storagesByName = new ConcurrentHashMap<>();
-    for (CacheStorage storage : pCacheStorages) {
-
-      /* Query the bean name locators for the name */
-
-      String name = null;
-      for (BeanNameLocator bnl : pNameLocators) {
-        name = bnl.getBeanName(storage);
-        //noinspection VariableNotUsedInsideIf
-        if (name != null) {
-          break;
-        }
-      }
-      if (name == null) {
-        throw new IllegalArgumentException(
-          "The CacheStorage " + storage.getClass().getName() + " must have a name (such as @Named) associated with it");
-      }
-
-      storage.setCacheEngine(this);
-      storagesByName.put(name, storage);
-    }
+    pCacheStorages.forEach(this::addCacheStorage);
 
     /* Build the storages by path */
 
-    Map<String, CacheStorage> storagesByPath = new ConcurrentHashMap<>();
-    Map<String, String> serializerNameByPath = new ConcurrentHashMap<>();
-    for (CachlyPathConfiguration pathConfig : pPaths) {
-      String storage = pathConfig.getStorage();
-      String serializerName = pathConfig.getSerializer();
-      String path = pathConfig.getName();
-      CacheStorage cacheStorage = storagesByName.get(storage);
-      if (cacheStorage == null) {
-        throw new IllegalArgumentException(
-          "Configuration has a storage called " + storage + " at path " + path + " which cannot be located");
-      }
-      storagesByPath.put(path, cacheStorage);
-      if (serializerName == null) {
-        serializerName = DEFAULT_SERIALIZER;
-      }
-      serializerNameByPath.put(path, serializerName);
-    }
-
-    if (!storagesByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME)) {
-      storagesByPath.put(CacheInfoLoader.CACHE_INFO_NAME,
-        new MemoryCacheStorage(pConverterManager, pExecutorService, pCallbackHandler)
-      );
-    }
-    if (!serializerNameByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME)) {
-      serializerNameByPath.put(CacheInfoLoader.CACHE_INFO_NAME, DEFAULT_SERIALIZER);
-    }
+    pPaths.forEach(this::addPathConfiguration);
 
     /* Build the map of loaders by path */
 
-    Map<String, CacheLoaderInfo<Object>> loadersByPath = new ConcurrentHashMap<>();
-    for (CacheLoader<?> loader : pCacheLoaders) {
-      @SuppressWarnings("unchecked") CacheLoaderInfo<Object> details = (CacheLoaderInfo<Object>) loader.getInfo();
-      String path = details.key.toString();
-      loadersByPath.put(path, details);
-    }
+    pCacheLoaders.forEach(this::addCacheLoader);
 
     /* Build the map of AccessContext SPIs */
 
-    Map<Class<?>, List<AccessContextSPI<?>>> accessContextsSPIMap = new HashMap<>();
-    for (AccessContextSPI<?> spi : pAccessContextSPIs) {
-      Class<?> clazz = spi.getAccessContextClass();
-      List<AccessContextSPI<?>> list = accessContextsSPIMap.computeIfAbsent(clazz, (key) -> new ArrayList<>());
-      list.add(spi);
-    }
+    pAccessContextSPIs.forEach(this::addAccessContextSPI);
 
-    mCacheStorageByPath = storagesByPath;
-    mCacheStorageByName = storagesByName;
-    mLoadersByPath = loadersByPath;
-    mSerializerNameByPath = serializerNameByPath;
-    mAccessContextSPIMap = accessContextsSPIMap;
-    mEmptyAccessContext = new AccessContextImpl(Collections.emptyMap());
-    mAccessContextClassMap = new ConcurrentHashMap<>();
-
-    /* Set up the storage key and cache information */
-
-    mStorageKey = (KeySPI<CacheInfo>) KeyBuilder.of(CacheInfoLoader.CACHE_INFO_NAME,
-      new TypeReference<CacheInfo>() { // type
-        // reference
-      }
-    );
-    AccessContext ac = createAccessContext(null);
-    setupKey(mStorageKey);
-    CacheResult<CacheInfo> cacheInfoResult = mStorageKey.getLastStorage().queryForKey(ac, mStorageKey);
-    if (!cacheInfoResult.entryFound()) {
-      mCacheInfo = new CacheInfo();
-    } else {
-      mCacheInfo = cacheInfoResult.getValue();
-    }
+    finishSetup();
   }
 
   @Override
+  @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+  public void addCacheStorage(CacheStorage pStorage) {
+    /* Query the bean name locators for the name */
+
+    String name = mBeanNameLocators.stream()
+      .map((bnl) -> bnl.getBeanName(pStorage))
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
+    if (name == null) {
+      throw new IllegalArgumentException(
+        "The CacheStorage " + pStorage.getClass().getName() + " must have a name (such as @Named) associated with it");
+    }
+
+    pStorage.setCacheEngine(this);
+    mCacheStorageByName.put(name, pStorage);
+  }
+
+  @Override
+  public void removeCacheStorage(CacheStorage pStorage) {
+    /* Query the bean name locators for the name */
+
+    String name = mBeanNameLocators.stream()
+      .map((bnl) -> bnl.getBeanName(pStorage))
+      .filter(Objects::nonNull)
+      .findFirst()
+      .orElse(null);
+    if (name == null) return;
+
+    mCacheStorageByName.remove(name, pStorage);
+  }
+
+  @Override
+  @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
   public void addPathConfiguration(CachlyPathConfiguration pPathConfig) {
     String storage = pPathConfig.getStorage();
     String serializerName = pPathConfig.getSerializer();
@@ -211,10 +243,66 @@ public class CacheEngine implements Cache {
   }
 
   @Override
+  public void removePathConfiguration(CachlyPathConfiguration pPathConfig) {
+    String storage = pPathConfig.getStorage();
+    String path = pPathConfig.getName();
+    var cacheStorage = mCacheStorageByName.get(storage);
+    if (cacheStorage != null) mCacheStorageByPath.remove(path, cacheStorage);
+    mSerializerNameByPath.remove(path, pPathConfig.getSerializer());
+  }
+
+  private void finishSetup() {
+
+    if (!mCacheStorageByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME)) {
+      mCacheStorageByPath.put(CacheInfoLoader.CACHE_INFO_NAME,
+        new MemoryCacheStorage(mConverterManager, mExecutorService, mCallbackHandler, CacheInfoLoader.CACHE_INFO_NAME)
+      );
+    }
+    if (!mSerializerNameByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME)) {
+      mSerializerNameByPath.put(CacheInfoLoader.CACHE_INFO_NAME, DEFAULT_SERIALIZER);
+    }
+    addCacheLoader(new CacheInfoLoader());
+
+    /* Set up the storage key and cache information */
+
+    AccessContext ac = createAccessContext(null);
+    setupKey(mStorageKey);
+    CacheResult<CacheInfo> cacheInfoResult = mStorageKey.getLastStorage().queryForKey(ac, mStorageKey);
+    if (!cacheInfoResult.entryFound()) {
+      mCacheInfo = new CacheInfo();
+    } else {
+      mCacheInfo = cacheInfoResult.getValue();
+    }
+  }
+
+  @Override
+  @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
   public void addCacheLoader(CacheLoader<?> pCacheLoader) {
     @SuppressWarnings("unchecked") CacheLoaderInfo<Object> details = (CacheLoaderInfo<Object>) pCacheLoader.getInfo();
     String path = details.key.toString();
     mLoadersByPath.put(path, details);
+  }
+
+  @Override
+  public void removeCacheLoader(CacheLoader<?> pCacheLoader) {
+    @SuppressWarnings("unchecked") CacheLoaderInfo<Object> details = (CacheLoaderInfo<Object>) pCacheLoader.getInfo();
+    String path = details.key.toString();
+    mLoadersByPath.remove(path, details);
+  }
+
+  @Override
+  @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+  public void addAccessContextSPI(AccessContextSPI<?> pAccessContextSPI) {
+    Class<?> clazz = pAccessContextSPI.getAccessContextClass();
+    List<AccessContextSPI<?>> list = mAccessContextSPIMap.computeIfAbsent(clazz, (_) -> new CopyOnWriteArrayList<>());
+    list.add(pAccessContextSPI);
+  }
+
+  @Override
+  public void removeAccessContextSPI(AccessContextSPI<?> pAccessContextSPI) {
+    Class<?> clazz = pAccessContextSPI.getAccessContextClass();
+    List<AccessContextSPI<?>> list = mAccessContextSPIMap.get(clazz);
+    if (list != null) list.remove(pAccessContextSPI);
   }
 
   @Override
@@ -354,7 +442,8 @@ public class CacheEngine implements Cache {
    * @param pKey the key
    * @return the result
    */
-  private <O> CacheResult<O> lookup(AccessContext pAccessContext, KeySPI<O> pKey, boolean pLoadIfMissing) {
+  private <O> CacheResult<O> lookup(AccessContext pAccessContext, KeySPI<O> pKey,
+    @SuppressWarnings("SameParameterValue") boolean pLoadIfMissing) {
 
     ArrayDeque<Set<String>> dependencyStack = sMonitored.get();
 
@@ -434,10 +523,12 @@ public class CacheEngine implements Cache {
 
       if (!dependencies.isEmpty()) {
         for (String dep : dependencies) {
-          Set<KeySPI<?>> set = mCacheInfo.dependencyMap.computeIfAbsent(dep, key -> new HashSet<>());
+          Set<KeySPI<?>> set = Objects.requireNonNull(mCacheInfo).dependencyMap.computeIfAbsent(dep,
+            (_) -> new HashSet<>()
+          );
           set.add(pKey);
         }
-        Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(pKey.toString(), key -> new HashSet<>());
+        Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(pKey.toString(), (_) -> new HashSet<>());
         set.addAll(dependencies);
         mStorageKey.getLastStorage().store(pAccessContext, mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
       }
@@ -493,7 +584,7 @@ public class CacheEngine implements Cache {
 
       CacheStorage storage = pKey.getLastStorage();
 
-      mCacheInfo.reverseDependencyMap.remove(keyStr);
+      Objects.requireNonNull(mCacheInfo).reverseDependencyMap.remove(keyStr);
 
       /* Were there dependencies? */
 
@@ -1023,14 +1114,14 @@ public class CacheEngine implements Cache {
   @Override
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Collection<Key<?>> getDependentKeys(AccessContext pAccessContext, String pKeyStr) {
-    final Collection<Key<?>> result = (Collection) mCacheInfo.dependencyMap.get(pKeyStr);
+    final Collection<Key<?>> result = (Collection) Objects.requireNonNull(mCacheInfo).dependencyMap.get(pKeyStr);
     if (result == null) return Collections.emptyList();
     return result;
   }
 
   @Override
   public Collection<String> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr) {
-    final Collection<String> result = mCacheInfo.reverseDependencyMap.get(pKeyStr);
+    final Collection<String> result = Objects.requireNonNull(mCacheInfo).reverseDependencyMap.get(pKeyStr);
     if (result == null) return Collections.emptyList();
     return result;
   }

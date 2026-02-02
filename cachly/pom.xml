@@ -9,6 +9,9 @@
   </parent>
   <artifactId>cachly</artifactId>
   <name>DiamondQ Cachly: Cachly</name>
+  <properties>
+    <osgi.base.package>com.diamondq.cachly</osgi.base.package>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>com.diamondq.common</groupId>
@@ -21,6 +24,11 @@
     <dependency>
       <groupId>jakarta.inject</groupId>
       <artifactId>jakarta.inject-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.service.component.annotations</artifactId>
+      <optional>true</optional>
     </dependency>
   </dependencies>
 </project>
