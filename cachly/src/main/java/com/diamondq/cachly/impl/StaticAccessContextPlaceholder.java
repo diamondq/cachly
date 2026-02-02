@@ -46,4 +46,9 @@ public class StaticAccessContextPlaceholder<O extends @Nullable Object> extends 
     mAccessContextSPI = (Map) pAcs;
   }
 
+  @Override
+  public void clearKeyDetails() {
+    super.clearKeyDetails();
+    mAccessContextSPI = null;
+  }
 }

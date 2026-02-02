@@ -26,6 +26,12 @@ public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> impleme
     return new ResolvedKeyPlaceholder<>(this, cacheValue);
   }
 
+  @Override
+  public void clearKeyDetails() {
+    super.clearKeyDetails();
+    if (mDefaultKey != this) mDefaultKey.clearKeyDetails();
+  }
+
   public KeySPI<String> getDefaultKey() {
     return mDefaultKey;
   }

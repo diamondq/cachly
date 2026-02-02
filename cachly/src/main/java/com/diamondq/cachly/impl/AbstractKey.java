@@ -57,6 +57,12 @@ public class AbstractKey<O extends @Nullable Object> implements KeySPI<O> {
   }
 
   @Override
+  public void clearKeyDetails() {
+    mKeyDetails = null;
+    for (KeySPI<@Nullable Object> part : mParts) if (part != this) part.clearKeyDetails();
+  }
+
+  @Override
   public boolean hasPlaceholders() {
     return mHasPlaceholders;
   }

@@ -25,6 +25,12 @@ public class ResolvedKeyPlaceholder<O extends @Nullable Object> implements KeySP
   }
 
   @Override
+  public void clearKeyDetails() {
+    if (mPlaceholder != this) mPlaceholder.clearKeyDetails();
+    for (KeySPI<@Nullable Object> part : mParts) if (part != this) part.clearKeyDetails();
+  }
+
+  @Override
   public boolean hasPlaceholders() {
     return false;
   }

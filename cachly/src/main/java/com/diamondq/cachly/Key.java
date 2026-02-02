@@ -43,4 +43,9 @@ public interface Key<O extends @Nullable Object> {
    * @return the output Type
    */
   Type getOutputType();
+
+  /**
+   * Clears any cached details within this key that is tied to the running Cache engine.
+   */
+  void clearKeyDetails();
 }

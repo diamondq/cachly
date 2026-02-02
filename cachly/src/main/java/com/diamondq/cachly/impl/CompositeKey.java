@@ -113,6 +113,12 @@ public class CompositeKey<O extends @Nullable Object> implements KeySPI<O> {
   }
 
   @Override
+  public void clearKeyDetails() {
+    if (mLast != this) mLast.clearKeyDetails();
+    for (KeySPI<@Nullable Object> part : mParts) if (part != this) part.clearKeyDetails();
+  }
+
+  @Override
   public boolean hasPlaceholders() {
     return mHasPlaceholders;
   }

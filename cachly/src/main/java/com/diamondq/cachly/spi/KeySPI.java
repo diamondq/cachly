@@ -13,8 +13,7 @@ import org.jspecify.annotations.Nullable;
  */
 public interface KeySPI<O extends @Nullable Object> extends Key<O> {
 
-  @Nullable
-  KeySPI<@Nullable Object> getPreviousKey();
+  @Nullable KeySPI<@Nullable Object> getPreviousKey();
 
   /**
    * Returns the storage used by the last part of the key
@@ -78,4 +77,5 @@ public interface KeySPI<O extends @Nullable Object> extends Key<O> {
    * @return true if there are placeholders or false if there are not
    */
   boolean hasPlaceholders();
+
 }
