@@ -15,7 +15,7 @@
       <dependency>
         <groupId>com.diamondq.common</groupId>
         <artifactId>common-bom</artifactId>
-        <version>0.4.57-9ca7c81</version>
+        <version>0.4.58-8dff472</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -46,8 +46,30 @@
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
-        <version>3.18.0</version>
+        <version>3.20.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <rules>
+            <banDynamicVersions>
+              <ignores>
+                <ignore>com.diamondq.cachly</ignore>
+              </ignores>
+            </banDynamicVersions>
+            <dependencyConvergence>
+              <excludes combine.children="append">
+                <!-- org.osgi:org.osgi.service.component.annotations:1.5.1 -->
+                <exclude>org.osgi:osgi.annotation:8.0.1</exclude>
+              </excludes>
+            </dependencyConvergence>
+          </rules>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
