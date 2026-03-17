@@ -22,6 +22,10 @@
     <nexus.serverId>1-dq-snapshot</nexus.serverId>
     <nexus.auto.release>false</nexus.auto.release>
     <nexus.skip.staging>true</nexus.skip.staging>
+    <osgi.export.scr>true</osgi.export.scr>
+    <osgi.manifest.directory>${project.build.outputDirectory}/META-INF</osgi.manifest.directory>
+    <osgi.osgi.directory>${project.build.outputDirectory}</osgi.osgi.directory>
+    <osgi.annotations.ds.options>inherit,norequirements,nocapabilities</osgi.annotations.ds.options>
   </properties>
   <distributionManagement>
     <snapshotRepository>
