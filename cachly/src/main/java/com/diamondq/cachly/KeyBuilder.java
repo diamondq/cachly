@@ -1,10 +1,10 @@
 package com.diamondq.cachly;
 
-import com.diamondq.cachly.impl.CompositeKey;
-import com.diamondq.cachly.impl.StaticAccessContextPlaceholder;
-import com.diamondq.cachly.impl.StaticKey;
-import com.diamondq.cachly.impl.StaticKeyPlaceholder;
-import com.diamondq.cachly.impl.StaticKeyPlaceholderWithDefault;
+import com.diamondq.cachly.spi.CompositeKey;
+import com.diamondq.cachly.spi.StaticAccessContextPlaceholder;
+import com.diamondq.cachly.spi.StaticKey;
+import com.diamondq.cachly.spi.StaticKeyPlaceholder;
+import com.diamondq.cachly.spi.StaticKeyPlaceholderWithDefault;
 import com.diamondq.common.TypeReference;
 
 /**

@@ -1,6 +1,6 @@
 package com.diamondq.cachly;
 
-import com.diamondq.cachly.impl.StaticCacheResult;
+import com.diamondq.cachly.spi.StaticCacheResult;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -18,8 +18,7 @@ public interface CacheResult<V extends @Nullable Object> {
    *
    * @return the duration or null if there is no expiry
    */
-  @Nullable
-  Duration getOverrideExpiry();
+  @Nullable Duration getOverrideExpiry();
 
   /**
    * Sets the expiry

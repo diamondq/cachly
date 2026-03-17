@@ -1,15 +1,13 @@
-package com.diamondq.cachly.impl;
+package com.diamondq.cachly.spi;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.engine.CacheStorage;
-import com.diamondq.cachly.spi.KeySPI;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-public class ResolvedKeyPlaceholder<O extends @Nullable Object> implements KeySPI<O> {
+public class ResolvedAccessContextPlaceholder<O extends @Nullable Object> implements KeySPI<O> {
 
   private final KeySPI<O> mPlaceholder;
 
@@ -17,7 +15,7 @@ public class ResolvedKeyPlaceholder<O extends @Nullable Object> implements KeySP
 
   private final KeySPI<@Nullable Object>[] mParts;
 
-  public ResolvedKeyPlaceholder(KeySPI<O> pPlaceholder, String pKey) {
+  public ResolvedAccessContextPlaceholder(KeySPI<O> pPlaceholder, String pKey) {
     mPlaceholder = pPlaceholder;
     mKey = pKey;
     @SuppressWarnings("unchecked") KeySPI<@Nullable Object>[] tempParts = new KeySPI[] { this };
@@ -110,6 +108,10 @@ public class ResolvedKeyPlaceholder<O extends @Nullable Object> implements KeySP
     mPlaceholder.storeKeyDetails(pDetails);
   }
 
+  public KeySPI<O> getPlaceholder() {
+    return mPlaceholder;
+  }
+
   @Override
   public String toString() {
     return mKey;
@@ -120,16 +122,13 @@ public class ResolvedKeyPlaceholder<O extends @Nullable Object> implements KeySP
     return Objects.hash(mKey, mPlaceholder);
   }
 
-  public KeySPI<O> getPlaceholder() {
-    return mPlaceholder;
-  }
-
   @Override
   public boolean equals(@Nullable Object pObj) {
     if (pObj == null) return false;
     if (pObj == this) return true;
-    if (!pObj.getClass().equals(ResolvedKeyPlaceholder.class)) return false;
-    @SuppressWarnings("unchecked") ResolvedKeyPlaceholder<O> other = (ResolvedKeyPlaceholder<O>) pObj;
+    if (!pObj.getClass().equals(ResolvedAccessContextPlaceholder.class)) return false;
+    @SuppressWarnings(
+      "unchecked") ResolvedAccessContextPlaceholder<O> other = (ResolvedAccessContextPlaceholder<O>) pObj;
     return Objects.equals(mKey, other.mKey) && Objects.equals(mPlaceholder, other.mPlaceholder);
   }
 }

@@ -8,11 +8,12 @@ import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
-import com.diamondq.cachly.engine.CacheEngine;
-import com.diamondq.cachly.engine.CachlyPathConfiguration;
-import com.diamondq.cachly.engine.MemoryCacheStorage;
 import com.diamondq.cachly.impl.CacheCallbackHandler;
+import com.diamondq.cachly.impl.CacheEngineImpl;
+import com.diamondq.cachly.impl.MemoryCacheStorage;
 import com.diamondq.cachly.spi.BeanNameableLocator;
+import com.diamondq.cachly.spi.CacheEngine;
+import com.diamondq.cachly.spi.CachlyPathConfiguration;
 import com.diamondq.common.context.impl.ContextFactorySetup;
 import com.diamondq.common.converters.impl.ConverterManagerImpl;
 import com.diamondq.common.types.Types;
@@ -111,7 +112,7 @@ public class TestGetNoCDI {
 
   }
 
-  private volatile Cache cache;
+  private volatile CacheEngine cache;
 
   /**
    * Creates the cache engine for testing
@@ -125,7 +126,7 @@ public class TestGetNoCDI {
     Keys.PROCESS_DEFINITIONS.clearKeyDetails();
     Keys.PD_BY_ID_PLACE.clearKeyDetails();
     Keys.PD_BY_ID.clearKeyDetails();
-    cache = new CacheEngine(callbackHandler, executorService, converterManager, contextFactory);
+    cache = new CacheEngineImpl(callbackHandler, executorService, converterManager, contextFactory);
     cache.addBeanNameLocator(new BeanNameableLocator());
     cache.addCacheStorage(new MemoryCacheStorage(converterManager, executorService, callbackHandler, "my-cache"));
     var pathConfig = new CachlyPathConfiguration(Keys.Strings.PARTIAL_PROCESS_DEFINITIONS);

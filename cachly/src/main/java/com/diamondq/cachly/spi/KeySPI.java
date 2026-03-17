@@ -2,8 +2,6 @@ package com.diamondq.cachly.spi;
 
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.engine.CacheStorage;
-import com.diamondq.cachly.impl.KeyDetails;
 import org.jspecify.annotations.Nullable;
 
 /**

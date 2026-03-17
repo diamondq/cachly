@@ -1,4 +1,4 @@
-package com.diamondq.cachly.engine;
+package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
@@ -10,18 +10,19 @@ import com.diamondq.cachly.Key;
 import com.diamondq.cachly.KeyBuilder;
 import com.diamondq.cachly.KeyPlaceholder;
 import com.diamondq.cachly.WriteBackCacheLoader;
-import com.diamondq.cachly.impl.AccessContextImpl;
-import com.diamondq.cachly.impl.CacheCallbackHandler;
-import com.diamondq.cachly.impl.CompositeKey;
-import com.diamondq.cachly.impl.KeyDetails;
-import com.diamondq.cachly.impl.ResolvedKeyPlaceholder;
-import com.diamondq.cachly.impl.StaticAccessContextPlaceholder;
-import com.diamondq.cachly.impl.StaticCacheResult;
 import com.diamondq.cachly.spi.AccessContextPlaceholderSPI;
 import com.diamondq.cachly.spi.AccessContextSPI;
 import com.diamondq.cachly.spi.BeanNameLocator;
+import com.diamondq.cachly.spi.CacheEngine;
+import com.diamondq.cachly.spi.CacheStorage;
+import com.diamondq.cachly.spi.CachlyPathConfiguration;
+import com.diamondq.cachly.spi.CompositeKey;
+import com.diamondq.cachly.spi.KeyDetails;
 import com.diamondq.cachly.spi.KeyPlaceholderSPI;
 import com.diamondq.cachly.spi.KeySPI;
+import com.diamondq.cachly.spi.ResolvedKeyPlaceholder;
+import com.diamondq.cachly.spi.StaticAccessContextPlaceholder;
+import com.diamondq.cachly.spi.StaticCacheResult;
 import com.diamondq.common.TypeReference;
 import com.diamondq.common.context.Context;
 import com.diamondq.common.context.ContextFactory;
@@ -60,7 +61,7 @@ import java.util.stream.Stream;
  */
 @Singleton
 @Component(service = Cache.class)
-public class CacheEngine implements Cache {
+public class CacheEngineImpl implements CacheEngine {
 
   /**
    * The callback handler
@@ -111,7 +112,7 @@ public class CacheEngine implements Cache {
   /**
    * Constructor for OSGi-based solutions
    */
-  public CacheEngine() {
+  public CacheEngineImpl() {
   }
 
   /**
@@ -122,7 +123,7 @@ public class CacheEngine implements Cache {
    * @param pConverterManager the Converter Manager
    * @param pContextFactory the Context Factory
    */
-  public CacheEngine(CacheCallbackHandler pCallbackHandler, ExecutorService pExecutorService,
+  public CacheEngineImpl(CacheCallbackHandler pCallbackHandler, ExecutorService pExecutorService,
     ConverterManager pConverterManager, ContextFactory pContextFactory) {
     mCallbackHandler = pCallbackHandler;
     mExecutorService = pExecutorService;
@@ -161,7 +162,7 @@ public class CacheEngine implements Cache {
    * @param pAccessContextSPIs the context SPIs
    */
   @Inject
-  public CacheEngine(ContextFactory pContextFactory, ConverterManager pConverterManager,
+  public CacheEngineImpl(ContextFactory pContextFactory, ConverterManager pConverterManager,
     @Named("DiamondQ") ExecutorService pExecutorService, CacheCallbackHandler pCallbackHandler,
     List<CachlyPathConfiguration> pPaths, List<BeanNameLocator> pNameLocators, List<CacheStorage> pCacheStorages,
     List<CacheLoader<?>> pCacheLoaders, List<AccessContextSPI<?>> pAccessContextSPIs) {
@@ -548,7 +549,7 @@ public class CacheEngine implements Cache {
    * @param pCacheResult the cache result to store
    */
   private <O> void setInternal(AccessContext pAccessContext, KeySPI<O> pKey, CacheResult<O> pCacheResult) {
-    try (Context ignored = mContextFactory.newContext(CacheEngine.class, this, pKey, pCacheResult)) {
+    try (Context ignored = mContextFactory.newContext(CacheEngineImpl.class, this, pKey, pCacheResult)) {
 
       pKey = resolvePlaceholders(pAccessContext, pKey, new ArrayDeque<>()).key();
 
@@ -574,7 +575,7 @@ public class CacheEngine implements Cache {
   }
 
   private <O> void invalidateInternal(AccessContext pAccessContext, KeySPI<O> pKey) {
-    try (Context ignored = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
+    try (Context ignored = mContextFactory.newContext(CacheEngineImpl.class, this, pKey)) {
 
       pKey = resolvePlaceholders(pAccessContext, pKey, new ArrayDeque<>()).key();
 
@@ -694,7 +695,7 @@ public class CacheEngine implements Cache {
 
   @Override
   public <V extends @Nullable Object> V get(AccessContext pAccessContext, Key<V> pKey) {
-    try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
+    try (Context ctx = mContextFactory.newContext(CacheEngineImpl.class, this, pKey)) {
       if (!(pKey instanceof KeySPI<V> ki)) {
         throw ctx.reportThrowable(new IllegalStateException());
       }
@@ -720,7 +721,7 @@ public class CacheEngine implements Cache {
 
   @Override
   public <V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey) {
-    try (Context ctx = mContextFactory.newContext(CacheEngine.class, this, pKey)) {
+    try (Context ctx = mContextFactory.newContext(CacheEngineImpl.class, this, pKey)) {
       if (!(pKey instanceof KeySPI<V> ki)) {
         throw ctx.reportThrowable(new IllegalStateException());
       }

@@ -1,10 +1,9 @@
-package com.diamondq.cachly.engine;
+package com.diamondq.cachly.spi;
 
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.spi.KeySPI;
 import com.diamondq.common.lambda.interfaces.Consumer3;
 import org.jspecify.annotations.Nullable;
 

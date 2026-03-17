@@ -1,10 +1,8 @@
-package com.diamondq.cachly.impl;
+package com.diamondq.cachly.spi;
 
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.Key;
-import com.diamondq.cachly.spi.KeyPlaceholderSPI;
-import com.diamondq.cachly.spi.KeySPI;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Type;

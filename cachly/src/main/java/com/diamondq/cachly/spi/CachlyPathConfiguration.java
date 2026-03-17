@@ -1,4 +1,4 @@
-package com.diamondq.cachly.engine;
+package com.diamondq.cachly.spi;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;

@@ -11,6 +11,7 @@
   <name>DiamondQ Cachly: Cachly</name>
   <properties>
     <osgi.base.package>com.diamondq.cachly</osgi.base.package>
+    <osgi.extra.dont.export.packages>!com.diamondq.cachly.engine</osgi.extra.dont.export.packages>
   </properties>
   <dependencies>
     <dependency>
@@ -28,6 +29,16 @@
     <dependency>
       <groupId>org.osgi</groupId>
       <artifactId>org.osgi.service.component.annotations</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.framework</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.util.tracker</artifactId>
       <optional>true</optional>
     </dependency>
   </dependencies>

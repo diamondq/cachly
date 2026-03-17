@@ -1,7 +1,6 @@
-package com.diamondq.cachly.impl;
+package com.diamondq.cachly.spi;
 
 import com.diamondq.cachly.CacheLoader;
-import com.diamondq.cachly.engine.CacheStorage;
 import org.jspecify.annotations.Nullable;
 
 public class KeyDetails<O extends @Nullable Object> {

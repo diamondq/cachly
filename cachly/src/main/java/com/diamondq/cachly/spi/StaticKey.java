@@ -1,4 +1,4 @@
-package com.diamondq.cachly.impl;
+package com.diamondq.cachly.spi;
 
 import org.jspecify.annotations.Nullable;
 

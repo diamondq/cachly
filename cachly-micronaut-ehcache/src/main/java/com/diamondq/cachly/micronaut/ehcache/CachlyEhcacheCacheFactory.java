@@ -1,7 +1,7 @@
 package com.diamondq.cachly.micronaut.ehcache;
 
 import com.diamondq.cachly.CacheKeyEvent;
-import com.diamondq.cachly.engine.MemoryStorageData;
+import com.diamondq.cachly.base.MemoryStorageData;
 import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.cachly.micronaut.ehcache.CachlyEhcacheConfiguration.CachlyDiskTieredCacheConfiguration;
 import com.diamondq.common.Holder;

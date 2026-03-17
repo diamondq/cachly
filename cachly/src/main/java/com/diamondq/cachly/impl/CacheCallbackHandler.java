@@ -1,7 +1,7 @@
 package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.CacheKeyEvent;
-import com.diamondq.cachly.engine.CacheStorage;
+import com.diamondq.cachly.spi.CacheStorage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;

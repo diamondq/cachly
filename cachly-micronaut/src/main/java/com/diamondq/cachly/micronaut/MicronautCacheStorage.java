@@ -1,9 +1,9 @@
 package com.diamondq.cachly.micronaut;
 
-import com.diamondq.cachly.engine.AbstractCacheStorage;
-import com.diamondq.cachly.engine.CommonKeyValuePair;
-import com.diamondq.cachly.engine.MemoryStorageData;
+import com.diamondq.cachly.base.AbstractCacheStorage;
+import com.diamondq.cachly.base.MemoryStorageData;
 import com.diamondq.cachly.impl.CacheCallbackHandler;
+import com.diamondq.cachly.spi.CommonKeyValuePair;
 import com.diamondq.common.converters.ConverterManager;
 import io.micronaut.cache.SyncCache;
 import io.micronaut.context.annotation.EachBean;
