@@ -47,10 +47,8 @@ public class OSGiEngineSetup {
       }
     );
     pathTracker.open();
-    @SuppressWarnings(
-      { "unchecked", "rawtypes" }) ServiceTracker<CacheLoader<?>, CacheLoader<?>> loaderTracker = new ServiceTracker<>(
-      pContext,
-      CacheLoader.class,
+    ServiceTracker<CacheLoader<?>, CacheLoader<?>> loaderTracker = new ServiceTracker<>(pContext,
+      CacheLoader.class.getName(),
       new ServiceTrackerCustomizer<CacheLoader<?>, CacheLoader<?>>() {
         @Override
         public CacheLoader<?> addingService(ServiceReference<CacheLoader<?>> reference) {
@@ -116,10 +114,8 @@ public class OSGiEngineSetup {
       }
     );
     nameTracker.open();
-    @SuppressWarnings(
-      { "unchecked", "rawtypes" }) ServiceTracker<AccessContextSPI<?>, AccessContextSPI<?>> accessTracker = new ServiceTracker<>(
-      pContext,
-      AccessContextSPI.class,
+    ServiceTracker<AccessContextSPI<?>, AccessContextSPI<?>> accessTracker = new ServiceTracker<>(pContext,
+      AccessContextSPI.class.getName(),
       new ServiceTrackerCustomizer<AccessContextSPI<?>, AccessContextSPI<?>>() {
         @Override
         public AccessContextSPI<?> addingService(ServiceReference<AccessContextSPI<?>> reference) {
