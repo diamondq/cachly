@@ -49,15 +49,19 @@ public class AbstractKey<O extends @Nullable Object> implements KeySPI<O> {
   public AbstractKey(String pKey, Type pOutputType, boolean pHasPlaceholders) {
     mKey = pKey;
     mOutputType = pOutputType;
-    @SuppressWarnings({ "null", "unchecked" }) KeySPI<@Nullable Object>[] tempParts = new KeySPI[] { this };
-    mParts = tempParts;
     mHasPlaceholders = pHasPlaceholders;
+    @SuppressWarnings(
+      { "null", "unchecked", "array.initializer.type.incompatible" }) KeySPI<@Nullable Object>[] tempParts = new KeySPI[] { this };
+    mParts = tempParts;
   }
 
   @Override
+  @SuppressWarnings("not.interned")
   public void clearKeyDetails() {
     mKeyDetails = null;
-    for (KeySPI<@Nullable Object> part : mParts) if (part != this) part.clearKeyDetails();
+    for (KeySPI<@Nullable Object> part : mParts) {
+      if (part != this) part.clearKeyDetails();
+    }
   }
 
   @Override
@@ -171,9 +175,9 @@ public class AbstractKey<O extends @Nullable Object> implements KeySPI<O> {
 
   @Override
   public boolean equals(@Nullable Object pObj) {
-    if (pObj == null) return false;
     if (pObj == this) return true;
-    if (!pObj.getClass().equals(getClass())) return false;
+    if (pObj == null) return false;
+    if (pObj.getClass() != getClass()) return false;
     @SuppressWarnings("unchecked") AbstractKey<O> other = (AbstractKey<O>) pObj;
     return Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType) && Objects.equals(
       mHasPlaceholders,

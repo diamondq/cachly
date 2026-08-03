@@ -29,5 +29,10 @@
       <groupId>jakarta.inject</groupId>
       <artifactId>jakarta.inject-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.github.eisop</groupId>
+      <artifactId>checker-qual</artifactId>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 </project>

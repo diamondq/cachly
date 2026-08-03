@@ -7,12 +7,11 @@ import com.esotericsoftware.kryo.io.Output;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.jspecify.annotations.Nullable;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.nio.ByteBuffer;
-import java.util.Objects;
 
 /**
  * Converts an object into a byte array using the Kryo serializer
@@ -24,7 +23,7 @@ public class ObjectToByteBufferConverter extends AbstractConverter<Object, ByteB
    * Kryo object
    */
   @Reference
-  protected @Nullable Kryo mKryo;
+  protected @MonotonicNonNull Kryo mKryo;
 
   /**
    * CDI constructor
@@ -42,13 +41,13 @@ public class ObjectToByteBufferConverter extends AbstractConverter<Object, ByteB
    */
   public ObjectToByteBufferConverter() {
     super(Object.class, ByteBuffer.class, "kryo");
-    mKryo = null;
   }
 
   @Override
   public ByteBuffer convert(Object pInput) {
     try (Output output = new Output(1, Integer.MAX_VALUE)) {
-      Objects.requireNonNull(mKryo).writeClassAndObject(output, pInput);
+      if (mKryo == null) throw new IllegalStateException("Kryo instance is null");
+      mKryo.writeClassAndObject(output, pInput);
       output.flush();
       return ByteBuffer.wrap(output.getBuffer());
     }

@@ -19,9 +19,14 @@ import com.diamondq.cachly.spi.StaticKey;
 import com.diamondq.cachly.spi.StaticKeyPlaceholder;
 import com.diamondq.cachly.spi.StaticKeyPlaceholderWithDefault;
 import com.diamondq.common.converters.ConverterManager;
+import com.diamondq.common.errors.DQRuntimeException;
 import com.diamondq.common.lambda.interfaces.Consumer3;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.RequiresNonNull;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.GenericArrayType;
@@ -38,7 +43,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -53,7 +57,7 @@ import java.util.stream.Stream;
  * This is the main abstract class for implementing Cache Storages. It provides a lot of the functionality that is
  * reused across all implementations.
  *
- * @param <CACHE> the underlying Cache type (i.e. EhCache)
+ * @param <CACHE> the underlying Cache type (i.e., EhCache)
  * @param <SER_KEY> the underlying type of the key
  */
 public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStorage {
@@ -158,89 +162,89 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   /**
    * The map of strings to short ids
    */
-  protected final           ConcurrentMap<String, Short>    mStringToShort;
+  protected final              ConcurrentMap<String, Short>    mStringToShort;
   /**
    * The map of short ids to strings
    */
-  protected final           ConcurrentMap<Short, String>    mShortToString;
+  protected final              ConcurrentMap<Short, String>    mShortToString;
   /**
    * The counter for tracking string ids
    */
-  protected final           AtomicInteger                   mStringCounter;
+  protected final              AtomicInteger                   mStringCounter;
   /**
    * The prefix to write before strings
    */
-  protected final           String                          mStringPrefix;
+  protected final              String                          mStringPrefix;
   /**
    * The length of the string prefix (for performance)
    */
-  protected final           int                             mStringPrefixLen;
+  protected final @NonNegative int                             mStringPrefixLen;
   /**
    * The map of types to short ids
    */
-  protected final           ConcurrentMap<Type, Short>      mTypeToShort;
+  protected final              ConcurrentMap<Type, Short>      mTypeToShort;
   /**
    * The map of short ids to types
    */
-  protected final           ConcurrentMap<Short, Type>      mShortToType;
+  protected final              ConcurrentMap<Short, Type>      mShortToType;
   /**
    * The counter for tracking type ids
    */
-  protected final           AtomicInteger                   mTypeCounter;
+  protected final              AtomicInteger                   mTypeCounter;
   /**
    * The prefix to write before types
    */
-  protected final           String                          mTypePrefix;
+  protected final              String                          mTypePrefix;
   /**
    * The length of the type prefix (for performance)
    */
-  protected final           int                             mTypePrefixLen;
+  protected final @NonNegative int                             mTypePrefixLen;
   /**
    * The map of keys to short ids
    */
-  protected final           ConcurrentMap<Key<?>, Short>    mKeyToShort;
+  protected final              ConcurrentMap<Key<?>, Short>    mKeyToShort;
   /**
    * The map of short ids to keys
    */
-  protected final           ConcurrentMap<Short, Key<?>>    mShortToKey;
+  protected final              ConcurrentMap<Short, Key<?>>    mShortToKey;
   /**
    * The counter for tracking key ids
    */
-  protected final           AtomicInteger                   mKeyCounter;
+  protected final              AtomicInteger                   mKeyCounter;
   /**
    * The key prefix
    */
-  protected final           String                          mKeyPrefix;
+  protected final              String                          mKeyPrefix;
   /**
    * The length of the key prefix (for performance)
    */
-  protected final           int                             mKeyPrefixLen;
+  protected final @NonNegative int                             mKeyPrefixLen;
   /**
    * The prefix to put on all value keys
    */
-  protected final @Nullable String                          mValuePrefix;
+  protected final @Nullable    String                          mValuePrefix;
   /**
    * The length of the value prefix
    */
-  protected final           int                             mValuePrefixLen;
+  protected final @NonNegative int                             mValuePrefixLen;
   /**
    * Indicates whether the value should be serialized (because the underlying cache is going to write it, or whether it
    * can be kept as an object
    */
-  protected final           boolean                         mSerializeValue;
+  protected final              boolean                         mSerializeValue;
   /**
    * Storage of the keys and the callbacks
    */
-  protected final           Map<String, List<CallbackInfo>> mCallbacks;
+  protected final              Map<String, List<CallbackInfo>> mCallbacks;
 
   /**
    * The map of keys to callback semaphores
    */
-  protected final     Map<String, Semaphore> mCallbackSemaphores;
+  protected final             Map<String, Semaphore> mCallbackSemaphores;
   /**
    * The Cache engine
    */
-  protected @Nullable CacheEngine            mCacheEngine;
+  protected @MonotonicNonNull CacheEngine            mCacheEngine;
 
   /**
    * Primary constructor
@@ -299,7 +303,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     mCallbackSemaphores = new ConcurrentHashMap<>();
 
     if (!mSerializeValue) {
-      if (!mSerValueClass.equals(MemoryStorageData.class)) {
+      if (mSerValueClass != MemoryStorageData.class) {
         throw new IllegalArgumentException(
           "Only a SER_VALUE of MemoryStorageData.class is supported for non-serializing caches");
       }
@@ -317,6 +321,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
         SER_KEY key = entry.getKey();
         String keyStr = (mKeyDeserializer != null ? mKeyDeserializer.apply(key) : (String) key);
         if (keyStr.startsWith(mStringPrefix)) {
+          var keyStrLen = keyStr.length();
+          if (keyStrLen <= mStringPrefixLen) throw new IllegalStateException("Key string is too short");
           short id = Short.parseShort(keyStr.substring(mStringPrefixLen));
           Object value = entry.getValue();
           ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
@@ -328,6 +334,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           mShortToString.put(id, valueStr);
           if (id > mStringCounter.get()) mStringCounter.set(id);
         } else if (keyStr.startsWith(mTypePrefix)) {
+          var keyStrLen = keyStr.length();
+          if (keyStrLen <= mTypePrefixLen) throw new IllegalStateException("Key string is too short");
           short id = Short.parseShort(keyStr.substring(mTypePrefixLen));
           Object value = entry.getValue();
           ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
@@ -354,6 +362,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           mShortToType.put(id, type);
           if (id > mTypeCounter.get()) mTypeCounter.set(id);
         } else if (keyStr.startsWith(mKeyPrefix)) {
+          var keyStrLen = keyStr.length();
+          if (keyStrLen <= mKeyPrefixLen) throw new IllegalStateException("Key string is too short");
           short id = Short.parseShort(keyStr.substring(mKeyPrefixLen));
           Object value = entry.getValue();
           ByteBuffer valueBuffer = convertSERVALUEtoByteBuffer(value);
@@ -400,8 +410,11 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
             }
 
             Type ownerType = decompressType(ownerTypeId);
-            Class<?> rawType = (Class<?>) Objects.requireNonNull(decompressType(rawTypeId));
+            var raw = decompressType(rawTypeId);
+            if (raw == null) throw new IllegalArgumentException("null not supported");
+            Class<?> rawType = (Class<?>) raw;
             short actualTypeArgumentsLen = valueBuffer.getShort();
+            if (actualTypeArgumentsLen < 0) throw new IllegalStateException("actualTypeArgumentsLen is negative");
             Type[] actualTypeArguments = new Type[actualTypeArgumentsLen];
             for (short shortI = 0; shortI < actualTypeArgumentsLen; shortI++) {
               short actualTypeId = valueBuffer.getShort();
@@ -409,7 +422,9 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
                 delayed.put(id, valueBuffer);
                 continue TemporaryTypeLoop;
               }
-              actualTypeArguments[shortI] = Objects.requireNonNull(decompressType(actualTypeId));
+              var actualType = decompressType(actualTypeId);
+              if (actualType == null) throw new IllegalArgumentException("null not supported");
+              actualTypeArguments[shortI] = actualType;
             }
             if (ownerType != null) {
               type = TypeUtils.parameterizeWithOwner(ownerType, rawType, actualTypeArguments);
@@ -422,36 +437,46 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
               delayed.put(id, valueBuffer);
               continue;
             }
-            Type gaType = Objects.requireNonNull(decompressType(gaTypeId));
+            var gaType = decompressType(gaTypeId);
+            if (gaType == null) throw new IllegalArgumentException("null not supported");
             type = TypeUtils.genericArrayType(gaType);
           } else if (typeType == TYPE_VARIABLE) {
-            throw new UnsupportedOperationException();
+            throw new UnsupportedOperationException("Variable Types are not supported");
           } else if (typeType == TYPE_WILDCARD) {
             short lowerBoundsLen = valueBuffer.getShort();
+            if (lowerBoundsLen < 0) throw new IllegalStateException("lowerBoundsLen is negative");
             Type[] lowerBounds = lowerBoundsLen == 0 ? null : new Type[lowerBoundsLen];
             short upperBoundsLen = valueBuffer.getShort();
-            Type[] upperBounds = upperBoundsLen == 0 ? null : new Type[lowerBoundsLen];
-            if (lowerBoundsLen > 0) {
-              for (short shortI = 0; shortI < lowerBoundsLen; shortI++) {
+            if (upperBoundsLen < 0) throw new IllegalStateException("upperBoundsLen is negative");
+            Type[] upperBounds = upperBoundsLen == 0 ? null : new Type[upperBoundsLen];
+            if (lowerBounds != null) {
+              for (short shortI = 0; shortI < lowerBounds.length; shortI++) {
                 short lowerBoundsTypeId = valueBuffer.getShort();
                 if (!mShortToType.containsKey(lowerBoundsTypeId)) {
                   delayed.put(id, valueBuffer);
                   continue TemporaryTypeLoop;
                 }
-                lowerBounds[shortI] = Objects.requireNonNull(decompressType(lowerBoundsTypeId));
+                var lowerBoundsType = decompressType(lowerBoundsTypeId);
+                if (lowerBoundsType == null) throw new IllegalArgumentException("null not supported");
+                lowerBounds[shortI] = lowerBoundsType;
               }
             }
             if ((upperBoundsLen > 0) && (upperBounds != null)) {
-              for (short shortI = 0; shortI < upperBoundsLen; shortI++) {
+              for (short shortI = 0; shortI < upperBounds.length; shortI++) {
                 short upperBoundsTypeId = valueBuffer.getShort();
                 if (!mShortToType.containsKey(upperBoundsTypeId)) {
                   delayed.put(id, valueBuffer);
                   continue TemporaryTypeLoop;
                 }
-                upperBounds[shortI] = Objects.requireNonNull(decompressType(upperBoundsTypeId));
+                var upperBoundsType = decompressType(upperBoundsTypeId);
+                if (upperBoundsType == null) throw new IllegalArgumentException("null not supported");
+                upperBounds[shortI] = upperBoundsType;
               }
             }
-            type = TypeUtils.wildcardType().withLowerBounds(lowerBounds).withUpperBounds(upperBounds).build();
+            var typeBuilder = TypeUtils.wildcardType();
+            if (lowerBounds != null) typeBuilder.withLowerBounds(lowerBounds);
+            if (upperBounds != null) typeBuilder.withUpperBounds(upperBounds);
+            type = typeBuilder.build();
           } else {
             throw new IllegalArgumentException("Unrecognized type (" + typeType + ")");
           }
@@ -470,10 +495,12 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
         ByteBuffer valueBuffer = entry.getValue();
         valueBuffer.rewind();
         int partLen = valueBuffer.limit() / 4;
-        @SuppressWarnings("unchecked") KeySPI<Object>[] parts = new KeySPI[partLen];
+        @SuppressWarnings("unchecked") KeySPI<@Nullable Object>[] parts = new KeySPI[partLen];
         for (int i = 0; i < partLen; i++) {
-          Type keyType = Objects.requireNonNull(decompressType(valueBuffer.getShort()));
-          String keyBase = Objects.requireNonNull(decompressString(valueBuffer.getShort()));
+          var keyType = decompressType(valueBuffer.getShort());
+          if (keyType == null) throw new IllegalArgumentException("null not supported");
+          String keyBase = decompressString(valueBuffer.getShort());
+          if (keyBase == null) throw new IllegalArgumentException("null not supported");
           parts[i] = new StaticKey<>(keyBase, keyType);
         }
         Key<?> shortKey = new CompositeKey<>(parts);
@@ -515,7 +542,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * @param pResult the cached value
    * @return the stream
    */
-  protected <V> List<CommonKeyValuePair<CACHE, SER_KEY>> serializeEntry(KeySPI<V> pKey, CacheResult<V> pResult) {
+  protected <V extends @Nullable Object> List<CommonKeyValuePair<CACHE, SER_KEY>> serializeEntry(KeySPI<V> pKey,
+    CacheResult<V> pResult) {
 
     String fullKey = pKey.toString();
 
@@ -535,8 +563,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
       Duration overrideExpiry = pResult.getOverrideExpiry();
       boolean isNull = pResult.isNull();
       V value = isNull ? null : pResult.getValue();
-      @SuppressWarnings(
-        { "null", "unchecked" }) Class<V> valueClass = !isNull ? (Class<V>) value.getClass() : (Class<V>) outputType;
+      @SuppressWarnings({ "null", "unchecked" }) Class<V> valueClass =
+        value != null ? (Class<V>) value.getClass() : (Class<V>) outputType;
 
       List<CommonKeyValuePair<CACHE, SER_KEY>> listOfEntries = new ArrayList<>();
 
@@ -552,7 +580,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
       ByteBuffer valueBuffer;
       int valueBufferSize;
 
-      if (!isNull) {
+      if (value != null) {
         valueBuffer = mConverterManager.convert(value, ByteBuffer.class, serializer);
         valueBuffer.rewind();
         valueBufferSize = valueBuffer.limit();
@@ -622,7 +650,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
       /* Write the data */
 
-      if (valueBufferSize > 0) result.put(valueBuffer);
+      if (valueBuffer != null && valueBufferSize > 0) result.put(valueBuffer);
       result.rewind();
 
       /* Calculate the final value */
@@ -653,7 +681,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    *
    * @return the entries
    */
-  protected abstract Stream<Map.Entry<SER_KEY, ?>> streamPrimary();
+  protected abstract Stream<Map.Entry<SER_KEY, ? extends Object>> streamPrimary();
 
   /**
    * Provides a stream of entries from the meta. NOTE: If meta is not a separate cache, then it is expected that regular
@@ -661,7 +689,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    *
    * @return the entries
    */
-  protected abstract Stream<Map.Entry<SER_KEY, ?>> streamMetaEntries();
+  protected abstract Stream<Map.Entry<SER_KEY, ? extends Object>> streamMetaEntries();
 
   /**
    * Deserializes a SER_KEY and SER_VALUE into a Key<?> and CacheResult<?>
@@ -675,7 +703,11 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     String fullKey = (mKeyDeserializer != null ? mKeyDeserializer.apply(pKey) : (String) pKey);
 
     //noinspection VariableNotUsedInsideIf
-    if (mValuePrefix != null) fullKey = fullKey.substring(mValuePrefixLen);
+    if (mValuePrefix != null) {
+      var fullKeyLen = fullKey.length();
+      if (fullKeyLen <= mValuePrefixLen) throw new IllegalStateException("Key string is too short");
+      fullKey = fullKey.substring(mValuePrefixLen);
+    }
 
     if (pValue == null) return new SimpleEntry<>(new CompositeKey<>(fullKey, Object.class), CacheResult.notFound());
 
@@ -708,10 +740,13 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
       /* Decompress ids */
 
-      String baseKey = Objects.requireNonNull(decompressString(baseKeyId));
+      String baseKey = decompressString(baseKeyId);
+      if (baseKey == null) throw new IllegalArgumentException("null not supported");
       String serializer = decompressString(serializerId);
-      Type outputType = Objects.requireNonNull(decompressType(outputTypeId));
-      Type valueClass = Objects.requireNonNull(decompressType(valueClassId));
+      var outputType = decompressType(outputTypeId);
+      if (outputType == null) throw new IllegalArgumentException("null not supported");
+      var valueClass = decompressType(valueClassId);
+      if (valueClass == null) throw new IllegalArgumentException("null not supported");
 
       /* Now generate the Key */
 
@@ -723,7 +758,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           "The base key (" + baseKey + ") doesn't have the same number of parts as the full key (" + fullKey + ")");
       }
 
-      @SuppressWarnings("unchecked") KeySPI<Object>[] parts = new KeySPI[keyLen];
+      @SuppressWarnings("unchecked") KeySPI<? extends @Nullable Object>[] parts = new KeySPI[keyLen];
 
       for (int i = 0; i < keyLen; i++) {
         String partBaseKey = baseSplit[i];
@@ -854,76 +889,86 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
             mKeySerializer != null ? mKeySerializer.apply(typeKey) : (SER_KEY) typeKey);
           int size = 1;
           byte[] extra;
-          if (type instanceof Class) {
-            String className = ClassUtils.getCanonicalName((Class<?>) type);
-            extra = className.getBytes(StandardCharsets.UTF_8);
-            size += extra.length;
-          } else if (type instanceof ParameterizedType pt) {
-            short ownerTypeId = compressType(pt.getOwnerType(), pWriteList);
-            short rawTypeId = compressType(pt.getRawType(), pWriteList);
-            Type[] actualTypeArguments = pt.getActualTypeArguments();
-            //noinspection NumericCastThatLosesPrecision
-            short actualTypeArgumentsLen = (short) actualTypeArguments.length;
-            ByteBuffer extraBuffer = ByteBuffer.allocate(6 + (actualTypeArgumentsLen * 2));
-            extraBuffer.putShort(ownerTypeId);
-            extraBuffer.putShort(rawTypeId);
-            extraBuffer.putShort(actualTypeArgumentsLen);
-            for (Type typeArg : actualTypeArguments) {
-              short typeArgId = compressType(typeArg, pWriteList);
-              extraBuffer.putShort(typeArgId);
+          switch (type) {
+            case Class<?> aClass -> {
+              String className = ClassUtils.getCanonicalName(aClass);
+              extra = className.getBytes(StandardCharsets.UTF_8);
+              size += extra.length;
             }
-            extraBuffer.rewind();
-            extra = extraBuffer.array();
-            size += extra.length;
-          } else if (type instanceof GenericArrayType gat) {
-            short gctId = compressType(gat.getGenericComponentType(), pWriteList);
-            ByteBuffer extraBuffer = ByteBuffer.allocate(2);
-            extraBuffer.putShort(gctId);
-            extraBuffer.rewind();
-            extra = extraBuffer.array();
-            size += extra.length;
-          } else if (type instanceof TypeVariable) {
-            throw new UnsupportedOperationException();
-          } else if (type instanceof WildcardType wt) {
-            Type[] lowerBounds = wt.getLowerBounds();
-            //noinspection NumericCastThatLosesPrecision
-            short lowerBoundsLen = (short) lowerBounds.length;
-            Type[] upperBounds = wt.getUpperBounds();
-            //noinspection NumericCastThatLosesPrecision
-            short upperBoundsLen = (short) upperBounds.length;
-            ByteBuffer extraBuffer = ByteBuffer.allocate(4 + ((lowerBoundsLen + upperBoundsLen) * 2));
-            extraBuffer.putShort(lowerBoundsLen);
-            extraBuffer.putShort(upperBoundsLen);
-            for (Type typeArg : lowerBounds) {
-              short typeArgId = compressType(typeArg, pWriteList);
-              extraBuffer.putShort(typeArgId);
+            case ParameterizedType pt -> {
+              short ownerTypeId = compressType(pt.getOwnerType(), pWriteList);
+              short rawTypeId = compressType(pt.getRawType(), pWriteList);
+              Type[] actualTypeArguments = pt.getActualTypeArguments();
+              //noinspection NumericCastThatLosesPrecision
+              short actualTypeArgumentsLen = (short) actualTypeArguments.length;
+              ByteBuffer extraBuffer = ByteBuffer.allocate(6 + (actualTypeArgumentsLen * 2));
+              extraBuffer.putShort(ownerTypeId);
+              extraBuffer.putShort(rawTypeId);
+              extraBuffer.putShort(actualTypeArgumentsLen);
+              for (Type typeArg : actualTypeArguments) {
+                short typeArgId = compressType(typeArg, pWriteList);
+                extraBuffer.putShort(typeArgId);
+              }
+              extraBuffer.rewind();
+              extra = extraBuffer.array();
+              size += extra.length;
             }
-            for (Type typeArg : upperBounds) {
-              short typeArgId = compressType(typeArg, pWriteList);
-              extraBuffer.putShort(typeArgId);
+            case GenericArrayType gat -> {
+              short gctId = compressType(gat.getGenericComponentType(), pWriteList);
+              ByteBuffer extraBuffer = ByteBuffer.allocate(2);
+              extraBuffer.putShort(gctId);
+              extraBuffer.rewind();
+              extra = extraBuffer.array();
+              size += extra.length;
             }
-            extraBuffer.rewind();
-            extra = extraBuffer.array();
-            size += extra.length;
-          } else {
-            throw new IllegalArgumentException("Unrecognized type (" + type.getClass().getName() + ")");
+            case WildcardType wt -> {
+              Type[] lowerBounds = wt.getLowerBounds();
+              //noinspection NumericCastThatLosesPrecision
+              short lowerBoundsLen = (short) lowerBounds.length;
+              Type[] upperBounds = wt.getUpperBounds();
+              //noinspection NumericCastThatLosesPrecision
+              short upperBoundsLen = (short) upperBounds.length;
+              ByteBuffer extraBuffer = ByteBuffer.allocate(4 + ((lowerBoundsLen + upperBoundsLen) * 2));
+              extraBuffer.putShort(lowerBoundsLen);
+              extraBuffer.putShort(upperBoundsLen);
+              for (Type typeArg : lowerBounds) {
+                short typeArgId = compressType(typeArg, pWriteList);
+                extraBuffer.putShort(typeArgId);
+              }
+              for (Type typeArg : upperBounds) {
+                short typeArgId = compressType(typeArg, pWriteList);
+                extraBuffer.putShort(typeArgId);
+              }
+              extraBuffer.rewind();
+              extra = extraBuffer.array();
+              size += extra.length;
+            }
+            default -> throw new IllegalArgumentException("Unrecognized type (" + type.getClass().getName() + ")");
           }
           ByteBuffer buffer = ByteBuffer.allocate(size);
-          if (type instanceof Class) {
-            buffer.put(TYPE_CLASS);
-            buffer.put(extra);
-          } else if (type instanceof ParameterizedType) {
-            buffer.put(TYPE_PARAMETERIZED);
-            buffer.put(extra);
-          } else if (type instanceof GenericArrayType) {
-            buffer.put(TYPE_GENERIC_ARRAY);
-            buffer.put(extra);
-          } else if (type instanceof TypeVariable) {
-            buffer.put(TYPE_VARIABLE);
-            buffer.put(extra);
-          } else if (type instanceof WildcardType) {
-            buffer.put(TYPE_WILDCARD);
-            buffer.put(extra);
+          switch (type) {
+            case Class<?> _ -> {
+              buffer.put(TYPE_CLASS);
+              buffer.put(extra);
+            }
+            case ParameterizedType _ -> {
+              buffer.put(TYPE_PARAMETERIZED);
+              buffer.put(extra);
+            }
+            case GenericArrayType _ -> {
+              buffer.put(TYPE_GENERIC_ARRAY);
+              buffer.put(extra);
+            }
+            case TypeVariable<?> _ -> {
+              buffer.put(TYPE_VARIABLE);
+              buffer.put(extra);
+            }
+            case WildcardType _ -> {
+              buffer.put(TYPE_WILDCARD);
+              buffer.put(extra);
+            }
+            default -> {
+            }
           }
           buffer.rewind();
           Object idValue = convertByteBufferToSERVALUE(buffer);
@@ -949,7 +994,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     Type type = mShortToType.get(pTypeId);
     if (type == null)
       throw new IllegalArgumentException("The type id (" + String.valueOf(pTypeId) + ") is not recognized");
-    if (type == NULL_TYPE) return null;
+    if (type.equals(NULL_TYPE)) return null;
     return type;
   }
 
@@ -973,7 +1018,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
           /* Verify that this key is just made up of static keys */
 
-          KeySPI<Object>[] parts = pKey.getParts();
+          KeySPI<? extends @Nullable Object>[] parts = pKey.getParts();
           int partsLen = parts.length;
           ByteBuffer buffer = ByteBuffer.allocate(4 * partsLen);
           for (KeySPI<?> p : parts) {
@@ -1025,9 +1070,9 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     /* Shortcut if they are the same */
 
-    if (ByteBuffer.class.equals(mSerValueClass)) return pValue;
-    if (byte[].class.equals(mSerValueClass)) return pValue.array();
-    return mConverterManager.convert(pValue, mSerValueClass);
+    if (mSerValueClass == ByteBuffer.class) return pValue;
+    if (mSerValueClass == byte[].class) return pValue.array();
+    return mConverterManager.<ByteBuffer, Object>convert(pValue, mSerValueClass);
   }
 
   /**
@@ -1041,20 +1086,21 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     if (mSerializeValue) {
       /* Shortcut if they are the same */
 
-      if (ByteBuffer.class.equals(mSerValueClass)) {
+      if (mSerValueClass == ByteBuffer.class) {
         return (ByteBuffer) pValue;
       }
-      if (byte[].class.equals(mSerValueClass)) {
+      if (mSerValueClass == byte[].class) {
         return ByteBuffer.wrap((byte[]) pValue);
       }
       return mConverterManager.convert(pValue, ByteBuffer.class);
     }
 
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Unsupported storage if serialize value is disabled");
   }
 
   @Override
-  public <V> void store(AccessContext pAccessContext, KeySPI<V> pKey, CacheResult<V> pLoadedResult) {
+  public <V extends @Nullable Object> void store(AccessContext pAccessContext, KeySPI<V> pKey,
+    CacheResult<V> pLoadedResult) {
 
     /* Convert the data into the things to actually write */
 
@@ -1082,7 +1128,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * @param <O> the key type
    * @return true if there is a callback or false otherwise
    */
-  protected <O> boolean hasCallback(KeySPI<O> pKey) {
+  protected <O extends @Nullable Object> boolean hasCallback(KeySPI<O> pKey) {
     var callbackInfoList = mCallbacks.get(pKey.toString());
     return callbackInfoList != null && !callbackInfoList.isEmpty();
   }
@@ -1094,14 +1140,15 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * @param pEvent the event
    * @param <O> the key type
    */
-  private <O> void callCallbacks(KeySPI<O> pKey, CacheKeyEvent pEvent) {
+  @RequiresNonNull("mCacheEngine")
+  private <O extends @Nullable Object> void callCallbacks(KeySPI<O> pKey, CacheKeyEvent pEvent) {
     var callbackInfoList = mCallbacks.get(pKey.toString());
     if (callbackInfoList != null) {
       for (var callbackInfo : callbackInfoList) {
         @SuppressWarnings(
-          { "unchecked", "rawtypes" }) Consumer3<Key<O>, CacheKeyEvent, Optional<O>> castedCallback = (Consumer3<Key<O>, CacheKeyEvent, Optional<O>>) (Consumer3) callbackInfo.callback;
+          { "unchecked", "rawtypes" }) Consumer3<Key<O>, CacheKeyEvent, Optional<@NonNull O>> castedCallback = (Consumer3<Key<O>, CacheKeyEvent, Optional<@NonNull O>>) (Consumer3) callbackInfo.callback;
 
-        var cacheEngine = Objects.requireNonNull(mCacheEngine);
+        var cacheEngine = mCacheEngine;
         var value = cacheEngine.getIfPresent(callbackInfo.accessContext, pKey);
 
         /* Check if the value is different */
@@ -1114,11 +1161,11 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     }
 
     if (pEvent == CacheKeyEvent.REMOVED) {
-      if (!pKey.hasKeyDetails()) Objects.requireNonNull(mCacheEngine).setupKey(pKey);
+      if (!pKey.hasKeyDetails()) mCacheEngine.setupKey(pKey);
       var loader = pKey.getLoader();
       if (loader instanceof CacheInvalidator) {
         @SuppressWarnings("unchecked") CacheInvalidator<O> ci = (CacheInvalidator<O>) loader;
-        ci.invalidate(Objects.requireNonNull(mCacheEngine), pKey);
+        ci.invalidate(mCacheEngine, pKey);
       }
     }
 
@@ -1133,7 +1180,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * @param <V> the key type
    * @return the optional semaphore
    */
-  protected <V> Optional<Semaphore> prepareSemphore(KeySPI<V> pKey) {
+  protected <V extends @Nullable Object> Optional<Semaphore> prepareSemphore(KeySPI<V> pKey) {
     String keyStr = pKey.toString();
 
     /* Check to see if there is a callback for this key */
@@ -1142,7 +1189,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     if (callbackList == null) return Optional.empty();
     if (callbackList.isEmpty()) return Optional.empty();
 
-    return Optional.of(mCallbackSemaphores.computeIfAbsent(keyStr, (localKey) -> new Semaphore(0)));
+    return Optional.of(mCallbackSemaphores.computeIfAbsent(keyStr, (_) -> new Semaphore(0)));
   }
 
   /**
@@ -1157,12 +1204,12 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
       semaphore.acquire();
     }
     catch (InterruptedException ex) {
-      throw new RuntimeException(ex);
+      throw new DQRuntimeException(ex);
     }
   }
 
   @Override
-  public <V> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey) {
+  public <V extends @Nullable Object> void invalidate(AccessContext pAccessContext, KeySPI<V> pKey) {
 
     /* Get the key string */
 
@@ -1200,15 +1247,17 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     /* Get the set of data */
 
-    Stream<Map.Entry<SER_KEY, ?>> rawStream = streamPrimary();
+    Stream<Map.Entry<SER_KEY, ? extends Object>> rawStream = streamPrimary();
 
     /* If there is no separate meta-cache, then the metadata may be present */
 
-    if ((mMetaCache == null) && (mValuePrefix != null)) {
-      if (mKeyDeserializer != null) {
-        rawStream = rawStream.filter((entry) -> mKeyDeserializer.apply(entry.getKey()).startsWith(mValuePrefix));
+    var valuePrefix = mValuePrefix;
+    if ((mMetaCache == null) && (valuePrefix != null)) {
+      var keyDeserializer = mKeyDeserializer;
+      if (keyDeserializer != null) {
+        rawStream = rawStream.filter((entry) -> keyDeserializer.apply(entry.getKey()).startsWith(valuePrefix));
       } else {
-        rawStream = rawStream.filter((entry) -> ((String) entry.getKey()).startsWith(mValuePrefix));
+        rawStream = rawStream.filter((entry) -> ((String) entry.getKey()).startsWith(valuePrefix));
       }
     }
 
@@ -1218,7 +1267,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   }
 
   @Override
-  public <V> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey) {
+  public <V extends @Nullable Object> CacheResult<V> queryForKey(AccessContext pAccessContext, KeySPI<V> pKey) {
 
     /* Get the key string */
 
@@ -1248,10 +1297,10 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   }
 
   @Override
-  public <V> void registerOnChange(AccessContext pAccessContext, KeySPI<V> pKey,
-    Consumer3<Key<V>, CacheKeyEvent, Optional<V>> pCallback) {
+  public <V extends @Nullable Object> void registerOnChange(AccessContext pAccessContext, KeySPI<V> pKey,
+    Consumer3<Key<V>, CacheKeyEvent, Optional<@NonNull V>> pCallback) {
 
-    var list = mCallbacks.computeIfAbsent(pKey.toString(), (localKey) -> new CopyOnWriteArrayList<>());
+    var list = mCallbacks.computeIfAbsent(pKey.toString(), (_) -> new CopyOnWriteArrayList<>());
     @SuppressWarnings(
       { "unchecked", "rawtypes" }) Consumer3<Key<?>, CacheKeyEvent, Optional<?>> callback = (Consumer3<Key<?>, CacheKeyEvent, Optional<?>>) (Consumer3) pCallback;
     list.add(new CallbackInfo(pAccessContext, callback));
@@ -1282,7 +1331,10 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     /* Because this might be called on a non-reentrant thread, move the querying for real data into another thread */
 
-    mExecutorService.submit(() -> callCallbacks(keyObj, pEvent));
+    mExecutorService.submit(() -> {
+      if (mCacheEngine == null) throw new IllegalStateException("The cache engine has not been set");
+      callCallbacks(keyObj, pEvent);
+    });
   }
 
   private static class NULL_TYPE_CLASS {

@@ -31,6 +31,8 @@ import com.diamondq.common.lambda.interfaces.Consumer3;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -61,29 +63,29 @@ import java.util.stream.Stream;
  */
 @Singleton
 @Component(service = Cache.class)
-public class CacheEngineImpl implements CacheEngine {
+public final class CacheEngineImpl implements CacheEngine {
 
   /**
    * The callback handler
    */
-  @Reference protected CacheCallbackHandler mCallbackHandler;
+  @Reference private CacheCallbackHandler mCallbackHandler;
   /**
    * The executor service
    */
-  @Reference protected ExecutorService      mExecutorService;
+  @Reference private ExecutorService      mExecutorService;
   /**
    * The converter manager
    */
-  @Reference protected ConverterManager     mConverterManager;
+  @Reference private ConverterManager     mConverterManager;
   /**
    * The context factory
    */
-  @Reference protected ContextFactory       mContextFactory;
+  @Reference private ContextFactory       mContextFactory;
 
   /**
    * Defines the bean name locators that are available
    */
-  protected final List<BeanNameLocator> mBeanNameLocators = new CopyOnWriteArrayList<>();
+  private final List<BeanNameLocator> mBeanNameLocators = new CopyOnWriteArrayList<>();
 
   private final Map<String, CacheStorage> mCacheStorageByPath = new ConcurrentHashMap<>();
 
@@ -93,7 +95,9 @@ public class CacheEngineImpl implements CacheEngine {
 
   private final Map<String, String> mSerializerNameByPath = new ConcurrentHashMap<>();
 
-  private static final ThreadLocal<ArrayDeque<Set<String>>> sMonitored = ThreadLocal.withInitial(ArrayDeque::new);
+  @SuppressWarnings(
+    "type.argument") private static final ThreadLocal<ArrayDeque<Set<String>>> sMonitored = ThreadLocal.withInitial(
+    ArrayDeque::new);
 
   private final KeySPI<CacheInfo> mStorageKey = (KeySPI<CacheInfo>) KeyBuilder.of(CacheInfoLoader.CACHE_INFO_NAME,
     new TypeReference<CacheInfo>() { // type
@@ -101,7 +105,7 @@ public class CacheEngineImpl implements CacheEngine {
     }
   );
 
-  private @Nullable CacheInfo mCacheInfo;
+  private @MonotonicNonNull CacheInfo mCacheInfo;
 
   private final AccessContext mEmptyAccessContext = new AccessContextImpl(Collections.emptyMap());
 
@@ -112,6 +116,7 @@ public class CacheEngineImpl implements CacheEngine {
   /**
    * Constructor for OSGi-based solutions
    */
+  @SuppressWarnings({ "initialization.fields.uninitialized", "contracts.postcondition.not.satisfied" })
   public CacheEngineImpl() {
   }
 
@@ -229,6 +234,7 @@ public class CacheEngineImpl implements CacheEngine {
   @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
   public void addPathConfiguration(CachlyPathConfiguration pPathConfig) {
     String storage = pPathConfig.getStorage();
+    if (storage == null) throw new IllegalArgumentException("The storage cannot be null");
     String serializerName = pPathConfig.getSerializer();
     String path = pPathConfig.getName();
     CacheStorage cacheStorage = mCacheStorageByName.get(storage);
@@ -246,10 +252,12 @@ public class CacheEngineImpl implements CacheEngine {
   @Override
   public void removePathConfiguration(CachlyPathConfiguration pPathConfig) {
     String storage = pPathConfig.getStorage();
+    if (storage == null) throw new IllegalArgumentException("The storage cannot be null");
     String path = pPathConfig.getName();
     var cacheStorage = mCacheStorageByName.get(storage);
     if (cacheStorage != null) mCacheStorageByPath.remove(path, cacheStorage);
-    mSerializerNameByPath.remove(path, pPathConfig.getSerializer());
+    var serializer = pPathConfig.getSerializer();
+    if (serializer != null) mSerializerNameByPath.remove(path, serializer);
   }
 
   private void finishSetup() {
@@ -384,27 +392,29 @@ public class CacheEngineImpl implements CacheEngine {
     return result;
   }
 
-  private record PlaceHolderResult<O>(KeySPI<O> key, @Nullable Set<String> placeholderDependencies) {
+  private record PlaceHolderResult<O extends @Nullable Object>(KeySPI<O> key,
+                                                               @Nullable Set<String> placeholderDependencies) {
   }
 
-  private <O> PlaceHolderResult<O> resolvePlaceholders(AccessContext pAccessContext, KeySPI<O> pKey,
-    ArrayDeque<Set<String>> dependencyStack) {
+  private <O extends @Nullable Object> PlaceHolderResult<O> resolvePlaceholders(AccessContext pAccessContext,
+    KeySPI<O> pKey, ArrayDeque<Set<String>> dependencyStack) {
 
     /*
      * If there are still defaults, since they need to be resolved. This is done here since some defaults may
      * require lookups and want them included in the dependencies
      */
 
+    KeySPI<O> key = pKey;
     Set<String> placeholderDependencies;
-    if (pKey.hasPlaceholders()) {
-      KeySPI<Object>[] parts = pKey.getParts();
+    if (key.hasPlaceholders()) {
+      KeySPI<? extends @Nullable Object>[] parts = key.getParts();
       int partsLen = parts.length;
-      @SuppressWarnings({ "null", "unchecked" }) KeySPI<Object>[] newParts = new KeySPI[partsLen];
+      @SuppressWarnings({ "null", "unchecked" }) KeySPI<? extends @Nullable Object>[] newParts = new KeySPI[partsLen];
 
       dependencyStack.push(new HashSet<>());
       try {
         for (int i = 0; i < partsLen; i++) {
-          KeySPI<Object> part = parts[i];
+          KeySPI<? extends @Nullable Object> part = parts[i];
           if (part instanceof KeyPlaceholderSPI) {
             @SuppressWarnings("unchecked") KeyPlaceholderSPI<Object> sspi = (KeyPlaceholderSPI<Object>) part;
             newParts[i] = sspi.resolveDefault(this, pAccessContext);
@@ -427,13 +437,13 @@ public class CacheEngineImpl implements CacheEngine {
         }
       }
 
-      pKey = new CompositeKey<>(newParts);
-      setupKey(pKey);
+      key = new CompositeKey<>(newParts);
+      setupKey(key);
     } else {
       placeholderDependencies = null;
     }
 
-    return new PlaceHolderResult<>(pKey, placeholderDependencies);
+    return new PlaceHolderResult<>(key, placeholderDependencies);
   }
 
   /**
@@ -443,7 +453,7 @@ public class CacheEngineImpl implements CacheEngine {
    * @param pKey the key
    * @return the result
    */
-  private <O> CacheResult<O> lookup(AccessContext pAccessContext, KeySPI<O> pKey,
+  private <O extends @Nullable Object> CacheResult<O> lookup(AccessContext pAccessContext, KeySPI<O> pKey,
     @SuppressWarnings("SameParameterValue") boolean pLoadIfMissing) {
 
     ArrayDeque<Set<String>> dependencyStack = sMonitored.get();
@@ -454,10 +464,10 @@ public class CacheEngineImpl implements CacheEngine {
      */
 
     var resolveResult = resolvePlaceholders(pAccessContext, pKey, dependencyStack);
-    pKey = resolveResult.key();
+    KeySPI<O> key = resolveResult.key();
     Set<String> placeholderDependencies = resolveResult.placeholderDependencies();
 
-    String keyStr = pKey.toString();
+    String keyStr = key.toString();
 
     /* Is monitoring enabled? */
 
@@ -467,11 +477,11 @@ public class CacheEngineImpl implements CacheEngine {
 
     /* Find the last storage given the key */
 
-    CacheStorage storage = pKey.getLastStorage();
+    CacheStorage storage = key.getLastStorage();
 
     /* Query the storage for the full key */
 
-    CacheResult<O> queryResult = storage.queryForKey(pAccessContext, pKey);
+    CacheResult<O> queryResult = storage.queryForKey(pAccessContext, key);
 
     if ((!pLoadIfMissing) || (queryResult.entryFound())) {
       return queryResult;
@@ -486,14 +496,14 @@ public class CacheEngineImpl implements CacheEngine {
       However, in most cases, this should only represent thousands of strings, not millions.
      */
 
-    synchronized (pKey.toString().intern()) {
-      queryResult = storage.queryForKey(pAccessContext, pKey);
+    synchronized (key.toString().intern()) {
+      queryResult = storage.queryForKey(pAccessContext, key);
 
       if (queryResult.entryFound()) return queryResult;
 
       /* Now attempt to look up the data */
 
-      CacheLoader<O> cacheLoader = pKey.getLoader();
+      CacheLoader<O> cacheLoader = key.getLoader();
 
       /* To track dependencies, create a new set to add to the current stack */
 
@@ -502,7 +512,7 @@ public class CacheEngineImpl implements CacheEngine {
       CacheResult<O> loadedResult = new StaticCacheResult<>();
       Set<String> dependencies;
       try {
-        cacheLoader.load(this, pAccessContext, pKey, loadedResult);
+        cacheLoader.load(this, pAccessContext, key, loadedResult);
       }
       finally {
 
@@ -517,19 +527,18 @@ public class CacheEngineImpl implements CacheEngine {
       /* Now store the result */
 
       if (loadedResult.entryFound()) {
-        storage.store(pAccessContext, pKey, loadedResult);
+        storage.store(pAccessContext, key, loadedResult);
       }
 
       /* Store the dependencies for later tracking */
 
       if (!dependencies.isEmpty()) {
+        if (mCacheInfo == null) throw new IllegalStateException("finishSetup has not been called");
         for (String dep : dependencies) {
-          Set<KeySPI<?>> set = Objects.requireNonNull(mCacheInfo).dependencyMap.computeIfAbsent(dep,
-            (_) -> new HashSet<>()
-          );
-          set.add(pKey);
+          Set<KeySPI<?>> set = mCacheInfo.dependencyMap.computeIfAbsent(dep, (_) -> new HashSet<>());
+          set.add(key);
         }
-        Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(pKey.toString(), (_) -> new HashSet<>());
+        Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(key.toString(), (_) -> new HashSet<>());
         set.addAll(dependencies);
         mStorageKey.getLastStorage().store(pAccessContext, mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
       }
@@ -548,22 +557,24 @@ public class CacheEngineImpl implements CacheEngine {
    * @param pKey the key
    * @param pCacheResult the cache result to store
    */
-  private <O> void setInternal(AccessContext pAccessContext, KeySPI<O> pKey, CacheResult<O> pCacheResult) {
-    try (Context ignored = mContextFactory.newContext(CacheEngineImpl.class, this, pKey, pCacheResult)) {
+  private <O extends @Nullable Object> void setInternal(AccessContext pAccessContext, KeySPI<O> pKey,
+    CacheResult<O> pCacheResult) {
+    KeySPI<O> key = pKey;
+    try (Context ignored = mContextFactory.newContext(CacheEngineImpl.class, this, key, pCacheResult)) {
 
-      pKey = resolvePlaceholders(pAccessContext, pKey, new ArrayDeque<>()).key();
+      key = resolvePlaceholders(pAccessContext, key, new ArrayDeque<>()).key();
 
       /* Find the last storage given the key */
 
-      CacheStorage storage = pKey.getLastStorage();
+      CacheStorage storage = key.getLastStorage();
 
-      storage.store(pAccessContext, pKey, pCacheResult);
+      storage.store(pAccessContext, key, pCacheResult);
 
       /* Now attempt to look up the data */
 
-      CacheLoader<O> cacheLoader = pKey.getLoader();
+      CacheLoader<O> cacheLoader = key.getLoader();
       if (cacheLoader instanceof WriteBackCacheLoader<O> writeBackCacheLoader) {
-        writeBackCacheLoader.store(this, pAccessContext, pKey, pCacheResult);
+        writeBackCacheLoader.store(this, pAccessContext, key, pCacheResult);
       }
 
     }
@@ -574,18 +585,20 @@ public class CacheEngineImpl implements CacheEngine {
     mCacheStorageByPath.values().stream().distinct().forEach((cs) -> cs.invalidateAll(pAccessContext));
   }
 
-  private <O> void invalidateInternal(AccessContext pAccessContext, KeySPI<O> pKey) {
-    try (Context ignored = mContextFactory.newContext(CacheEngineImpl.class, this, pKey)) {
+  private <O extends @Nullable Object> void invalidateInternal(AccessContext pAccessContext, KeySPI<O> pKey) {
+    KeySPI<O> key = pKey;
+    try (Context ignored = mContextFactory.newContext(CacheEngineImpl.class, this, key)) {
 
-      pKey = resolvePlaceholders(pAccessContext, pKey, new ArrayDeque<>()).key();
+      key = resolvePlaceholders(pAccessContext, key, new ArrayDeque<>()).key();
 
-      String keyStr = pKey.toString();
+      String keyStr = key.toString();
 
       /* Find the last storage given the key */
 
-      CacheStorage storage = pKey.getLastStorage();
+      CacheStorage storage = key.getLastStorage();
 
-      Objects.requireNonNull(mCacheInfo).reverseDependencyMap.remove(keyStr);
+      if (mCacheInfo == null) throw new IllegalStateException("finishSetup has not been called");
+      mCacheInfo.reverseDependencyMap.remove(keyStr);
 
       /* Were there dependencies? */
 
@@ -593,7 +606,7 @@ public class CacheEngineImpl implements CacheEngine {
 
       /* Call the invalidation routine on the storage. NOTE: This may cause the data to load back depending on callbacks */
 
-      storage.invalidate(pAccessContext, pKey);
+      storage.invalidate(pAccessContext, key);
 
       if (depSet != null) {
 
@@ -617,12 +630,12 @@ public class CacheEngineImpl implements CacheEngine {
    * @param pKey the key
    * @param <O> the key type
    */
-  public <O> void setupKey(KeySPI<O> pKey) {
-    KeySPI<Object>[] parts = pKey.getParts();
+  public <O extends @Nullable Object> void setupKey(KeySPI<O> pKey) {
+    KeySPI<? extends @Nullable Object>[] parts = pKey.getParts();
     StringBuilder sb = new StringBuilder();
     CacheStorage lastStorage = null;
     String lastSerializerName = null;
-    for (KeySPI<Object> part : parts) {
+    for (KeySPI<? extends @Nullable Object> part : parts) {
       sb.append(part.getBaseKey());
 
       String currentPath = sb.toString();
@@ -651,7 +664,8 @@ public class CacheEngineImpl implements CacheEngine {
           loaderInfo.supportsNull,
           loaderInfo.loader
         );
-        part.storeKeyDetails(keyDetails);
+        @SuppressWarnings("unchecked") KeySPI<Object> castedPart = (KeySPI<Object>) part;
+        castedPart.storeKeyDetails(keyDetails);
       }
 
       if (part instanceof StaticAccessContextPlaceholder<?> sacp) {
@@ -675,17 +689,17 @@ public class CacheEngineImpl implements CacheEngine {
   private static <K extends @Nullable Object, V extends @Nullable Object> KeySPI<V> resolve(KeySPI<V> pKey,
     KeyPlaceholder<K> pHolder, String pValue) {
     if (!(pHolder instanceof KeySPI)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported holder type: " + pHolder.getClass().getName());
     }
-    @SuppressWarnings("unchecked") KeySPI<Object> hi = (KeySPI<Object>) pHolder;
-    KeySPI<Object>[] parts = pKey.getParts();
+    @SuppressWarnings("unchecked") KeySPI<@Nullable Object> hi = (KeySPI<@Nullable Object>) pHolder;
+    KeySPI<? extends @Nullable Object>[] parts = pKey.getParts();
     int partsLen = parts.length;
-    @SuppressWarnings({ "null", "unchecked" }) KeySPI<Object>[] newParts = new KeySPI[partsLen];
+    @SuppressWarnings({ "null", "unchecked" }) KeySPI<? extends @Nullable Object>[] newParts = new KeySPI[partsLen];
 
     for (int i = 0; i < partsLen; i++) {
-      KeySPI<Object> part = parts[i];
-      if (part == pHolder) {
-        newParts[i] = new ResolvedKeyPlaceholder<>(hi, pValue);
+      KeySPI<? extends @Nullable Object> part = parts[i];
+      if (part.equals(pHolder)) {
+        newParts[i] = new ResolvedKeyPlaceholder<@Nullable Object>(hi, pValue);
       } else {
         newParts[i] = part;
       }
@@ -697,7 +711,7 @@ public class CacheEngineImpl implements CacheEngine {
   public <V extends @Nullable Object> V get(AccessContext pAccessContext, Key<V> pKey) {
     try (Context ctx = mContextFactory.newContext(CacheEngineImpl.class, this, pKey)) {
       if (!(pKey instanceof KeySPI<V> ki)) {
-        throw ctx.reportThrowable(new IllegalStateException());
+        throw ctx.reportThrowable(new IllegalStateException("Unsupported key type: " + pKey.getClass().getName()));
       }
       if (!ki.hasKeyDetails()) {
         setupKey(ki);
@@ -720,10 +734,10 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey) {
+  public <V extends @Nullable Object> Optional<@NonNull V> getIfPresent(AccessContext pAccessContext, Key<V> pKey) {
     try (Context ctx = mContextFactory.newContext(CacheEngineImpl.class, this, pKey)) {
       if (!(pKey instanceof KeySPI<V> ki)) {
-        throw ctx.reportThrowable(new IllegalStateException());
+        throw ctx.reportThrowable(new IllegalStateException("Unsupported key type: " + pKey.getClass().getName()));
       }
       if (!ki.hasKeyDetails()) {
         setupKey(ki);
@@ -739,35 +753,37 @@ public class CacheEngineImpl implements CacheEngine {
   public <K1 extends @Nullable Object, V extends @Nullable Object> V get(AccessContext pAccessContext, Key<V> pKey,
     KeyPlaceholder<K1> pHolder1, String pValue1) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     return get(pAccessContext, resolve(ki, pHolder1, pValue1));
   }
 
   @Override
-  public <K1, K2, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> V get(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     return get(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
   }
 
   @Override
-  public <K1, K2, K3, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> V get(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     return get(pAccessContext, resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3));
   }
 
   @Override
-  public <K1, K2, K3, K4, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> V get(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     return get(pAccessContext,
       resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4, pValue4)
@@ -775,50 +791,60 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1) {
+  public <K1 extends @Nullable Object, V extends @Nullable Object> Optional<@NonNull V> getIfPresent(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
-    return getIfPresent(pAccessContext, resolve(ki, pHolder1, pValue1));
+    // NOTE: The redundant type argument is necessary to fix the nullability pinning.
+    //noinspection RedundantTypeArguments
+    return this.<V>getIfPresent(pAccessContext, resolve(ki, pHolder1, pValue1));
   }
 
   @Override
-  public <K1, K2, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> Optional<@NonNull V> getIfPresent(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
-    return getIfPresent(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
+    // NOTE: The redundant type argument is necessary to fix the nullability pinning.
+    //noinspection RedundantTypeArguments
+    return this.<V>getIfPresent(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
   }
 
   @Override
-  public <K1, K2, K3, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey,
-    KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2,
-    KeyPlaceholder<K3> pHolder3, String pValue3) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> Optional<@NonNull V> getIfPresent(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
-    return getIfPresent(pAccessContext,
+    // NOTE: The redundant type argument is necessary to fix the nullability pinning.
+    //noinspection RedundantTypeArguments
+    return this.<V>getIfPresent(pAccessContext,
       resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3)
     );
   }
 
   @Override
-  public <K1, K2, K3, K4, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey,
-    KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2,
-    KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> Optional<@NonNull V> getIfPresent(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
-    return getIfPresent(pAccessContext,
+    // NOTE: The redundant type argument is necessary to fix the nullability pinning.
+    //noinspection RedundantTypeArguments
+    return this.<V>getIfPresent(pAccessContext,
       resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4, pValue4)
     );
   }
 
   @Override
-  public <V> void set(AccessContext pAccessContext, Key<V> pKey, V pValue) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <V extends @Nullable Object> void set(AccessContext pAccessContext, Key<V> pKey, V pValue) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -826,17 +852,20 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <V> void set(AccessContext pAccessContext, Key<V> pKey, V pValue, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <V extends @Nullable Object> void set(AccessContext pAccessContext, Key<V> pKey, V pValue, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
-    setInternal(pAccessContext, ki, new StaticCacheResult<>(pValue, true).setOverrideExpiry(pExpiry));
+    //noinspection RedundantTypeArguments,Convert2Diamond
+    this.<V>setInternal(pAccessContext, ki, new StaticCacheResult<V>(pValue, true).setOverrideExpiry(pExpiry));
   }
 
   @Override
-  public <V> void setNotFound(AccessContext pAccessContext, Key<V> pKey) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <V extends @Nullable Object> void setNotFound(AccessContext pAccessContext, Key<V> pKey) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -844,8 +873,9 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <V extends @Nullable Object> void setNotFound(AccessContext pAccessContext, Key<V> pKey, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -853,9 +883,10 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    V pValue) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, V extends @Nullable Object> void set(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1, V pValue) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -863,9 +894,10 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    V pValue, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, V extends @Nullable Object> void set(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1, V pValue, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -873,9 +905,10 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, V extends @Nullable Object> void setNotFound(AccessContext pAccessContext,
+    Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -883,9 +916,10 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, V extends @Nullable Object> void setNotFound(AccessContext pAccessContext,
+    Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -893,9 +927,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, V pValue) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, V pValue) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -903,9 +939,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, V pValue, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, V pValue, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -913,9 +951,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -923,9 +963,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -933,10 +975,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, K3, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    V pValue) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -944,10 +987,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, K3, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue,
-    Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -959,9 +1003,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, K3, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -969,10 +1015,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, K3, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -983,10 +1030,12 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, K3, K4, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4, V pValue) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4,
+    V pValue) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -1000,10 +1049,12 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, K3, K4, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4, V pValue, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4, V pValue,
+    Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -1018,10 +1069,11 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, K3, K4, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -1031,10 +1083,12 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, K2, K3, K4, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4, Duration pExpiry) {
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4,
+    Duration pExpiry) {
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
     }
@@ -1048,9 +1102,9 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <V> void invalidate(AccessContext pAccessContext, Key<V> pKey) {
+  public <V extends @Nullable Object> void invalidate(AccessContext pAccessContext, Key<V> pKey) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
@@ -1059,38 +1113,40 @@ public class CacheEngineImpl implements CacheEngine {
   }
 
   @Override
-  public <K1, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1) {
+  public <K1 extends @Nullable Object, V extends @Nullable Object> void invalidate(AccessContext pAccessContext,
+    Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     invalidate(pAccessContext, resolve(ki, pHolder1, pValue1));
   }
 
   @Override
-  public <K1, K2, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void invalidate(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     invalidate(pAccessContext, resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2));
   }
 
   @Override
-  public <K1, K2, K3, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void invalidate(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     invalidate(pAccessContext, resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3));
   }
 
   @Override
-  public <K1, K2, K3, K4, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4) {
+  public <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void invalidate(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4) {
     if (!(pKey instanceof KeySPI<V> ki)) {
-      throw new IllegalStateException();
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
     }
     invalidate(pAccessContext,
       resolve(resolve(resolve(resolve(ki, pHolder1, pValue1), pHolder2, pValue2), pHolder3, pValue3), pHolder4, pValue4)
@@ -1115,28 +1171,32 @@ public class CacheEngineImpl implements CacheEngine {
   @Override
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Collection<Key<?>> getDependentKeys(AccessContext pAccessContext, String pKeyStr) {
-    final Collection<Key<?>> result = (Collection) Objects.requireNonNull(mCacheInfo).dependencyMap.get(pKeyStr);
+    if (mCacheInfo == null) throw new IllegalStateException("finishSetup has not been called");
+    Collection<Key<?>> result = (Collection) mCacheInfo.dependencyMap.get(pKeyStr);
     if (result == null) return Collections.emptyList();
     return result;
   }
 
   @Override
   public Collection<String> getDependentOnKeys(AccessContext pAccessContext, String pKeyStr) {
-    final Collection<String> result = Objects.requireNonNull(mCacheInfo).reverseDependencyMap.get(pKeyStr);
+    if (mCacheInfo == null) throw new IllegalStateException("finishSetup has not been called");
+    Collection<String> result = mCacheInfo.reverseDependencyMap.get(pKeyStr);
     if (result == null) return Collections.emptyList();
     return result;
   }
 
   @Override
-  public <K1, V> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder, String pValue) {
+  public <K1 extends @Nullable Object, V extends @Nullable Object> Key<V> resolve(Key<V> pKey,
+    KeyPlaceholder<K1> pHolder, String pValue) {
     return resolve((KeySPI<V>) pKey, pHolder, pValue);
   }
 
   @Override
-  public <V> void registerOnChange(AccessContext pAccessContext, Key<V> pKey,
-    Consumer3<Key<V>, CacheKeyEvent, Optional<V>> pCallback) {
+  public <V extends @Nullable Object> void registerOnChange(AccessContext pAccessContext, Key<V> pKey,
+    Consumer3<Key<V>, CacheKeyEvent, Optional<@NonNull V>> pCallback) {
 
-    if (!(pKey instanceof KeySPI<V> ki)) throw new IllegalStateException();
+    if (!(pKey instanceof KeySPI<V> ki))
+      throw new IllegalStateException("Unsupported key type: " + pKey.getClass().getName());
 
     if (!ki.hasKeyDetails()) {
       setupKey(ki);
@@ -1150,7 +1210,9 @@ public class CacheEngineImpl implements CacheEngine {
 
     /* Register the callback with the actual cache */
 
-    storage.registerOnChange(pAccessContext, resolvedKey, pCallback);
+    // NOTE: The redundant type argument is necessary to fix the nullability pinning.
+    //noinspection RedundantTypeArguments
+    storage.<V>registerOnChange(pAccessContext, resolvedKey, pCallback);
 
     getIfPresent(pAccessContext, resolvedKey);
   }

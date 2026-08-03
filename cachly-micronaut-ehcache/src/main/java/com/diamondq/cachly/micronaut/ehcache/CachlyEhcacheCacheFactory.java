@@ -214,7 +214,8 @@ public class CachlyEhcacheCacheFactory {
           case CREATED -> CacheKeyEvent.ADDED;
           case UPDATED -> CacheKeyEvent.MODIFIED;
         };
-        handler.handleEvent(nativeCache, event.getKey(), eventEnum, value);
+        var key = event.getKey();
+        if (key != null) handler.handleEvent(nativeCache, key, eventEnum, value);
       }, EventOrdering.ORDERED, EventFiring.SYNCHRONOUS, EnumSet.allOf(EventType.class)
     ));
 

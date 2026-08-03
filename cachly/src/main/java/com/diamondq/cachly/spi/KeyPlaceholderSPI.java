@@ -3,13 +3,14 @@ package com.diamondq.cachly.spi;
 import com.diamondq.cachly.AccessContext;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.KeyPlaceholder;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An SPI that represents a placeholder
  *
  * @param <O>
  */
-public interface KeyPlaceholderSPI<O> extends KeyPlaceholder<O> {
+public interface KeyPlaceholderSPI<O extends @Nullable Object> extends KeyPlaceholder<O> {
 
   /**
    * Resolves the placeholder to a key

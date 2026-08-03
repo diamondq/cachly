@@ -60,7 +60,7 @@ public interface KeySPI<O extends @Nullable Object> extends Key<O> {
    *
    * @return the array of parts
    */
-  KeySPI<@Nullable Object>[] getParts();
+  KeySPI<? extends @Nullable Object>[] getParts();
 
   /**
    * Returns the base key

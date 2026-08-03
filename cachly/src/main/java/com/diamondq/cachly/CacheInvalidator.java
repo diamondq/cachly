@@ -1,5 +1,7 @@
 package com.diamondq.cachly;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * This represents a cache invalidator which is called whenever a key is invalidated from the cache. Used to do extra
  * cleanup.
@@ -7,7 +9,7 @@ package com.diamondq.cachly;
  * @param <O> the expected result type
  */
 @SuppressWarnings("InterfaceMayBeAnnotatedFunctional")
-public interface CacheInvalidator<O> {
+public interface CacheInvalidator<O extends @Nullable Object> {
 
   /**
    * Called to invalidate a specific key

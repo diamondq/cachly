@@ -5,6 +5,7 @@ import com.diamondq.cachly.CacheKeyEvent;
 import com.diamondq.cachly.CacheResult;
 import com.diamondq.cachly.Key;
 import com.diamondq.common.lambda.interfaces.Consumer3;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -70,7 +71,7 @@ public interface CacheStorage {
    * @param <V> the key type
    */
   <V extends @Nullable Object> void registerOnChange(AccessContext pAccessContext, KeySPI<V> pKey,
-    Consumer3<Key<V>, CacheKeyEvent, Optional<V>> pCallback);
+    Consumer3<Key<V>, CacheKeyEvent, Optional<@NonNull V>> pCallback);
 
   /**
    * Called by the low-level cache informing that a key has changed

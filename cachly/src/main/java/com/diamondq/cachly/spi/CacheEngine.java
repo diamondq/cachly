@@ -3,6 +3,7 @@ package com.diamondq.cachly.spi;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
@@ -17,7 +18,7 @@ public interface CacheEngine extends Cache {
    * @param pKey the key
    * @param <O> the key type
    */
-  <O> void setupKey(KeySPI<O> pKey);
+  <O extends @Nullable Object> void setupKey(KeySPI<O> pKey);
 
   /**
    * Returns all the existing CacheLoaderInfo associated with their path

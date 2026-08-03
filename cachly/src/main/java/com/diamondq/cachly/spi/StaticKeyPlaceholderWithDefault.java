@@ -27,7 +27,7 @@ public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> impleme
   @Override
   public void clearKeyDetails() {
     super.clearKeyDetails();
-    if (mDefaultKey != this) mDefaultKey.clearKeyDetails();
+    if (!mDefaultKey.equals(this)) mDefaultKey.clearKeyDetails();
   }
 
   public KeySPI<String> getDefaultKey() {
@@ -47,9 +47,9 @@ public class StaticKeyPlaceholderWithDefault extends AbstractKey<String> impleme
    */
   @Override
   public boolean equals(@Nullable Object pObj) {
-    if (pObj == null) return false;
     if (pObj == this) return true;
-    if (!pObj.getClass().equals(StaticKeyPlaceholderWithDefault.class)) return false;
+    if (pObj == null) return false;
+    if (pObj.getClass() != StaticKeyPlaceholderWithDefault.class) return false;
     StaticKeyPlaceholderWithDefault other = (StaticKeyPlaceholderWithDefault) pObj;
     return Objects.equals(mKey, other.mKey) && Objects.equals(mOutputType, other.mOutputType) && Objects.equals(
       mHasPlaceholders,

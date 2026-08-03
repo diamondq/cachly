@@ -1,5 +1,7 @@
 package com.diamondq.cachly;
 
+import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
+import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -28,7 +30,7 @@ public class CacheLoaderInfo<O extends @Nullable Object> {
   /**
    * The Cache Loader
    */
-  public final CacheLoader<O> loader;
+  public final @NotOnlyInitialized CacheLoader<O> loader;
 
   /**
    * Primary Constructor
@@ -38,7 +40,8 @@ public class CacheLoaderInfo<O extends @Nullable Object> {
    * @param pHelp the help string
    * @param pLoader the loader
    */
-  public CacheLoaderInfo(Key<O> pKey, boolean pSupportsNull, String pHelp, CacheLoader<O> pLoader) {
+  public CacheLoaderInfo(Key<O> pKey, boolean pSupportsNull, String pHelp,
+    @UnknownInitialization CacheLoader<O> pLoader) {
     key = pKey;
     supportsNull = pSupportsNull;
     help = pHelp;

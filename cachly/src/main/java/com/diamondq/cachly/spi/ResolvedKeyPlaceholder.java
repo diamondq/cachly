@@ -18,14 +18,15 @@ public class ResolvedKeyPlaceholder<O extends @Nullable Object> implements KeySP
   public ResolvedKeyPlaceholder(KeySPI<O> pPlaceholder, String pKey) {
     mPlaceholder = pPlaceholder;
     mKey = pKey;
-    @SuppressWarnings("unchecked") KeySPI<@Nullable Object>[] tempParts = new KeySPI[] { this };
+    @SuppressWarnings(
+      { "unchecked", "array.initializer.type.incompatible" }) KeySPI<@Nullable Object>[] tempParts = new KeySPI[] { this };
     mParts = tempParts;
   }
 
   @Override
   public void clearKeyDetails() {
-    if (mPlaceholder != this) mPlaceholder.clearKeyDetails();
-    for (KeySPI<@Nullable Object> part : mParts) if (part != this) part.clearKeyDetails();
+    if (!mPlaceholder.equals(this)) mPlaceholder.clearKeyDetails();
+    for (KeySPI<@Nullable Object> part : mParts) if (!part.equals(this)) part.clearKeyDetails();
   }
 
   @Override
@@ -124,9 +125,9 @@ public class ResolvedKeyPlaceholder<O extends @Nullable Object> implements KeySP
 
   @Override
   public boolean equals(@Nullable Object pObj) {
-    if (pObj == null) return false;
     if (pObj == this) return true;
-    if (!pObj.getClass().equals(ResolvedKeyPlaceholder.class)) return false;
+    if (pObj == null) return false;
+    if (pObj.getClass() != ResolvedKeyPlaceholder.class) return false;
     @SuppressWarnings("unchecked") ResolvedKeyPlaceholder<O> other = (ResolvedKeyPlaceholder<O>) pObj;
     return Objects.equals(mKey, other.mKey) && Objects.equals(mPlaceholder, other.mPlaceholder);
   }

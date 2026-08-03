@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="EntryPointsManager">
-    <list size="1">
+    <list size="5">
       <item index="0" class="java.lang.String" itemvalue="org.osgi.service.component.annotations.Activate" />
+      <item index="1" class="java.lang.String" itemvalue="org.osgi.service.component.annotations.Component" />
+      <item index="2" class="java.lang.String" itemvalue="org.osgi.service.component.annotations.Deactivate" />
+      <item index="3" class="java.lang.String" itemvalue="org.osgi.service.component.annotations.Modified" />
+      <item index="4" class="java.lang.String" itemvalue="org.osgi.service.component.annotations.Reference" />
     </list>
+    <writeAnnotations>
+      <writeAnnotation name="org.osgi.service.component.annotations.Reference" />
+    </writeAnnotations>
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="MavenProjectsManager">
@@ -19,7 +26,7 @@
     <option name="myOrdered" value="true" />
     <option name="myNullables">
       <value>
-        <list size="18">
+        <list size="19">
           <item index="0" class="java.lang.String" itemvalue="org.jspecify.annotations.Nullable" />
           <item index="1" class="java.lang.String" itemvalue="io.reactivex.annotations.Nullable" />
           <item index="2" class="java.lang.String" itemvalue="io.reactivex.rxjava3.annotations.Nullable" />
@@ -38,6 +45,7 @@
           <item index="15" class="java.lang.String" itemvalue="javax.annotation.CheckForNull" />
           <item index="16" class="java.lang.String" itemvalue="org.springframework.lang.Nullable" />
           <item index="17" class="java.lang.String" itemvalue="jakarta.annotation.Nullable" />
+          <item index="18" class="java.lang.String" itemvalue="org.jspecify.annotations.NullMarked" />
         </list>
       </value>
     </option>

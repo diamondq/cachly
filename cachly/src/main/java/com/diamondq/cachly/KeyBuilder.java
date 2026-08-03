@@ -6,6 +6,7 @@ import com.diamondq.cachly.spi.StaticKey;
 import com.diamondq.cachly.spi.StaticKeyPlaceholder;
 import com.diamondq.cachly.spi.StaticKeyPlaceholderWithDefault;
 import com.diamondq.common.TypeReference;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The primary helper for producing Keys
@@ -20,7 +21,7 @@ public class KeyBuilder {
    * @param <O> the key type
    * @return the key
    */
-  public static <O> Key<O> of(String pTextKey, TypeReference<O> pOutputType) {
+  public static <O extends @Nullable Object> Key<O> of(String pTextKey, TypeReference<O> pOutputType) {
     return new StaticKey<>(pTextKey, pOutputType.getType());
   }
 
@@ -31,7 +32,7 @@ public class KeyBuilder {
    * @param <O> the key type
    * @return the new key
    */
-  public static <O> Key<O> from(Key<O> pKey1) {
+  public static <O extends @Nullable Object> Key<O> from(Key<O> pKey1) {
     return pKey1;
   }
 
@@ -43,7 +44,7 @@ public class KeyBuilder {
    * @param <O> the second key type
    * @return the new key
    */
-  public static <O> Key<O> from(Key<?> pKey1, Key<O> pKey2) {
+  public static <O extends @Nullable Object> Key<O> from(Key<?> pKey1, Key<O> pKey2) {
     return new CompositeKey<>(pKey1, pKey2);
   }
 
@@ -56,7 +57,7 @@ public class KeyBuilder {
    * @param <O> the third key type
    * @return the new key
    */
-  public static <O> Key<O> from(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
+  public static <O extends @Nullable Object> Key<O> from(Key<?> pKey1, Key<?> pKey2, Key<O> pKey3) {
     return new CompositeKey<>(pKey1, pKey2, pKey3);
   }
 
@@ -68,7 +69,8 @@ public class KeyBuilder {
    * @param <O> the data type
    * @return the placeholder
    */
-  public static <O> AccessContextPlaceholder<O> accessContext(String pAccessContextKey, TypeReference<O> pOutputType) {
+  public static <O extends @Nullable Object> AccessContextPlaceholder<O> accessContext(String pAccessContextKey,
+    TypeReference<O> pOutputType) {
     return new StaticAccessContextPlaceholder<>(pAccessContextKey, pOutputType.getType());
   }
 
@@ -80,7 +82,8 @@ public class KeyBuilder {
    * @param <O> the data type
    * @return the placeholder
    */
-  public static <O> KeyPlaceholder<O> placeholder(String pPlaceholderKey, TypeReference<O> pOutputType) {
+  public static <O extends @Nullable Object> KeyPlaceholder<O> placeholder(String pPlaceholderKey,
+    TypeReference<O> pOutputType) {
     return new StaticKeyPlaceholder<>(pPlaceholderKey, pOutputType.getType());
   }
 

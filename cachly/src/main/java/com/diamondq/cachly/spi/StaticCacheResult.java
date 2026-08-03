@@ -4,7 +4,6 @@ import com.diamondq.cachly.CacheResult;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.Objects;
 
 public class StaticCacheResult<V extends @Nullable Object> implements CacheResult<V> {
 
@@ -40,7 +39,9 @@ public class StaticCacheResult<V extends @Nullable Object> implements CacheResul
 
   @Override
   public V getValue() {
-    return Objects.requireNonNull(mValue);
+    var value = mValue;
+    if (value == null) throw new IllegalStateException("Value is null");
+    return value;
   }
 
   @Override

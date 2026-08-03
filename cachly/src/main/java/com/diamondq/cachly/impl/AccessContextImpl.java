@@ -1,6 +1,8 @@
 package com.diamondq.cachly.impl;
 
 import com.diamondq.cachly.AccessContext;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -28,7 +30,7 @@ public final class AccessContextImpl implements AccessContext {
   }
 
   @Override
-  public <X> Optional<X> get(Class<X> pClass) {
+  public <X extends @Nullable Object> Optional<@NonNull X> get(Class<X> pClass) {
     @SuppressWarnings("unchecked") X result = (X) mData.get(pClass);
     return Optional.ofNullable(result);
   }

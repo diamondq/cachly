@@ -3,6 +3,7 @@ package com.diamondq.cachly.base;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
 import com.diamondq.cachly.Key;
+import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -15,7 +16,7 @@ public abstract class AbstractCacheLoader<VALUE extends @Nullable Object> implem
   /**
    * The cache loader information
    */
-  protected final CacheLoaderInfo<VALUE> mCacheLoaderInfo;
+  protected final @NotOnlyInitialized CacheLoaderInfo<VALUE> mCacheLoaderInfo;
 
   /**
    * Constructor

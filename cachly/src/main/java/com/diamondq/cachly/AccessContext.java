@@ -1,5 +1,8 @@
 package com.diamondq.cachly;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,6 +25,6 @@ public interface AccessContext {
    * @param pClass the data type class
    * @return the optional data
    */
-  <X> Optional<X> get(Class<X> pClass);
+  <X extends @Nullable Object> Optional<@NonNull X> get(Class<X> pClass);
 
 }

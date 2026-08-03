@@ -23,12 +23,12 @@ public class CacheInfoLoader implements CacheLoader<CacheInfo> {
   /**
    * The TypeReference for the CacheInfo
    */
-  public static final TypeReference<CacheInfo> TYPEREF = new TypeReference<>() {
+  public static final TypeReference<CacheInfo> TYPE_REF = new TypeReference<>() {
   };
 
   @Override
   public CacheLoaderInfo<CacheInfo> getInfo() {
-    return new CacheLoaderInfo<>(KeyBuilder.of(CACHE_INFO_NAME, TYPEREF), false, "", this);
+    return new CacheLoaderInfo<>(KeyBuilder.of(CACHE_INFO_NAME, TYPE_REF), false, "", this);
   }
 
   @Override

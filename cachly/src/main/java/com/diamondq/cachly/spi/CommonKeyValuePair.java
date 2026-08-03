@@ -11,14 +11,14 @@ public class CommonKeyValuePair<CACHE, SER_KEY> {
 
   public final @Nullable Duration expiresIn;
 
-  public final @Nullable Key<?> key;
+  public final @Nullable Key<? extends @Nullable Object> key;
 
   public final SER_KEY serKey;
 
   public final @Nullable Object serValue;
 
-  public CommonKeyValuePair(CACHE pCache, SER_KEY pSerKey, @Nullable Key<?> pKey, @Nullable Object pSerValue,
-    @Nullable Duration pExpiresIn) {
+  public CommonKeyValuePair(CACHE pCache, SER_KEY pSerKey, @Nullable Key<? extends @Nullable Object> pKey,
+    @Nullable Object pSerValue, @Nullable Duration pExpiresIn) {
     cache = pCache;
     serKey = pSerKey;
     key = pKey;

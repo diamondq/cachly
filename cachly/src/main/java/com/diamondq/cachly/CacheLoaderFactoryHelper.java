@@ -1,30 +1,32 @@
 package com.diamondq.cachly;
 
 import com.diamondq.common.lambda.interfaces.Consumer3;
+import org.checkerframework.checker.initialization.qual.NotOnlyInitialized;
 import org.jspecify.annotations.Nullable;
 
 /**
  * A Helper class that provides some pre-built Cache Loaders
  */
-public class CacheLoaderFactoryHelper {
+public final class CacheLoaderFactoryHelper {
 
-  private static final class NullCacheLoader implements CacheLoader<@Nullable Void> {
+  private CacheLoaderFactoryHelper() {}
 
-    private final CacheLoaderInfo<@Nullable Void> mCacheLoaderInfo;
+  private static final class NullCacheLoader implements CacheLoader<Void> {
 
-    private NullCacheLoader(Key<@Nullable Void> pKey, String pHelp) {
+    private final @NotOnlyInitialized CacheLoaderInfo<Void> mCacheLoaderInfo;
+
+    private NullCacheLoader(Key<Void> pKey, String pHelp) {
       mCacheLoaderInfo = new CacheLoaderInfo<>(pKey, true, pHelp, this);
     }
 
     @SuppressWarnings("SuspiciousGetterSetter")
     @Override
-    public CacheLoaderInfo<@Nullable Void> getInfo() {
+    public CacheLoaderInfo<Void> getInfo() {
       return mCacheLoaderInfo;
     }
 
     @Override
-    public void load(Cache pCache, AccessContext pAccessContext, Key<@Nullable Void> pKey,
-      CacheResult<@Nullable Void> pResult) {
+    public void load(Cache pCache, AccessContext pAccessContext, Key<Void> pKey, CacheResult<Void> pResult) {
       pResult.setNotFound();
     }
 
@@ -37,7 +39,7 @@ public class CacheLoaderFactoryHelper {
    * @param pHelp the help string
    * @return the cache loader
    */
-  public static CacheLoader<@Nullable Void> ofNull(Key<@Nullable Void> pKey, String pHelp) {
+  public static CacheLoader<Void> ofNull(Key<Void> pKey, String pHelp) {
     return new NullCacheLoader(pKey, pHelp);
   }
 
@@ -51,9 +53,10 @@ public class CacheLoaderFactoryHelper {
    * @param <V> the key type
    * @return the Cache Loader
    */
-  public static <V> CacheLoader<V> of(Key<V> pKey, boolean pSupportsNull, String pHelp,
+  public static <V extends @Nullable Object> CacheLoader<V> of(Key<V> pKey, boolean pSupportsNull, String pHelp,
     Consumer3<Cache, Key<V>, CacheResult<V>> pProvider) {
-    return new CacheLoader<>() {
+    //noinspection Convert2Diamond
+    return new CacheLoader<V>() {
 
       @Override
       public CacheLoaderInfo<V> getInfo() {

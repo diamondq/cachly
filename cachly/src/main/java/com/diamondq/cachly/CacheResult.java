@@ -80,7 +80,7 @@ public interface CacheResult<V extends @Nullable Object> {
    * @param <A> the result type
    * @return the not found result
    */
-  static <A> CacheResult<A> notFound() {
+  static <A extends @Nullable Object> CacheResult<A> notFound() {
     @SuppressWarnings("unchecked") CacheResult<A> r = (CacheResult<A>) StaticCacheResult.sNOT_FOUND;
     return r;
   }

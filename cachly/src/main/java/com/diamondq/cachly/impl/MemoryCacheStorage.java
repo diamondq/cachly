@@ -12,7 +12,6 @@ import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -22,7 +21,7 @@ import java.util.stream.Stream;
 /**
  * Cache Storage of entries into memory
  */
-public class MemoryCacheStorage extends AbstractCacheStorage<String, String> implements BeanNameable {
+public final class MemoryCacheStorage extends AbstractCacheStorage<String, String> implements BeanNameable {
 
   private final CacheCallbackHandler mHandler;
   private final String               mBeanName;
@@ -77,10 +76,10 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> imp
 
   @Override
   protected void writeToCache(CommonKeyValuePair<String, String> pEntry) {
+    var serValue = pEntry.serValue;
+    if (serValue == null) throw new IllegalStateException("serValue is null");
     var hasOld = mData.put(pEntry.serKey,
-      new DataRecord(Objects.requireNonNull(pEntry.serValue),
-        pEntry.expiresIn != null ? Instant.now().plus(pEntry.expiresIn).toEpochMilli() : null
-      )
+      new DataRecord(serValue, pEntry.expiresIn != null ? Instant.now().plus(pEntry.expiresIn).toEpochMilli() : null)
     ) != null;
     mHandler.handleEvent(mData, pEntry.serKey, hasOld ? CacheKeyEvent.MODIFIED : CacheKeyEvent.ADDED, pEntry.serValue);
   }
@@ -108,15 +107,16 @@ public class MemoryCacheStorage extends AbstractCacheStorage<String, String> imp
   }
 
   @Override
-  protected Stream<Map.Entry<String, ?>> streamPrimary() {
-    @SuppressWarnings({ "unchecked", "rawtypes" }) Stream<Map.Entry<String, ?>> r = (Stream) mData.entrySet()
+  protected Stream<Map.Entry<String, ? extends Object>> streamPrimary() {
+    @SuppressWarnings(
+      { "unchecked", "rawtypes" }) Stream<Map.Entry<String, ? extends Object>> r = (Stream) mData.entrySet()
       .stream()
       .map((entry) -> new AbstractMap.SimpleEntry(entry.getKey(), entry.getValue().data));
     return r;
   }
 
   @Override
-  protected Stream<Entry<String, ?>> streamMetaEntries() {
+  protected Stream<Entry<String, ? extends Object>> streamMetaEntries() {
     return streamPrimary();
   }
 

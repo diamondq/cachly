@@ -19,7 +19,7 @@ public interface Key<O extends @Nullable Object> {
    * @param pTemplate the template key
    * @return the Key or null if the template key is not present
    */
-  <P> @Nullable Key<P> getPreviousKey(Key<P> pTemplate);
+  <P extends @Nullable Object> @Nullable Key<P> getPreviousKey(Key<P> pTemplate);
 
   /**
    * Returns the string partial of the last piece from the key.

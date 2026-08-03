@@ -1,6 +1,7 @@
 package com.diamondq.cachly;
 
 import com.diamondq.common.lambda.interfaces.Consumer3;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
@@ -37,7 +38,7 @@ public interface Cache {
    * @param pKey the key
    * @return the result
    */
-  <V> V get(AccessContext pAccessContext, Key<V> pKey);
+  <V extends @Nullable Object> V get(AccessContext pAccessContext, Key<V> pKey);
 
   /**
    * Retrieves a value from the cache
@@ -67,8 +68,9 @@ public interface Cache {
    * @param pValue2 the value for the first placeholder
    * @return the result
    */
-  <K1, K2, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> V get(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2);
 
   /**
    * Retrieves a value from the cache
@@ -87,8 +89,9 @@ public interface Cache {
    * @param pValue3 the value for the third placeholder
    * @return the result
    */
-  <K1, K2, K3, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> V get(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
 
   /**
    * Retrieves a value from the cache
@@ -110,9 +113,9 @@ public interface Cache {
    * @param pValue4 the value for the fourth placeholder
    * @return the result
    */
-  <K1, K2, K3, K4, V> V get(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> V get(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4);
 
   /**
    * Retrieves a value from the cache
@@ -122,7 +125,7 @@ public interface Cache {
    * @param pKey the key
    * @return the optional result
    */
-  <V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey);
+  <V extends @Nullable Object> Optional<@NonNull V> getIfPresent(AccessContext pAccessContext, Key<V> pKey);
 
   /**
    * Retrieves a value from the cache
@@ -135,8 +138,8 @@ public interface Cache {
    * @param pValue1 the value for the first placeholder
    * @return the optional result
    */
-  <K1, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1);
+  <K1 extends @Nullable Object, V extends @Nullable Object> Optional<@NonNull V> getIfPresent(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
 
   /**
    * Retrieves a value from the cache
@@ -152,8 +155,9 @@ public interface Cache {
    * @param pValue2 the value for the first placeholder
    * @return the optional result
    */
-  <K1, K2, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> Optional<@NonNull V> getIfPresent(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2);
 
   /**
    * Retrieves a value from the cache
@@ -172,8 +176,9 @@ public interface Cache {
    * @param pValue3 the value for the third placeholder
    * @return the optional result
    */
-  <K1, K2, K3, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> Optional<@NonNull V> getIfPresent(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
 
   /**
    * Retrieves a value from the cache
@@ -195,9 +200,9 @@ public interface Cache {
    * @param pValue4 the value for the fourth placeholder
    * @return the optional result
    */
-  <K1, K2, K3, K4, V> Optional<V> getIfPresent(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> Optional<@NonNull V> getIfPresent(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4);
 
   /**
    * Stores a value into the cache (NOTE: This bypasses the loaders)
@@ -207,7 +212,7 @@ public interface Cache {
    * @param pValue the value
    * @param <V> the value to store
    */
-  <V> void set(AccessContext pAccessContext, Key<V> pKey, V pValue);
+  <V extends @Nullable Object> void set(AccessContext pAccessContext, Key<V> pKey, V pValue);
 
   /**
    * Stores a value into the cache (NOTE: This bypasses the loaders)
@@ -218,7 +223,7 @@ public interface Cache {
    * @param pExpiry the expiry duration
    * @param <V> the value to store
    */
-  <V> void set(AccessContext pAccessContext, Key<V> pKey, V pValue, Duration pExpiry);
+  <V extends @Nullable Object> void set(AccessContext pAccessContext, Key<V> pKey, V pValue, Duration pExpiry);
 
   /**
    * Stores a not found value into the cache (NOTE: This bypasses the loaders)
@@ -227,7 +232,7 @@ public interface Cache {
    * @param pKey the key
    * @param <V> the value to store
    */
-  <V> void setNotFound(AccessContext pAccessContext, Key<V> pKey);
+  <V extends @Nullable Object> void setNotFound(AccessContext pAccessContext, Key<V> pKey);
 
   /**
    * Stores a not found value into the cache (NOTE: This bypasses the loaders)
@@ -237,7 +242,7 @@ public interface Cache {
    * @param pExpiry the expiry duration
    * @param <V> the value to store
    */
-  <V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, Duration pExpiry);
+  <V extends @Nullable Object> void setNotFound(AccessContext pAccessContext, Key<V> pKey, Duration pExpiry);
 
   /**
    * Stores a value into the cache (NOTE: This bypasses the loaders)
@@ -250,7 +255,8 @@ public interface Cache {
    * @param <K1> the type of the first placeholder
    * @param <V> the value to store
    */
-  <K1, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, V pValue);
+  <K1 extends @Nullable Object, V extends @Nullable Object> void set(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1, V pValue);
 
   /**
    * Stores a value into the cache (NOTE: This bypasses the loaders)
@@ -264,7 +270,240 @@ public interface Cache {
    * @param <K1> the type of the first placeholder
    * @param <V> the value to store
    */
-  <K1, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, V pValue,
+  <K1 extends @Nullable Object, V extends @Nullable Object> void set(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1, V pValue, Duration pExpiry);
+
+  /**
+   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param <K1> the type of the first placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, V extends @Nullable Object> void setNotFound(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1);
+
+  /**
+   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pExpiry the expiry duration
+   * @param <K1> the type of the first placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, V extends @Nullable Object> void setNotFound(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1, Duration pExpiry);
+
+  /**
+   * Stores a value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pValue the value
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, V pValue);
+
+  /**
+   * Stores a value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pValue the value
+   * @param pExpiry the expiry duration
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, V pValue, Duration pExpiry);
+
+  /**
+   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2);
+
+  /**
+   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pExpiry the expiry duration
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, Duration pExpiry);
+
+  /**
+   * Stores a value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pHolder3 the third placeholder
+   * @param pValue3 the value for the third placeholder
+   * @param pValue the value
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <K3> the type of the third placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue);
+
+  /**
+   * Stores a value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pHolder3 the third placeholder
+   * @param pValue3 the value for the third placeholder
+   * @param pValue the value
+   * @param pExpiry the expiry duration
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <K3> the type of the third placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue, Duration pExpiry);
+
+  /**
+   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pHolder3 the third placeholder
+   * @param pValue3 the value for the third placeholder
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <K3> the type of the third placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
+
+  /**
+   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pHolder3 the third placeholder
+   * @param pValue3 the value for the third placeholder
+   * @param pExpiry the expiry duration
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <K3> the type of the third placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, Duration pExpiry);
+
+  /**
+   * Stores a value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pHolder3 the third placeholder
+   * @param pValue3 the value for the third placeholder
+   * @param pHolder4 the fourth placeholder
+   * @param pValue4 the value for the fourth placeholder
+   * @param pValue the value
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <K3> the type of the third placeholder
+   * @param <K4> the type of the fourth placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4, V pValue);
+
+  /**
+   * Stores a value into the cache (NOTE: This bypasses the loaders)
+   *
+   * @param pAccessContext the access context
+   * @param pKey the key
+   * @param pHolder1 the first placeholder
+   * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pHolder3 the third placeholder
+   * @param pValue3 the value for the third placeholder
+   * @param pHolder4 the fourth placeholder
+   * @param pValue4 the value for the fourth placeholder
+   * @param pValue the value
+   * @param pExpiry the expiry duration
+   * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <K3> the type of the third placeholder
+   * @param <K4> the type of the fourth placeholder
+   * @param <V> the value to store
+   */
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void set(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4, V pValue,
     Duration pExpiry);
 
   /**
@@ -274,10 +513,21 @@ public interface Cache {
    * @param pKey the key
    * @param pHolder1 the first placeholder
    * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pHolder3 the third placeholder
+   * @param pValue3 the value for the third placeholder
+   * @param pHolder4 the fourth placeholder
+   * @param pValue4 the value for the fourth placeholder
    * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <K3> the type of the third placeholder
+   * @param <K4> the type of the fourth placeholder
    * @param <V> the value to store
    */
-  <K1, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4);
 
   /**
    * Stores a not found value into the cache (NOTE: This bypasses the loaders)
@@ -286,258 +536,23 @@ public interface Cache {
    * @param pKey the key
    * @param pHolder1 the first placeholder
    * @param pValue1 the value for the first placeholder
+   * @param pHolder2 the second placeholder
+   * @param pValue2 the value for the second placeholder
+   * @param pHolder3 the third placeholder
+   * @param pValue3 the value for the third placeholder
+   * @param pHolder4 the fourth placeholder
+   * @param pValue4 the value for the fourth placeholder
    * @param pExpiry the expiry duration
    * @param <K1> the type of the first placeholder
+   * @param <K2> the type of the second placeholder
+   * @param <K3> the type of the third placeholder
+   * @param <K4> the type of the fourth placeholder
    * @param <V> the value to store
    */
-  <K1, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void setNotFound(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4,
     Duration pExpiry);
-
-  /**
-   * Stores a value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pValue the value
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, V pValue);
-
-  /**
-   * Stores a value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pValue the value
-   * @param pExpiry the expiry duration
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, V pValue, Duration pExpiry);
-
-  /**
-   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2);
-
-  /**
-   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pExpiry the expiry duration
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, Duration pExpiry);
-
-  /**
-   * Stores a value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pHolder3 the third placeholder
-   * @param pValue3 the value for the third placeholder
-   * @param pValue the value
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <K3> the type of the third placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, K3, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue);
-
-  /**
-   * Stores a value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pHolder3 the third placeholder
-   * @param pValue3 the value for the third placeholder
-   * @param pValue the value
-   * @param pExpiry the expiry duration
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <K3> the type of the third placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, K3, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, V pValue,
-    Duration pExpiry);
-
-  /**
-   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pHolder3 the third placeholder
-   * @param pValue3 the value for the third placeholder
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <K3> the type of the third placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, K3, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
-
-  /**
-   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pHolder3 the third placeholder
-   * @param pValue3 the value for the third placeholder
-   * @param pExpiry the expiry duration
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <K3> the type of the third placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, K3, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    Duration pExpiry);
-
-  /**
-   * Stores a value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pHolder3 the third placeholder
-   * @param pValue3 the value for the third placeholder
-   * @param pHolder4 the fourth placeholder
-   * @param pValue4 the value for the fourth placeholder
-   * @param pValue the value
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <K3> the type of the third placeholder
-   * @param <K4> the type of the fourth placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, K3, K4, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4, V pValue);
-
-  /**
-   * Stores a value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pHolder3 the third placeholder
-   * @param pValue3 the value for the third placeholder
-   * @param pHolder4 the fourth placeholder
-   * @param pValue4 the value for the fourth placeholder
-   * @param pValue the value
-   * @param pExpiry the expiry duration
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <K3> the type of the third placeholder
-   * @param <K4> the type of the fourth placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, K3, K4, V> void set(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4, V pValue, Duration pExpiry);
-
-  /**
-   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pHolder3 the third placeholder
-   * @param pValue3 the value for the third placeholder
-   * @param pHolder4 the fourth placeholder
-   * @param pValue4 the value for the fourth placeholder
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <K3> the type of the third placeholder
-   * @param <K4> the type of the fourth placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, K3, K4, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4);
-
-  /**
-   * Stores a not found value into the cache (NOTE: This bypasses the loaders)
-   *
-   * @param pAccessContext the access context
-   * @param pKey the key
-   * @param pHolder1 the first placeholder
-   * @param pValue1 the value for the first placeholder
-   * @param pHolder2 the second placeholder
-   * @param pValue2 the value for the second placeholder
-   * @param pHolder3 the third placeholder
-   * @param pValue3 the value for the third placeholder
-   * @param pHolder4 the fourth placeholder
-   * @param pValue4 the value for the fourth placeholder
-   * @param pExpiry the expiry duration
-   * @param <K1> the type of the first placeholder
-   * @param <K2> the type of the second placeholder
-   * @param <K3> the type of the third placeholder
-   * @param <K4> the type of the fourth placeholder
-   * @param <V> the value to store
-   */
-  <K1, K2, K3, K4, V> void setNotFound(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4, Duration pExpiry);
 
   /**
    * Invalidates an entry in the cache
@@ -546,7 +561,7 @@ public interface Cache {
    * @param pAccessContext the access context
    * @param pKey the key
    */
-  <V> void invalidate(AccessContext pAccessContext, Key<V> pKey);
+  <V extends @Nullable Object> void invalidate(AccessContext pAccessContext, Key<V> pKey);
 
   /**
    * Invalidates an entry in the cache
@@ -558,7 +573,8 @@ public interface Cache {
    * @param pHolder1 the first placeholder
    * @param pValue1 the value for the first placeholder
    */
-  <K1, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1);
+  <K1 extends @Nullable Object, V extends @Nullable Object> void invalidate(AccessContext pAccessContext, Key<V> pKey,
+    KeyPlaceholder<K1> pHolder1, String pValue1);
 
   /**
    * Invalidates an entry in the cache
@@ -573,8 +589,9 @@ public interface Cache {
    * @param pHolder2 the second placeholder
    * @param pValue2 the value for the first placeholder
    */
-  <K1, K2, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1,
-    KeyPlaceholder<K2> pHolder2, String pValue2);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, V extends @Nullable Object> void invalidate(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2);
 
   /**
    * Invalidates an entry in the cache
@@ -592,8 +609,9 @@ public interface Cache {
    * @param pHolder3 the third placeholder
    * @param pValue3 the value for the third placeholder
    */
-  <K1, K2, K3, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, V extends @Nullable Object> void invalidate(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3);
 
   /**
    * Invalidates an entry in the cache
@@ -614,9 +632,9 @@ public interface Cache {
    * @param pHolder4 the fourth placeholder
    * @param pValue4 the value for the fourth placeholder
    */
-  <K1, K2, K3, K4, V> void invalidate(AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1,
-    String pValue1, KeyPlaceholder<K2> pHolder2, String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3,
-    KeyPlaceholder<K4> pHolder4, String pValue4);
+  <K1 extends @Nullable Object, K2 extends @Nullable Object, K3 extends @Nullable Object, K4 extends @Nullable Object, V extends @Nullable Object> void invalidate(
+    AccessContext pAccessContext, Key<V> pKey, KeyPlaceholder<K1> pHolder1, String pValue1, KeyPlaceholder<K2> pHolder2,
+    String pValue2, KeyPlaceholder<K3> pHolder3, String pValue3, KeyPlaceholder<K4> pHolder4, String pValue4);
 
   /**
    * Invalidate all keys
@@ -631,7 +649,8 @@ public interface Cache {
    * @param pAccessContext the access context
    * @return the stream
    */
-  Stream<Map.Entry<Key<?>, CacheResult<?>>> streamEntries(AccessContext pAccessContext);
+  Stream<Map.Entry<Key<? extends @Nullable Object>, CacheResult<? extends @Nullable Object>>> streamEntries(
+    AccessContext pAccessContext);
 
   /**
    * Get the list of keys that are dependent on the given key
@@ -640,7 +659,7 @@ public interface Cache {
    * @param pKeyStr the key
    * @return the collection of keys that are dependent
    */
-  Collection<Key<?>> getDependentKeys(AccessContext pAccessContext, String pKeyStr);
+  Collection<Key<? extends @Nullable Object>> getDependentKeys(AccessContext pAccessContext, String pKeyStr);
 
   /**
    * Get the list of keys that the given key depends on
@@ -661,7 +680,8 @@ public interface Cache {
    * @param <V> the key type
    * @return an updated key
    */
-  <K1, V> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder, String pValue);
+  <K1 extends @Nullable Object, V extends @Nullable Object> Key<V> resolve(Key<V> pKey, KeyPlaceholder<K1> pHolder,
+    String pValue);
 
   /**
    * Register a callback which is called immediately, and then any time the value of the key changes
@@ -671,7 +691,7 @@ public interface Cache {
    * @param pCallback the callback
    * @param <V> the key type
    */
-  <V> void registerOnChange(AccessContext pAccessContext, Key<V> pKey,
-    Consumer3<Key<V>, CacheKeyEvent, Optional<V>> pCallback);
+  <V extends @Nullable Object> void registerOnChange(AccessContext pAccessContext, Key<V> pKey,
+    Consumer3<Key<V>, CacheKeyEvent, Optional<@NonNull V>> pCallback);
 
 }

@@ -41,5 +41,65 @@
       <artifactId>org.osgi.util.tracker</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>io.github.eisop</groupId>
+      <artifactId>checker-qual</artifactId>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
+  <!--  <profiles>-->
+  <!--    <profile>-->
+  <!--      <id>jspecify-check</id>-->
+  <!--      <dependencies>-->
+  <!--        <dependency>-->
+  <!--          <groupId>io.github.eisop</groupId>-->
+  <!--          <artifactId>checker-qual</artifactId>-->
+  <!--          <version>3.49.5-eisop1</version>-->
+  <!--          <optional>true</optional>-->
+  <!--        </dependency>-->
+  <!--      </dependencies>-->
+  <!--      <build>-->
+  <!--        <plugins>-->
+  <!--          <plugin>-->
+  <!--            <groupId>org.apache.maven.plugins</groupId>-->
+  <!--            <artifactId>maven-compiler-plugin</artifactId>-->
+  <!--            <configuration>-->
+  <!--              <fork>true</fork>-->
+  <!--              <annotationProcessorPaths combine.children="append">-->
+  <!--                <path>-->
+  <!--                  <groupId>io.github.eisop</groupId>-->
+  <!--                  <artifactId>checker</artifactId>-->
+  <!--                  <version>3.49.5-eisop1</version>-->
+  <!--                </path>-->
+  <!--                <path>-->
+  <!--                  <groupId>io.github.eisop</groupId>-->
+  <!--                  <artifactId>checker-qual</artifactId>-->
+  <!--                  <version>3.49.5-eisop1</version>-->
+  <!--                </path>-->
+  <!--              </annotationProcessorPaths>-->
+  <!--              <annotationProcessors combine.children="append">-->
+  <!--                &lt;!&ndash; Add all the checkers you want to enable here &ndash;&gt;-->
+  <!--                <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>-->
+  <!--              </annotationProcessors>-->
+  <!--              <compilerArgs combine.children="append">-->
+  <!--                <arg>-Xmaxerrs</arg>-->
+  <!--                <arg>10000</arg>-->
+  <!--                <arg>-AsuppressWarnings=initialization,keyfor</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>-->
+  <!--                <arg>-J&#45;&#45;add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>-->
+  <!--              </compilerArgs>-->
+  <!--            </configuration>-->
+  <!--          </plugin>-->
+  <!--        </plugins>-->
+  <!--      </build>-->
+  <!--    </profile>-->
+  <!--  </profiles>-->
 </project>
