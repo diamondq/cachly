@@ -3,9 +3,12 @@ package com.diamondq.cachly.spi;
 import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import com.diamondq.cachly.CacheLoaderInfo;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * SPI level methods on the cache engine
@@ -102,4 +105,28 @@ public interface CacheEngine extends Cache {
    */
   void activate();
 
+  /**
+   * Defines the types of registrations
+   */
+  enum RegistrationChangeType {
+    /**
+     * A cache storage directly on a path
+     */
+    CACHE_STORAGE_PATHS,
+    /**
+     * Cache Loader change
+     */
+    CACHE_LOADER,
+    /**
+     * Cache Storage change
+     */
+    CACHE_STORAGE
+  }
+
+  /**
+   * A listener that is called anytime something that could affect registration (mostly around OSGi) changes.
+   *
+   * @param pRegistrationChangeListener the listener that receives the complete list of registration details
+   */
+  void setRegistrationChangeListener(Consumer<List<Pair<RegistrationChangeType, String>>> pRegistrationChangeListener);
 }

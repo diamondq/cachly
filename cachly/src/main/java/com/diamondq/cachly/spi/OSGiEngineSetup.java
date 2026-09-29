@@ -1,26 +1,37 @@
 package com.diamondq.cachly.spi;
 
+import com.diamondq.cachly.Cache;
 import com.diamondq.cachly.CacheLoader;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 import java.io.Closeable;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * This is called when the engine is not managed by OSGi, but the parts (like CacheLoaders) are.
  */
-public class OSGiEngineSetup {
+@SuppressWarnings("unused")
+public final class OSGiEngineSetup {
+
+  private OSGiEngineSetup() {}
 
   /**
    * Sets up an existing CacheEngine to be populated from services in OSGi
    *
    * @param pContext the Bundle Context
    * @param pEngine the CacheEngine
+   * @param pCacheReg the cache registration
+   * @param pCacheEngineReg the cache engine registration
    * @return a Closeable that closes the trackers
    */
-  public static Closeable setup(BundleContext pContext, CacheEngine pEngine) {
+  public static Closeable setup(BundleContext pContext, CacheEngine pEngine, ServiceRegistration<Cache> pCacheReg,
+    ServiceRegistration<CacheEngine> pCacheEngineReg) {
 
     ServiceTracker<CachlyPathConfiguration, CachlyPathConfiguration> pathTracker = new ServiceTracker<>(pContext,
       CachlyPathConfiguration.class,
@@ -136,6 +147,26 @@ public class OSGiEngineSetup {
       }
     );
     accessTracker.open();
+    pEngine.setRegistrationChangeListener((list) -> {
+
+      Map<String, StringBuilder> building = new HashMap<>();
+      for (var pair : list) {
+        var type = pair.getLeft();
+        var sb = building.computeIfAbsent("active_" + type.name().toLowerCase(Locale.ROOT), (_) -> new StringBuilder());
+        if (!sb.isEmpty()) sb.append(",");
+        sb.append(pair.getRight());
+      }
+
+      /* Rebuild the properties */
+
+      var cacheEngineProps = pCacheEngineReg.getReference().getProperties();
+      building.forEach((type, sb) -> cacheEngineProps.put(type, sb.toString()));
+      pCacheEngineReg.setProperties(cacheEngineProps);
+
+      var cacheProps = pCacheReg.getReference().getProperties();
+      building.forEach((type, sb) -> cacheProps.put(type, sb.toString()));
+      pCacheReg.setProperties(cacheProps);
+    });
     return () -> {
       pathTracker.close();
       loaderTracker.close();

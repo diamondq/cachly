@@ -31,6 +31,7 @@ import com.diamondq.common.lambda.interfaces.Consumer3;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.apache.commons.lang3.tuple.Pair;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -45,6 +46,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +58,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -111,7 +114,8 @@ public final class CacheEngineImpl implements CacheEngine {
 
   private final Map<Class<?>, List<AccessContextSPI<?>>> mAccessContextSPIMap = new ConcurrentHashMap<>();
 
-  private final Map<Class<?>, Class<?>> mAccessContextClassMap = new ConcurrentHashMap<>();
+  private final     Map<Class<?>, Class<?>>                              mAccessContextClassMap = new ConcurrentHashMap<>();
+  private @Nullable Consumer<List<Pair<RegistrationChangeType, String>>> mRegistrationChangeListener;
 
   /**
    * Constructor for OSGi-based solutions
@@ -214,6 +218,7 @@ public final class CacheEngineImpl implements CacheEngine {
 
     pStorage.setCacheEngine(this);
     mCacheStorageByName.put(name, pStorage);
+    triggerRegistrationChanges();
   }
 
   @Override
@@ -228,6 +233,7 @@ public final class CacheEngineImpl implements CacheEngine {
     if (name == null) return;
 
     mCacheStorageByName.remove(name, pStorage);
+    triggerRegistrationChanges();
   }
 
   @Override
@@ -247,6 +253,7 @@ public final class CacheEngineImpl implements CacheEngine {
       serializerName = DEFAULT_SERIALIZER;
     }
     mSerializerNameByPath.put(path, serializerName);
+    triggerRegistrationChanges();
   }
 
   @Override
@@ -258,6 +265,7 @@ public final class CacheEngineImpl implements CacheEngine {
     if (cacheStorage != null) mCacheStorageByPath.remove(path, cacheStorage);
     var serializer = pPathConfig.getSerializer();
     if (serializer != null) mSerializerNameByPath.remove(path, serializer);
+    triggerRegistrationChanges();
   }
 
   private void finishSetup() {
@@ -282,6 +290,28 @@ public final class CacheEngineImpl implements CacheEngine {
     } else {
       mCacheInfo = cacheInfoResult.getValue();
     }
+
+    triggerRegistrationChanges();
+  }
+
+  private void triggerRegistrationChanges() {
+    var listener = mRegistrationChangeListener;
+    if (listener != null) {
+      List<Pair<RegistrationChangeType, String>> registrations = new ArrayList<>();
+
+      for (var name : mCacheStorageByName.keySet()) {
+        registrations.add(Pair.of(RegistrationChangeType.CACHE_STORAGE, name));
+      }
+      for (var name : mLoadersByPath.keySet()) {
+        registrations.add(Pair.of(RegistrationChangeType.CACHE_LOADER, name));
+      }
+      for (var name : mCacheStorageByPath.keySet()) {
+        registrations.add(Pair.of(RegistrationChangeType.CACHE_STORAGE_PATHS, name));
+      }
+      registrations.sort(Comparator.<Pair<RegistrationChangeType, String>, RegistrationChangeType>comparing(Pair::getLeft)
+        .thenComparing(Pair::getRight));
+      listener.accept(registrations);
+    }
   }
 
   @Override
@@ -290,6 +320,7 @@ public final class CacheEngineImpl implements CacheEngine {
     @SuppressWarnings("unchecked") CacheLoaderInfo<Object> details = (CacheLoaderInfo<Object>) pCacheLoader.getInfo();
     String path = details.key.toString();
     mLoadersByPath.put(path, details);
+    triggerRegistrationChanges();
   }
 
   @Override
@@ -297,6 +328,7 @@ public final class CacheEngineImpl implements CacheEngine {
     @SuppressWarnings("unchecked") CacheLoaderInfo<Object> details = (CacheLoaderInfo<Object>) pCacheLoader.getInfo();
     String path = details.key.toString();
     mLoadersByPath.remove(path, details);
+    triggerRegistrationChanges();
   }
 
   @Override
@@ -312,6 +344,12 @@ public final class CacheEngineImpl implements CacheEngine {
     Class<?> clazz = pAccessContextSPI.getAccessContextClass();
     List<AccessContextSPI<?>> list = mAccessContextSPIMap.get(clazz);
     if (list != null) list.remove(pAccessContextSPI);
+  }
+
+  @Override
+  public void setRegistrationChangeListener(
+    Consumer<List<Pair<RegistrationChangeType, String>>> pRegistrationChangeListener) {
+    mRegistrationChangeListener = pRegistrationChangeListener;
   }
 
   @Override
