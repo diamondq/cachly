@@ -9,7 +9,9 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.osgi.util.tracker.ServiceTrackerCustomizer;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -147,24 +149,27 @@ public final class OSGiEngineSetup {
       }
     );
     accessTracker.open();
-    pEngine.setRegistrationChangeListener((list) -> {
+    pEngine.setRegistrationChangeListener((pChangeList) -> {
 
-      Map<String, StringBuilder> building = new HashMap<>();
-      for (var pair : list) {
+      Map<String, List<String>> building = new HashMap<>();
+      for (var pair : pChangeList) {
         var type = pair.getLeft();
-        var sb = building.computeIfAbsent("active_" + type.name().toLowerCase(Locale.ROOT), (_) -> new StringBuilder());
-        if (!sb.isEmpty()) sb.append(",");
-        sb.append(pair.getRight());
+        var list = building.computeIfAbsent("active_" + type.name().toLowerCase(Locale.ROOT), (_) -> new ArrayList<>());
+        list.add(pair.getRight());
+      }
+      Map<String, String[]> buildingArray = new HashMap<>();
+      for (var entry : building.entrySet()) {
+        buildingArray.put(entry.getKey(), entry.getValue().toArray(new String[0]));
       }
 
       /* Rebuild the properties */
 
       var cacheEngineProps = pCacheEngineReg.getReference().getProperties();
-      building.forEach((type, sb) -> cacheEngineProps.put(type, sb.toString()));
+      buildingArray.forEach(cacheEngineProps::put);
       pCacheEngineReg.setProperties(cacheEngineProps);
 
       var cacheProps = pCacheReg.getReference().getProperties();
-      building.forEach((type, sb) -> cacheProps.put(type, sb.toString()));
+      buildingArray.forEach(cacheProps::put);
       pCacheReg.setProperties(cacheProps);
     });
     return () -> {
