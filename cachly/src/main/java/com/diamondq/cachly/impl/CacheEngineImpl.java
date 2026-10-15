@@ -110,6 +110,48 @@ public final class CacheEngineImpl implements CacheEngine {
 
   private @MonotonicNonNull CacheInfo mCacheInfo;
 
+  /**
+   * The loads that are currently running. Used to detect keys that are invalidated while a load is in progress.
+   */
+  private final Set<LoadTracker> mActiveLoads = ConcurrentHashMap.newKeySet();
+
+  /**
+   * Tracks the invalidations that happen while a single load is running.
+   * <p>
+   * The dependencies of a key are only recorded once its load has finished. So an invalidation of something that the
+   * load has already read does not reach the key that is being loaded, and the load would store a value that was built
+   * from the old data. By recording what is invalidated during the load, the load can tell that its result is out of
+   * date.
+   */
+  private static final class LoadTracker {
+    private final Set<String> mInvalidated = ConcurrentHashMap.newKeySet();
+
+    private volatile boolean mAllInvalidated;
+
+    void invalidated(String pKey) {
+      mInvalidated.add(pKey);
+    }
+
+    void allInvalidated() {
+      mAllInvalidated = true;
+    }
+
+    /**
+     * Returns true if the key, or any of the keys that it depends on, was invalidated since the tracker was created
+     *
+     * @param pKey the key being loaded
+     * @param pDependencies the keys that the load read
+     * @return true if the result of the load is out of date
+     */
+    boolean isAffected(String pKey, Set<String> pDependencies) {
+      if (mAllInvalidated || mInvalidated.contains(pKey)) return true;
+      for (String dependency : pDependencies) {
+        if (mInvalidated.contains(dependency)) return true;
+      }
+      return false;
+    }
+  }
+
   private final AccessContext mEmptyAccessContext = new AccessContextImpl(Collections.emptyMap());
 
   private final Map<Class<?>, List<AccessContextSPI<?>>> mAccessContextSPIMap = new ConcurrentHashMap<>();
@@ -543,47 +585,75 @@ public final class CacheEngineImpl implements CacheEngine {
 
       CacheLoader<O> cacheLoader = key.getLoader();
 
-      /* To track dependencies, create a new set to add to the current stack */
+      /* Watch for invalidations while the load is running. This has to be registered before the loader reads anything */
 
-      dependencyStack.push(new HashSet<>());
-
-      CacheResult<O> loadedResult = new StaticCacheResult<>();
-      Set<String> dependencies;
+      var tracker = new LoadTracker();
+      mActiveLoads.add(tracker);
       try {
-        cacheLoader.load(this, pAccessContext, key, loadedResult);
+
+        /* To track dependencies, create a new set to add to the current stack */
+
+        dependencyStack.push(new HashSet<>());
+
+        CacheResult<O> loadedResult = new StaticCacheResult<>();
+        Set<String> dependencies;
+        try {
+          cacheLoader.load(this, pAccessContext, key, loadedResult);
+        }
+        finally {
+
+          /* Pull the dependency set off the stack */
+
+          dependencies = dependencyStack.pop();
+          if (placeholderDependencies != null) {
+            dependencies.addAll(placeholderDependencies);
+          }
+        }
+
+        /* If something that this load depends on was invalidated while the load was running, then the result may have
+          been built from the old data. The caller still gets it, but it is not kept in the cache. The dependencies of
+          a key are not recorded until the load is finished, so the invalidation could not have reached this key. This
+          result is now also out of date, so let any load that is reading it know. */
+
+        if (tracker.isAffected(keyStr, dependencies)) {
+          markInvalidated(keyStr);
+          return loadedResult;
+        }
+
+        /* Now store the result */
+
+        if (loadedResult.entryFound()) {
+          storage.store(pAccessContext, key, loadedResult);
+        }
+
+        /* Store the dependencies for later tracking */
+
+        if (!dependencies.isEmpty()) {
+          if (mCacheInfo == null) throw new IllegalStateException("finishSetup has not been called");
+          for (String dep : dependencies) {
+            Set<KeySPI<?>> set = mCacheInfo.dependencyMap.computeIfAbsent(dep, (_) -> new HashSet<>());
+            set.add(key);
+          }
+          Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(key.toString(), (_) -> new HashSet<>());
+          set.addAll(dependencies);
+          mStorageKey.getLastStorage().store(pAccessContext, mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
+        }
+
+        /* An invalidation can arrive after the check above, but before the dependencies were recorded. Now that they
+          are recorded, any later invalidation will reach this key. But to catch one that was missed in between, check
+          again and, if so, remove what was just stored. */
+
+        if (tracker.isAffected(keyStr, dependencies)) {
+          invalidateInternal(pAccessContext, key);
+        }
+
+        /* Return */
+
+        return loadedResult;
       }
       finally {
-
-        /* Pull the dependency set off the stack */
-
-        dependencies = dependencyStack.pop();
-        if (placeholderDependencies != null) {
-          dependencies.addAll(placeholderDependencies);
-        }
+        mActiveLoads.remove(tracker);
       }
-
-      /* Now store the result */
-
-      if (loadedResult.entryFound()) {
-        storage.store(pAccessContext, key, loadedResult);
-      }
-
-      /* Store the dependencies for later tracking */
-
-      if (!dependencies.isEmpty()) {
-        if (mCacheInfo == null) throw new IllegalStateException("finishSetup has not been called");
-        for (String dep : dependencies) {
-          Set<KeySPI<?>> set = mCacheInfo.dependencyMap.computeIfAbsent(dep, (_) -> new HashSet<>());
-          set.add(key);
-        }
-        Set<String> set = mCacheInfo.reverseDependencyMap.computeIfAbsent(key.toString(), (_) -> new HashSet<>());
-        set.addAll(dependencies);
-        mStorageKey.getLastStorage().store(pAccessContext, mStorageKey, new StaticCacheResult<>(mCacheInfo, true));
-      }
-
-      /* Return */
-
-      return loadedResult;
     }
 
   }
@@ -620,7 +690,18 @@ public final class CacheEngineImpl implements CacheEngine {
 
   @Override
   public void invalidateAll(AccessContext pAccessContext) {
+    for (var tracker : mActiveLoads) tracker.allInvalidated();
     mCacheStorageByPath.values().stream().distinct().forEach((cs) -> cs.invalidateAll(pAccessContext));
+    for (var tracker : mActiveLoads) tracker.allInvalidated();
+  }
+
+  /**
+   * Lets all the loads that are currently running know that a key was invalidated
+   *
+   * @param pKey the key
+   */
+  private void markInvalidated(String pKey) {
+    for (var tracker : mActiveLoads) tracker.invalidated(pKey);
   }
 
   private <O extends @Nullable Object> void invalidateInternal(AccessContext pAccessContext, KeySPI<O> pKey) {
@@ -635,6 +716,11 @@ public final class CacheEngineImpl implements CacheEngine {
 
       CacheStorage storage = key.getLastStorage();
 
+      /* Loads that are running now may have read this key, but are not yet recorded as dependent on it. Let them know
+        before the dependents are looked up, so that a load that records its dependencies after that is still caught. */
+
+      markInvalidated(keyStr);
+
       if (mCacheInfo == null) throw new IllegalStateException("finishSetup has not been called");
       mCacheInfo.reverseDependencyMap.remove(keyStr);
 
@@ -645,6 +731,11 @@ public final class CacheEngineImpl implements CacheEngine {
       /* Call the invalidation routine on the storage. NOTE: This may cause the data to load back depending on callbacks */
 
       storage.invalidate(pAccessContext, key);
+
+      /* A load that started after the first mark, but read this key before it was removed from the storage, would not
+        have been told. */
+
+      markInvalidated(keyStr);
 
       if (depSet != null) {
 
