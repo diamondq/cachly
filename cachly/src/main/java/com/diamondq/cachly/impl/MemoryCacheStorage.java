@@ -5,6 +5,7 @@ import com.diamondq.cachly.base.AbstractCacheStorage;
 import com.diamondq.cachly.base.MemoryStorageData;
 import com.diamondq.cachly.spi.BeanNameable;
 import com.diamondq.cachly.spi.CommonKeyValuePair;
+import com.diamondq.common.context.ContextFactory;
 import com.diamondq.common.converters.ConverterManager;
 import org.jspecify.annotations.Nullable;
 
@@ -42,14 +43,16 @@ public final class MemoryCacheStorage extends AbstractCacheStorage<String, Strin
   /**
    * Primary constructor
    *
+   * @param pContextFactory the Context Factory
    * @param pConverterManager the Converter Manager
    * @param pExecutorService the Executor Service
    * @param pHandler the Handler
    * @param pBeanName the bean name
    */
-  public MemoryCacheStorage(ConverterManager pConverterManager, ExecutorService pExecutorService,
-    CacheCallbackHandler pHandler, String pBeanName) {
-    super(pConverterManager,
+  public MemoryCacheStorage(ContextFactory pContextFactory, ConverterManager pConverterManager,
+    ExecutorService pExecutorService, CacheCallbackHandler pHandler, String pBeanName) {
+    super(pContextFactory,
+      pConverterManager,
       pExecutorService,
       "",
       "",
@@ -67,6 +70,7 @@ public final class MemoryCacheStorage extends AbstractCacheStorage<String, Strin
     mHandler = pHandler;
     mData = new ConcurrentHashMap<>();
     pHandler.registerCacheStorage(mData, this);
+    pHandler.registerEventSource(mData);
   }
 
   @Override
@@ -76,12 +80,18 @@ public final class MemoryCacheStorage extends AbstractCacheStorage<String, Strin
 
   @Override
   protected void writeToCache(CommonKeyValuePair<String, String> pEntry) {
-    var serValue = pEntry.serValue;
+    var serValue = pEntry.serValue();
     if (serValue == null) throw new IllegalStateException("serValue is null");
-    var hasOld = mData.put(pEntry.serKey,
-      new DataRecord(serValue, pEntry.expiresIn != null ? Instant.now().plus(pEntry.expiresIn).toEpochMilli() : null)
+    var hasOld = mData.put(pEntry.serKey(),
+      new DataRecord(serValue,
+        pEntry.expiresIn() != null ? Instant.now().plus(pEntry.expiresIn()).toEpochMilli() : null
+      )
     ) != null;
-    mHandler.handleEvent(mData, pEntry.serKey, hasOld ? CacheKeyEvent.MODIFIED : CacheKeyEvent.ADDED, pEntry.serValue);
+    mHandler.handleEvent(mData,
+      pEntry.serKey(),
+      hasOld ? CacheKeyEvent.MODIFIED : CacheKeyEvent.ADDED,
+      pEntry.serValue()
+    );
   }
 
   @Override

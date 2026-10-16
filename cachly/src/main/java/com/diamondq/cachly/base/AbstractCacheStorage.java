@@ -18,6 +18,7 @@ import com.diamondq.cachly.spi.StaticCacheResult;
 import com.diamondq.cachly.spi.StaticKey;
 import com.diamondq.cachly.spi.StaticKeyPlaceholder;
 import com.diamondq.cachly.spi.StaticKeyPlaceholderWithDefault;
+import com.diamondq.common.context.ContextFactory;
 import com.diamondq.common.converters.ConverterManager;
 import com.diamondq.common.errors.DQRuntimeException;
 import com.diamondq.common.lambda.interfaces.Consumer3;
@@ -44,11 +45,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -88,7 +92,12 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   private static final byte PART_TYPE_PLACEHOLDER = 2;
 
   private static final byte PART_TYPE_PLACEHOLDER_DEFAULTS = 3;
-  private static final Type NULL_TYPE                      = NULL_TYPE_CLASS.class;
+  private static final Type NULL_TYPE                      = NullTypeClass.class;
+
+  /**
+   * The default maximum time that a writer waits for the callbacks of a key to run
+   */
+  public static final Duration DEFAULT_CALLBACK_TIMEOUT = Duration.ofSeconds(30);
 
   /**
    * Holds information about the callback
@@ -126,6 +135,10 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     }
   }
 
+  /**
+   * The context factory
+   */
+  protected final           ContextFactory            mContextFactory;
   /**
    * The executor service
    */
@@ -238,17 +251,24 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
   protected final              Map<String, List<CallbackInfo>> mCallbacks;
 
   /**
-   * The map of keys to callback semaphores
+   * The map of keys to the writers that are waiting for a callback to run. Each writer has its own single-count latch,
+   * which is released once by the next callback run for the key (or when the writer gives up waiting). The count is not
+   * related to the number of registered callbacks, so callbacks being added during a run have no effect on it.
    */
-  protected final             Map<String, Semaphore> mCallbackSemaphores;
+  private final               Map<String, Queue<CountDownLatch>> mCallbackWaiters;
+  /**
+   * The maximum time that a writer waits for the callbacks of a key to run
+   */
+  private volatile            Duration                           mCallbackTimeout = DEFAULT_CALLBACK_TIMEOUT;
   /**
    * The Cache engine
    */
-  protected @MonotonicNonNull CacheEngine            mCacheEngine;
+  protected @MonotonicNonNull CacheEngine                        mCacheEngine;
 
   /**
    * Primary constructor
    *
+   * @param pContextFactory the Context Factory
    * @param pConverterManager the Converter Manager used to perform data conversions
    * @param pExecutorService the Executor Service
    * @param pPrimaryCache the underlying cache to store data
@@ -264,11 +284,12 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * @param pKeySerializer the function that will serialize keys from a string to the serialized format
    * @param pKeyDeserializer the function that will deserialize keys from the serialized format to a string
    */
-  protected AbstractCacheStorage(ConverterManager pConverterManager, ExecutorService pExecutorService,
-    CACHE pPrimaryCache, @Nullable CACHE pMetaCache, Class<SER_KEY> pSerKeyClass, Class<?> pSerValueClass,
-    boolean pSerializeValue, @Nullable String pStringPrefix, @Nullable String pTypePrefix, @Nullable String pKeyPrefix,
-    @Nullable String pValuePrefix, @Nullable Function<String, SER_KEY> pKeySerializer,
+  protected AbstractCacheStorage(ContextFactory pContextFactory, ConverterManager pConverterManager,
+    ExecutorService pExecutorService, CACHE pPrimaryCache, @Nullable CACHE pMetaCache, Class<SER_KEY> pSerKeyClass,
+    Class<?> pSerValueClass, boolean pSerializeValue, @Nullable String pStringPrefix, @Nullable String pTypePrefix,
+    @Nullable String pKeyPrefix, @Nullable String pValuePrefix, @Nullable Function<String, SER_KEY> pKeySerializer,
     @Nullable Function<SER_KEY, String> pKeyDeserializer) {
+    mContextFactory = pContextFactory;
     mConverterManager = pConverterManager;
     mExecutorService = pExecutorService;
     mPrimaryCache = pPrimaryCache;
@@ -300,7 +321,7 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     mValuePrefixLen = mValuePrefix.length();
     mSerializeValue = pSerializeValue;
     mCallbacks = new ConcurrentHashMap<>();
-    mCallbackSemaphores = new ConcurrentHashMap<>();
+    mCallbackWaiters = new ConcurrentHashMap<>();
 
     if (!mSerializeValue) {
       if (mSerValueClass != MemoryStorageData.class) {
@@ -632,9 +653,9 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           KeySPI<?> placeholder = rkp.getPlaceholder();
           if (placeholder instanceof StaticKeyPlaceholder) {
             result.put(PART_TYPE_PLACEHOLDER);
-          } else if (placeholder instanceof StaticKeyPlaceholderWithDefault skpwd) {
+          } else if (placeholder instanceof StaticKeyPlaceholderWithDefault staticPlaceholder) {
             result.put(PART_TYPE_PLACEHOLDER_DEFAULTS);
-            result.putShort(compressKey(skpwd.getDefaultKey(), listOfEntries));
+            result.putShort(compressKey(staticPlaceholder.getDefaultKey(), listOfEntries));
           } else {
             throw new IllegalStateException("Unrecognized placeholder (" + placeholder.getClass().getName() + ")");
           }
@@ -840,7 +861,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           @SuppressWarnings("unchecked") SER_KEY idKey = (
             mKeySerializer != null ? mKeySerializer.apply(strKey) : (SER_KEY) strKey);
           Object idValue = convertByteBufferToSERVALUE(ByteBuffer.wrap(value.getBytes(StandardCharsets.UTF_8)));
-          pWriteList.add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache,
+          CACHE metaCache = mMetaCache;
+          pWriteList.add(new CommonKeyValuePair<>(metaCache != null ? metaCache : mPrimaryCache,
             idKey,
             null,
             idValue,
@@ -967,12 +989,16 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
               buffer.put(TYPE_WILDCARD);
               buffer.put(extra);
             }
-            default -> {
+            /* Unknown types were already rejected by the first switch, so this is never reached. However,
+              java.lang.reflect.Type is not sealed, so the compiler requires the switch to have a default. */
+            default -> //noinspection UnreachableCode
+            {
             }
           }
           buffer.rewind();
           Object idValue = convertByteBufferToSERVALUE(buffer);
-          pWriteList.add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache,
+          CACHE metaCache = mMetaCache;
+          pWriteList.add(new CommonKeyValuePair<>(metaCache != null ? metaCache : mPrimaryCache,
             idKey,
             null,
             idValue,
@@ -1035,7 +1061,8 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
           @SuppressWarnings("unchecked") SER_KEY idKey = (
             mKeySerializer != null ? mKeySerializer.apply(keyKey) : (SER_KEY) keyKey);
           Object idValue = convertByteBufferToSERVALUE(buffer);
-          pWriteList.add(new CommonKeyValuePair<>(mMetaCache != null ? mMetaCache : mPrimaryCache,
+          CACHE metaCache = mMetaCache;
+          pWriteList.add(new CommonKeyValuePair<>(metaCache != null ? metaCache : mPrimaryCache,
             idKey,
             null,
             idValue,
@@ -1108,17 +1135,43 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
 
     /* Mark that the code is waiting for a callback from the cache */
 
-    var semaphore = prepareSemphore(pKey);
+    var waiter = prepareWaiter(pKey);
 
     /* Write them to the cache */
 
-    for (CommonKeyValuePair<CACHE, SER_KEY> kvpair : kvPairs) {
-      writeToCache(kvpair);
+    try {
+      for (CommonKeyValuePair<CACHE, SER_KEY> pair : kvPairs) {
+        writeToCache(pair);
+      }
+    }
+    catch (RuntimeException | Error ex) {
+      cancelWaiter(pKey, waiter);
+      throw ex;
     }
 
     /* Wait for the callback to occur */
 
-    waitSemaphore(semaphore);
+    awaitWaiter(pKey, waiter);
+  }
+
+  /**
+   * Returns whether the underlying cache reports changes to {@link #handleEvent}. If it doesn't, then writers must not
+   * wait for a callback, since it would never arrive. The default is true.
+   *
+   * @return true if events are reported or false otherwise
+   */
+  protected boolean supportsEvents() {
+    return true;
+  }
+
+  /**
+   * Sets the maximum time that a writer waits for the callbacks of a key to run. When the time is exceeded, a warning
+   * is logged and the writer carries on.
+   *
+   * @param pTimeout the timeout
+   */
+  public void setCallbackTimeout(Duration pTimeout) {
+    mCallbackTimeout = pTimeout;
   }
 
   /**
@@ -1128,13 +1181,15 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    * @param <O> the key type
    * @return true if there is a callback or false otherwise
    */
+  @SuppressWarnings("unused")
   protected <O extends @Nullable Object> boolean hasCallback(KeySPI<O> pKey) {
     var callbackInfoList = mCallbacks.get(pKey.toString());
     return callbackInfoList != null && !callbackInfoList.isEmpty();
   }
 
   /**
-   * Helper method that calls any necessary callbacks
+   * Helper method that calls any necessary callbacks. The longest waiting writer of the key is always released, even if
+   * a callback fails.
    *
    * @param pKey the key
    * @param pEvent the event
@@ -1142,45 +1197,78 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
    */
   @RequiresNonNull("mCacheEngine")
   private <O extends @Nullable Object> void callCallbacks(KeySPI<O> pKey, CacheKeyEvent pEvent) {
-    var callbackInfoList = mCallbacks.get(pKey.toString());
-    if (callbackInfoList != null) {
-      for (var callbackInfo : callbackInfoList) {
-        @SuppressWarnings(
-          { "unchecked", "rawtypes" }) Consumer3<Key<O>, CacheKeyEvent, Optional<@NonNull O>> castedCallback = (Consumer3<Key<O>, CacheKeyEvent, Optional<@NonNull O>>) (Consumer3) callbackInfo.callback;
+    String keyStr = pKey.toString();
+    try {
 
-        var cacheEngine = mCacheEngine;
-        var value = cacheEngine.getIfPresent(callbackInfo.accessContext, pKey);
+      /* The list is copy-on-write, so callbacks registered while these runs don't affect the iteration */
 
-        /* Check if the value is different */
+      var callbackInfoList = mCallbacks.get(keyStr);
+      if (callbackInfoList != null) {
+        for (var callbackInfo : callbackInfoList) {
+          try {
+            @SuppressWarnings(
+              { "unchecked", "rawtypes" }) Consumer3<Key<O>, CacheKeyEvent, Optional<@NonNull O>> castedCallback = (Consumer3<Key<O>, CacheKeyEvent, Optional<@NonNull O>>) (Consumer3) callbackInfo.callback;
 
-        if (!value.equals(callbackInfo.lastValue)) {
-          callbackInfo.lastValue = value;
-          castedCallback.accept(pKey, pEvent, value);
+            var cacheEngine = mCacheEngine;
+            var value = cacheEngine.getIfPresent(callbackInfo.accessContext, pKey);
+
+            /* Check if the value is different */
+
+            if (!value.equals(callbackInfo.lastValue)) {
+              callbackInfo.lastValue = value;
+              castedCallback.accept(pKey, pEvent, value);
+            }
+          }
+          catch (RuntimeException ex) {
+            //noinspection ThrowableNotThrown
+            mContextFactory.reportThrowable(AbstractCacheStorage.class, this, ex);
+          }
+        }
+      }
+
+      if (pEvent == CacheKeyEvent.REMOVED) {
+        try {
+          if (!pKey.hasKeyDetails()) mCacheEngine.setupKey(pKey);
+          var loader = pKey.getLoader();
+          if (loader instanceof CacheInvalidator) {
+            @SuppressWarnings("unchecked") CacheInvalidator<O> ci = (CacheInvalidator<O>) loader;
+            ci.invalidate(mCacheEngine, pKey);
+          }
+        }
+        catch (RuntimeException ex) {
+          //noinspection ThrowableNotThrown
+          mContextFactory.reportThrowable(AbstractCacheStorage.class, this, ex);
         }
       }
     }
-
-    if (pEvent == CacheKeyEvent.REMOVED) {
-      if (!pKey.hasKeyDetails()) mCacheEngine.setupKey(pKey);
-      var loader = pKey.getLoader();
-      if (loader instanceof CacheInvalidator) {
-        @SuppressWarnings("unchecked") CacheInvalidator<O> ci = (CacheInvalidator<O>) loader;
-        ci.invalidate(mCacheEngine, pKey);
-      }
+    finally {
+      completeWaiter(keyStr);
     }
-
-    var semaphore = mCallbackSemaphores.get(pKey.toString());
-    if (semaphore != null) semaphore.release();
   }
 
   /**
-   * Prepares semaphore so that the code can wait on this thread until the callback occurs
+   * Releases the longest waiting writer of the key (if any)
+   *
+   * @param pKeyStr the key string
+   */
+  private void completeWaiter(String pKeyStr) {
+    var queue = mCallbackWaiters.get(pKeyStr);
+    if (queue == null) return;
+    var latch = queue.poll();
+    if (latch != null) latch.countDown();
+  }
+
+  /**
+   * Prepares a waiter so that the code can wait on this thread until the callback occurs. Nothing is waited for if the
+   * key has no callbacks, or the underlying cache doesn't report events.
    *
    * @param pKey the key
    * @param <V> the key type
-   * @return the optional semaphore
+   * @return the optional waiter
    */
-  protected <V extends @Nullable Object> Optional<Semaphore> prepareSemphore(KeySPI<V> pKey) {
+  protected <V extends @Nullable Object> Optional<CountDownLatch> prepareWaiter(KeySPI<V> pKey) {
+    if (!supportsEvents()) return Optional.empty();
+
     String keyStr = pKey.toString();
 
     /* Check to see if there is a callback for this key */
@@ -1189,21 +1277,49 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     if (callbackList == null) return Optional.empty();
     if (callbackList.isEmpty()) return Optional.empty();
 
-    return Optional.of(mCallbackSemaphores.computeIfAbsent(keyStr, (_) -> new Semaphore(0)));
+    var latch = new CountDownLatch(1);
+    mCallbackWaiters.computeIfAbsent(keyStr, (_) -> new ConcurrentLinkedQueue<>()).add(latch);
+    return Optional.of(latch);
   }
 
   /**
-   * Waits for the semaphore to complete
+   * Gives up on a waiter so that a later callback doesn't get consumed by it
    *
-   * @param pSemaphoreOpt the optional semaphore
+   * @param pKey the key
+   * @param pWaiterOpt the optional waiter
+   * @param <V> the key type
    */
-  protected static void waitSemaphore(Optional<Semaphore> pSemaphoreOpt) {
-    if (pSemaphoreOpt.isEmpty()) return;
-    var semaphore = pSemaphoreOpt.get();
+  private <V extends @Nullable Object> void cancelWaiter(KeySPI<V> pKey, Optional<CountDownLatch> pWaiterOpt) {
+    if (pWaiterOpt.isEmpty()) return;
+    var queue = mCallbackWaiters.get(pKey.toString());
+    if (queue != null) queue.remove(pWaiterOpt.get());
+  }
+
+  /**
+   * Waits for the callback to occur. If it doesn't within the timeout, a warning is logged and the code carries on.
+   *
+   * @param pKey the key
+   * @param pWaiterOpt the optional waiter
+   * @param <V> the key type
+   */
+  protected <V extends @Nullable Object> void awaitWaiter(KeySPI<V> pKey, Optional<CountDownLatch> pWaiterOpt) {
+    if (pWaiterOpt.isEmpty()) return;
+    var latch = pWaiterOpt.get();
     try {
-      semaphore.acquire();
+      var timeout = mCallbackTimeout;
+      if (!latch.await(timeout.toNanos(), TimeUnit.NANOSECONDS)) {
+        cancelWaiter(pKey, pWaiterOpt);
+        mContextFactory.reportWarn(AbstractCacheStorage.class,
+          this,
+          "Gave up waiting {} for the callbacks of the key {} to run",
+          timeout,
+          pKey
+        );
+      }
     }
     catch (InterruptedException ex) {
+      cancelWaiter(pKey, pWaiterOpt);
+      Thread.currentThread().interrupt();
       throw new DQRuntimeException(ex);
     }
   }
@@ -1220,15 +1336,22 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     @SuppressWarnings("unchecked") SER_KEY serKey = (
       mKeySerializer != null ? mKeySerializer.apply(keyStr) : (SER_KEY) keyStr);
 
-    /* Mark that the code is waiting for a callback from the cache */
+    /* Mark that the code is waiting for a callback from the cache. Removing a key that isn't there doesn't produce an
+      event, so there is nothing to wait for in that case. */
 
-    var semaphore = prepareSemphore(pKey);
+    Optional<CountDownLatch> waiter = (readFromPrimaryCache(serKey).isPresent() ? prepareWaiter(pKey) : Optional.empty());
 
-    invalidate(mPrimaryCache, serKey);
+    try {
+      invalidate(mPrimaryCache, serKey);
+    }
+    catch (RuntimeException | Error ex) {
+      cancelWaiter(pKey, waiter);
+      throw ex;
+    }
 
     /* Wait for the callback to occur */
 
-    waitSemaphore(semaphore);
+    awaitWaiter(pKey, waiter);
 
   }
 
@@ -1332,12 +1455,15 @@ public abstract class AbstractCacheStorage<CACHE, SER_KEY> implements CacheStora
     /* Because this might be called on a non-reentrant thread, move the querying for real data into another thread */
 
     mExecutorService.submit(() -> {
-      if (mCacheEngine == null) throw new IllegalStateException("The cache engine has not been set");
+      if (mCacheEngine == null) {
+        completeWaiter(keyObj.toString());
+        throw new IllegalStateException("The cache engine has not been set");
+      }
       callCallbacks(keyObj, pEvent);
     });
   }
 
-  private static class NULL_TYPE_CLASS {
+  private static class NullTypeClass {
     // empty
   }
 }

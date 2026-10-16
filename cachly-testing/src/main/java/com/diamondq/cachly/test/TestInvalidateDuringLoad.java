@@ -204,7 +204,7 @@ public class TestInvalidateDuringLoad {
     Keys.TOP.clearKeyDetails();
     mCache =new CacheEngineImpl(callbackHandler, executorService, converterManager, contextFactory);
     mCache.addBeanNameLocator(new BeanNameableLocator());
-    mCache.addCacheStorage(new MemoryCacheStorage(converterManager, executorService, callbackHandler, "my-cache"));
+    mCache.addCacheStorage(new MemoryCacheStorage(contextFactory, converterManager, executorService, callbackHandler, "my-cache"));
     var pathConfig = new CachlyPathConfiguration(Keys.Strings.PARTIAL_SOURCE);
     pathConfig.setStorage("my-cache");
     pathConfig.setSerializer("kryo");

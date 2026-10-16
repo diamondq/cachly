@@ -204,6 +204,7 @@ public class CachlyEhcacheCacheFactory {
     /* Set up for notification for callbacks */
 
     var handlerOpt = pApplicationContext.findBean(CacheCallbackHandler.class);
+    handlerOpt.ifPresent((handler) -> handler.registerEventSource(nativeCache));
     handlerOpt.ifPresent((handler) -> nativeCache.getRuntimeConfiguration().registerCacheEventListener((event) -> {
         var value = switch (event.getType()) {
           case EVICTED, EXPIRED, REMOVED -> event.getOldValue();

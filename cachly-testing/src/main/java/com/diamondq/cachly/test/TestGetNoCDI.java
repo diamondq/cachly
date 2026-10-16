@@ -128,7 +128,7 @@ public class TestGetNoCDI {
     Keys.PD_BY_ID.clearKeyDetails();
     cache = new CacheEngineImpl(callbackHandler, executorService, converterManager, contextFactory);
     cache.addBeanNameLocator(new BeanNameableLocator());
-    cache.addCacheStorage(new MemoryCacheStorage(converterManager, executorService, callbackHandler, "my-cache"));
+    cache.addCacheStorage(new MemoryCacheStorage(contextFactory, converterManager, executorService, callbackHandler, "my-cache"));
     var pathConfig = new CachlyPathConfiguration(Keys.Strings.PARTIAL_PROCESS_DEFINITIONS);
     pathConfig.setStorage("my-cache");
     pathConfig.setSerializer("kryo");

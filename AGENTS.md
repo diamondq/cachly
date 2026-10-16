@@ -30,6 +30,16 @@ DiamondQ Cachly is a Java caching library: a typed, path-keyed cache API (`Cache
 - New modules must be added to the root `pom.xml` `<modules>` and to `cachly-bom`.
 - Properties registered on the Cache/CacheEngine (OSGi) use a `String[]` value, not a `String`.
 
+## Code style
+
+- Fix IntelliJ warnings rather than ignoring or suppressing them, even when the inspection is wrong. Ignored warnings hide the real ones later. Use `get_file_problems` from the IntelliJ MCP to check a file you changed.
+- The exception is an "unused" warning on a method that could reasonably be expected to be used in future, or that is part of an interface where its usefulness is clear. Mark that method (never the class) with `@SuppressWarnings("unused")`.
+- When a warning must be suppressed, suppress it at the narrowest, most specific location, so that real problems nearby aren't hidden. Use `@SuppressWarnings` when it can sit on something that small (a local variable, a field, or a method that is itself the target of the warning). When the only annotation target would cover a wider block of code (for example a whole method, just to cover one cast), use an IntelliJ `//noinspection` comment on that line instead. Place it so it attaches to the right element: for a warning on a `switch` rule's branch (e.g. an unreachable `default -> { }`), the comment goes between the `->` and the `{`, not above the label or the `switch`. IntelliJ reports a misplaced one as "Redundant suppression". Put a short comment above it explaining why the warning is wrong.
+- Extract a method only when it needs documentation to explain what it does. If the code is short and obvious enough that a doc comment would add nothing, keep it inline, even if that duplicates it. A method extracted from obvious code would itself need a comment explaining why it exists, and readers would wonder.
+- Report problems through the `ContextFactory` that is injected (pass it through the constructor), never `ContextFactory.getInstance()` or `System.Logger`/other logging frameworks. Use `reportWarn` / `reportThrowable` for rare problems.
+- Don't create a new `Context` in tight loops or performance-sensitive paths.
+- Prefer IntelliJ (the MCP tools) to find references and usages when it is faster than grepping.
+
 ## Environment notes
 
 - Development is on Windows; the project lives under `C:\DQGitHub\cachly`. `.idea/` is checked in, so avoid committing incidental IDE changes (e.g. `.idea/compiler.xml`).

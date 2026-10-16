@@ -4,6 +4,7 @@ import com.diamondq.cachly.base.AbstractCacheStorage;
 import com.diamondq.cachly.base.MemoryStorageData;
 import com.diamondq.cachly.impl.CacheCallbackHandler;
 import com.diamondq.cachly.spi.CommonKeyValuePair;
+import com.diamondq.common.context.ContextFactory;
 import com.diamondq.common.converters.ConverterManager;
 import io.micronaut.cache.SyncCache;
 import io.micronaut.context.annotation.EachBean;
@@ -32,9 +33,12 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
 
   private final List<ExpiryHandler> mExpiryHandlers;
 
+  private final CacheCallbackHandler mHandler;
+
   /**
    * Injection Constructor
    *
+   * @param pContextFactory the Context Factory
    * @param pConverterManager the Converter Manager
    * @param pExecutorService the Executor Service
    * @param pHandler the Callback Handler bridge
@@ -43,10 +47,10 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
    * @param pExpiryHandlers the list of handlers for expiry
    */
   @Inject
-  public MicronautCacheStorage(ConverterManager pConverterManager,
+  public MicronautCacheStorage(ContextFactory pContextFactory, ConverterManager pConverterManager,
     @Named(TaskExecutors.IO) ExecutorService pExecutorService, CacheCallbackHandler pHandler,
     SyncCache<?> pPrimaryCache, List<KeyExtractor> pKeyExtractors, List<ExpiryHandler> pExpiryHandlers) {
-    super(pConverterManager, pExecutorService,
+    super(pContextFactory, pConverterManager, pExecutorService,
 
       /* The cache object */
 
@@ -78,16 +82,22 @@ public class MicronautCacheStorage extends AbstractCacheStorage<SyncCache<?>, St
     );
     mKeyExtractors = pKeyExtractors;
     mExpiryHandlers = pExpiryHandlers;
+    mHandler = pHandler;
     pHandler.registerCacheStorage(mPrimaryCache.getNativeCache(), this);
     init();
   }
 
   @Override
+  protected boolean supportsEvents() {
+    return mHandler.isEventSource(mPrimaryCache.getNativeCache());
+  }
+
+  @Override
   protected void writeToCache(CommonKeyValuePair<SyncCache<?>, String> pEntry) {
-    Duration expiresIn = pEntry.expiresIn;
+    Duration expiresIn = pEntry.expiresIn();
     if (expiresIn != null) for (ExpiryHandler eh : mExpiryHandlers)
-      eh.markForExpiry(pEntry.serKey, expiresIn);
-    pEntry.cache.put(pEntry.serKey, Objects.requireNonNull(pEntry.serValue));
+      eh.markForExpiry(pEntry.serKey(), expiresIn);
+    pEntry.cache().put(pEntry.serKey(), Objects.requireNonNull(pEntry.serValue()));
   }
 
   @Override

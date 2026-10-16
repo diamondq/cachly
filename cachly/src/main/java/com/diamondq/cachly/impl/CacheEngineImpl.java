@@ -119,9 +119,8 @@ public final class CacheEngineImpl implements CacheEngine {
    * Tracks the invalidations that happen while a single load is running.
    * <p>
    * The dependencies of a key are only recorded once its load has finished. So an invalidation of something that the
-   * load has already read does not reach the key that is being loaded, and the load would store a value that was built
-   * from the old data. By recording what is invalidated during the load, the load can tell that its result is out of
-   * date.
+   * load has already read does not reach the key that is being loaded, and the load would store a value built from the
+   * old data. By recording what is invalidated during the load, the load can tell that its result is out of date.
    */
   private static final class LoadTracker {
     private final Set<String> mInvalidated = ConcurrentHashMap.newKeySet();
@@ -314,7 +313,12 @@ public final class CacheEngineImpl implements CacheEngine {
 
     if (!mCacheStorageByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME)) {
       mCacheStorageByPath.put(CacheInfoLoader.CACHE_INFO_NAME,
-        new MemoryCacheStorage(mConverterManager, mExecutorService, mCallbackHandler, CacheInfoLoader.CACHE_INFO_NAME)
+        new MemoryCacheStorage(mContextFactory,
+          mConverterManager,
+          mExecutorService,
+          mCallbackHandler,
+          CacheInfoLoader.CACHE_INFO_NAME
+        )
       );
     }
     if (!mSerializerNameByPath.containsKey(CacheInfoLoader.CACHE_INFO_NAME)) {
@@ -576,6 +580,8 @@ public final class CacheEngineImpl implements CacheEngine {
       However, in most cases, this should only represent thousands of strings, not millions.
      */
 
+    CacheResult<O> result;
+    boolean invalidateAfterUnlock;
     synchronized (key.toString().intern()) {
       queryResult = storage.queryForKey(pAccessContext, key);
 
@@ -641,20 +647,24 @@ public final class CacheEngineImpl implements CacheEngine {
 
         /* An invalidation can arrive after the check above, but before the dependencies were recorded. Now that they
           are recorded, any later invalidation will reach this key. But to catch one that was missed in between, check
-          again and, if so, remove what was just stored. */
+          again and, if so, remove what was just stored. That has to wait until the lock is released, because the
+          invalidation waits for the callbacks of the key, and they may need this lock to read the key. */
 
-        if (tracker.isAffected(keyStr, dependencies)) {
-          invalidateInternal(pAccessContext, key);
-        }
-
-        /* Return */
-
-        return loadedResult;
+        invalidateAfterUnlock = tracker.isAffected(keyStr, dependencies);
+        result = loadedResult;
       }
       finally {
         mActiveLoads.remove(tracker);
       }
     }
+
+    if (invalidateAfterUnlock) {
+      invalidateInternal(pAccessContext, key);
+    }
+
+    /* Return */
+
+    return result;
 
   }
 
@@ -716,8 +726,8 @@ public final class CacheEngineImpl implements CacheEngine {
 
       CacheStorage storage = key.getLastStorage();
 
-      /* Loads that are running now may have read this key, but are not yet recorded as dependent on it. Let them know
-        before the dependents are looked up, so that a load that records its dependencies after that is still caught. */
+      /* Loads that are running now may have read this key but are not yet recorded as dependent on it. Let them know
+        before the dependents are looked up so that a load that records its dependencies after that is still caught. */
 
       markInvalidated(keyStr);
 
